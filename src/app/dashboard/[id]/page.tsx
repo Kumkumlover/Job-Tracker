@@ -218,11 +218,14 @@ export default function ApplicationDetailPage() {
                           ? `https://mail.google.com/mail/?authuser=${encodeURIComponent(account)}#inbox/${tp.emailMessageId}`
                           : `https://mail.google.com/mail/u/0/#inbox/${tp.emailMessageId}`;
                         return (
-                          <a href={href} target="_blank" rel="noopener noreferrer"
-                            className="text-blue-500 hover:text-blue-400 transition-colors"
-                            title="Open in Gmail">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
+                          <>
+                            <a href={href} target="_blank" rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-400 transition-colors"
+                              title={`account: ${account || "none"} | msgId: ${tp.emailMessageId} | meta: ${JSON.stringify(meta)}`}>
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                            {account && <span className="text-[10px] text-green-500 ml-1">linked</span>}
+                          </>
                         );
                       })()}
                     </div>
