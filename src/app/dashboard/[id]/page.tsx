@@ -153,18 +153,26 @@ export default function ApplicationDetailPage() {
                 LinkedIn DM sent
               </span>
             )}
-            {app.emailThreadId && (
-              <a
-                href={`https://mail.google.com/mail/u/0/#inbox/${app.emailThreadId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm text-green-600 hover:text-green-500 transition-colors"
-              >
-                <Mail className="w-4 h-4" />
-                Open email thread
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
+            {app.emailThreadId && (() => {
+              const threadAccount = app.touchpoints
+                .map((tp) => (tp.metadata as Record<string, string> | null)?.gmailAccount)
+                .find(Boolean);
+              const threadHref = threadAccount
+                ? `https://mail.google.com/mail/?authuser=${encodeURIComponent(threadAccount)}#inbox/${app.emailThreadId}`
+                : `https://mail.google.com/mail/u/0/#inbox/${app.emailThreadId}`;
+              return (
+                <a
+                  href={threadHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-sm text-green-600 hover:text-green-500 transition-colors"
+                >
+                  <Mail className="w-4 h-4" />
+                  Open email thread
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              );
+            })()}
           </div>
           {app.touchpoints.length > 0 ? (
             <div className="space-y-2">

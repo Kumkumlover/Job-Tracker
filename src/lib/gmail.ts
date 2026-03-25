@@ -662,15 +662,6 @@ async function processEmailList(
             },
           });
           results.touchpointsAdded++;
-        } else if (gmailAccount && existingTouchpoint) {
-          // Backfill gmailAccount into metadata if it was saved before this field existed
-          const meta = (existingTouchpoint.metadata as Record<string, string> | null) || {};
-          if (!meta.gmailAccount) {
-            await prisma.touchpoint.update({
-              where: { id: existingTouchpoint.id },
-              data: { metadata: { ...meta, gmailAccount } },
-            });
-          }
           if (!match.emailThreadId && parsed.threadId) {
             await prisma.application.update({
               where: { id: match.id },
@@ -697,6 +688,15 @@ async function processEmailList(
             await prisma.application.update({
               where: { id: match.id },
               data: { role: parsed.role },
+            });
+          }
+        } else if (gmailAccount) {
+          // Patch gmailAccount into metadata of touchpoints saved before this field existed
+          const meta = (existingTouchpoint.metadata as Record<string, string> | null) || {};
+          if (!meta.gmailAccount) {
+            await prisma.touchpoint.update({
+              where: { id: existingTouchpoint.id },
+              data: { metadata: { ...meta, gmailAccount } },
             });
           }
         }
