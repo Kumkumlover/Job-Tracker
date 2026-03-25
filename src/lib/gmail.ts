@@ -1123,7 +1123,7 @@ export async function processBackfill(userId: string) {
   // Search for application-related emails with tight queries
   const queries = [
     // Acknowledgments
-    'subject:("received your application" OR "thank you for applying" OR "application for" OR "application to" OR "successfully applied" OR "application received" OR "application confirmed" OR "application submitted" OR "thank you for your application") newer_than:3m -category:promotions -category:social',
+    'subject:("received your application" OR "thank you for applying" OR "application for" OR "application to" OR "successfully applied" OR "application received" OR "application confirmed" OR "application submitted" OR "thank you for your application" OR "application was sent") newer_than:3m -category:promotions -category:social',
     // Status updates (shortlisted, interview, assignment)
     'subject:(shortlisted OR "been selected" OR "interview invite" OR "interview scheduled" OR "assignment" OR "assessment" OR "next steps") newer_than:3m -category:promotions -category:social',
     // Generic status updates (rejection/update may be in body, not subject)
@@ -1233,7 +1233,7 @@ export async function processSync(userId: string) {
     ? `after:${Math.floor(syncState.lastSyncedAt.getTime() / 1000) - 3600}` // 1 hour buffer
     : "newer_than:1w";
 
-  const query = `(subject:("received your application" OR "thank you for applying" OR "application for" OR "application received" OR "successfully applied" OR "thank you for your application" OR "job application status" OR "application status" OR "update on your application" OR "shortlisted" OR "been selected" OR "interview" OR "assignment" OR "assessment" OR "regret to inform" OR "unfortunately" OR "not moving forward" OR "offer letter") OR from:(kekamail.com OR viazohorecruit.in OR icims.com) OR (from:me subject:(application OR applying OR APM OR "product manager" OR resume))) ${adjustedSince}`;
+  const query = `(subject:("received your application" OR "thank you for applying" OR "application for" OR "application received" OR "successfully applied" OR "application was sent" OR "thank you for your application" OR "job application status" OR "application status" OR "update on your application" OR "shortlisted" OR "been selected" OR "interview" OR "assignment" OR "assessment" OR "regret to inform" OR "unfortunately" OR "not moving forward" OR "offer letter") OR from:(kekamail.com OR viazohorecruit.in OR icims.com) OR (from:me subject:(application OR applying OR APM OR "product manager" OR resume))) ${adjustedSince}`;
   console.log(`[Gmail Sync] lastSyncedAt=${syncState?.lastSyncedAt}, adjustedSince=${adjustedSince}`);
   const messageIds = await searchEmails(gmail, query, 50);
   console.log(`[Gmail Sync] found ${messageIds.length} emails`);
