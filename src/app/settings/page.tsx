@@ -16,7 +16,7 @@ import {
 import { PROPERTY_TYPES } from "@/lib/constants";
 
 export default function SettingsPage() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   const { data: properties = [] } = useCustomProperties();
