@@ -48,11 +48,12 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
+    if (status !== "authenticated") return;
     fetch("/api/gmail/linked-accounts")
       .then((r) => r.json())
       .then((d) => Array.isArray(d) && setLinkedAccounts(d))
       .catch(() => {});
-  }, []);
+  }, [status]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

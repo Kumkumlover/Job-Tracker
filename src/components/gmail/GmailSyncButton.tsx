@@ -18,8 +18,9 @@ export default function GmailSyncButton() {
       const data = await res.json();
 
       if (res.ok) {
+        const linked = data.linkedAccountsFound ? ` (${data.linkedAccountsFound} linked)` : "";
         setResult(
-          `${data.emailsProcessed} emails scanned, ${data.applicationsCreated} new apps, ${data.touchpointsAdded} touchpoints added`
+          `${data.emailsProcessed} emails scanned${linked}, ${data.applicationsCreated} new apps, ${data.touchpointsAdded} touchpoints added`
         );
         queryClient.invalidateQueries({ queryKey: ["applications"] });
       } else {

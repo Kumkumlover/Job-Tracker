@@ -1117,6 +1117,7 @@ export async function processBackfill(userId: string) {
     touchpointsAdded: 0,
     emailsProcessed: 0,
     emailsSkipped: 0,
+    linkedAccountsFound: 0,
   };
 
   // Search for application-related emails with tight queries
@@ -1173,14 +1174,18 @@ export async function processBackfill(userId: string) {
 
   // Process linked Gmail accounts (e.g. college email)
   const linkedAccounts = await prisma.linkedGmailAccount.findMany({ where: { userId } });
+  results.linkedAccountsFound = linkedAccounts.length;
+  console.log(`[Gmail Backfill] Found ${linkedAccounts.length} linked accounts for user ${userId}`);
   for (const linked of linkedAccounts) {
     try {
+      console.log(`[Gmail Backfill] Processing linked account: ${linked.email}`);
       const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
       const linkedIds = new Set<string>();
       for (const q of queries) {
         const ids = await searchEmails(linkedGmail, q);
         ids.forEach((id) => linkedIds.add(id));
       }
+      console.log(`[Gmail Backfill] Linked account ${linked.email}: found ${linkedIds.size} emails`);
       const linkedParsed: ParsedEmail[] = [];
       for (const msgId of linkedIds) {
         try {
