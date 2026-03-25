@@ -49,7 +49,8 @@ model User {
   applications     Application[]
   customProperties CustomProperty[]
   customStages     CustomStage[]
-  gmailSyncState   GmailSyncState?
+  gmailSyncState       GmailSyncState?
+  linkedGmailAccounts  LinkedGmailAccount[]
 }
 
 model VerificationToken {
@@ -159,4 +160,20 @@ model GmailSyncState {
   backfillDone  Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LinkedGmailAccount {
+  id           String    @id @default(cuid())
+  userId       String
+  email        String
+  accessToken  String    @db.Text
+  refreshToken String?   @db.Text
+  expiresAt    Int?
+  lastSyncedAt DateTime?
+  backfillDone Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
 }

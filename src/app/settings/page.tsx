@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, GripVertical, Key, Copy } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Key, Copy, Mail, CheckCircle, AlertCircle } from "lucide-react";
 import {
   useCustomProperties,
   useCreateCustomProperty,
@@ -33,6 +33,8 @@ export default function SettingsPage() {
   const [newStageColor, setNewStageColor] = useState("#6b7280");
   const [apiKey, setApiKey] = useState("");
   const [copied, setCopied] = useState(false);
+  const [linkedAccounts, setLinkedAccounts] = useState<{ id: string; email: string; lastSyncedAt: string | null }[]>([]);
+  const [gmailMessage, setGmailMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/auth/signin");
@@ -44,6 +46,38 @@ export default function SettingsPage() {
       .then((d) => setApiKey(d.apiKey || ""))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetch("/api/gmail/linked-accounts")
+      .then((r) => r.json())
+      .then((d) => Array.isArray(d) && setLinkedAccounts(d))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "gmail_linked") {
+      setGmailMessage({ type: "success", text: "Gmail account connected successfully!" });
+      fetch("/api/gmail/linked-accounts")
+        .then((r) => r.json())
+        .then((d) => Array.isArray(d) && setLinkedAccounts(d))
+        .catch(() => {});
+      window.history.replaceState({}, "", "/settings");
+    } else if (params.get("error") === "gmail_link_failed") {
+      setGmailMessage({ type: "error", text: "Failed to connect Gmail. Please try again." });
+      window.history.replaceState({}, "", "/settings");
+    }
+  }, []);
+
+  const handleUnlinkGmail = async (id: string) => {
+    if (!confirm("Disconnect this Gmail account?")) return;
+    await fetch("/api/gmail/linked-accounts", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setLinkedAccounts((prev) => prev.filter((a) => a.id !== id));
+  };
 
   const handleAddProperty = () => {
     if (!newPropName.trim()) return;
@@ -91,6 +125,58 @@ export default function SettingsPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-6 space-y-8">
+        {/* Gmail Accounts */}
+        <section className="p-5 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <h2 className="text-lg font-semibold flex items-center gap-2 mb-1">
+            <Mail className="w-5 h-5" />
+            Gmail Accounts
+          </h2>
+          <p className="text-sm text-[var(--muted-foreground)] mb-4">
+            Connect additional Gmail accounts to sync job emails. Your primary login account is always synced.
+          </p>
+
+          {gmailMessage && (
+            <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg mb-3 ${gmailMessage.type === "success" ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"}`}>
+              {gmailMessage.type === "success" ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+              {gmailMessage.text}
+            </div>
+          )}
+
+          {/* Primary account */}
+          <div className="flex items-center gap-3 py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--background)] mb-2">
+            <Mail className="w-4 h-4 text-[var(--muted-foreground)]" />
+            <span className="flex-1 text-sm">{(session?.user as { email?: string })?.email || "Primary account"}</span>
+            <span className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">Primary</span>
+          </div>
+
+          {/* Linked accounts */}
+          {linkedAccounts.map((account) => (
+            <div key={account.id} className="flex items-center gap-3 py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--background)] mb-2">
+              <Mail className="w-4 h-4 text-[var(--muted-foreground)]" />
+              <span className="flex-1 text-sm">{account.email}</span>
+              {account.lastSyncedAt && (
+                <span className="text-xs text-[var(--muted-foreground)]">
+                  synced {new Date(account.lastSyncedAt).toLocaleDateString()}
+                </span>
+              )}
+              <button
+                onClick={() => handleUnlinkGmail(account.id)}
+                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-[var(--muted-foreground)] hover:text-red-600"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+
+          <a
+            href="/api/gmail/link"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-sm hover:bg-[var(--secondary)] transition-colors mt-1"
+          >
+            <Plus className="w-4 h-4" />
+            Connect another Gmail
+          </a>
+        </section>
+
         {/* Extension API Key */}
         <section className="p-5 rounded-xl border border-[var(--border)] bg-[var(--card)]">
           <h2 className="text-lg font-semibold flex items-center gap-2 mb-3">

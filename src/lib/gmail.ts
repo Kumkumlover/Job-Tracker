@@ -596,6 +596,128 @@ export async function getGmailClient(userId: string) {
   return google.gmail({ version: "v1", auth: oauth2Client });
 }
 
+export async function getGmailClientForLinked(linkedId: string) {
+  const linked = await prisma.linkedGmailAccount.findUnique({ where: { id: linkedId } });
+  if (!linked?.accessToken) throw new Error("No access token for linked account");
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+  oauth2Client.setCredentials({
+    access_token: linked.accessToken,
+    refresh_token: linked.refreshToken,
+  });
+  oauth2Client.on("tokens", async (tokens) => {
+    if (tokens.access_token) {
+      await prisma.linkedGmailAccount.update({
+        where: { id: linkedId },
+        data: {
+          accessToken: tokens.access_token,
+          expiresAt: tokens.expiry_date ? Math.floor(tokens.expiry_date / 1000) : null,
+        },
+      });
+    }
+  });
+  return { gmail: google.gmail({ version: "v1", auth: oauth2Client }), email: linked.email };
+}
+
+type SyncResults = {
+  applicationsCreated: number;
+  applicationsUpdated: number;
+  touchpointsAdded: number;
+  emailsProcessed: number;
+  emailsSkipped?: number;
+};
+
+async function processEmailList(
+  userId: string,
+  parsedEmails: ParsedEmail[],
+  results: SyncResults
+) {
+  for (const parsed of parsedEmails) {
+    try {
+      const match = await matchToApplication(userId, parsed);
+      if (match) {
+        const existingTouchpoint = await prisma.touchpoint.findFirst({
+          where: { emailMessageId: parsed.messageId },
+        });
+        if (!existingTouchpoint) {
+          await prisma.touchpoint.create({
+            data: {
+              applicationId: match.id,
+              type: parsed.isOutbound ? "email_to_hr" : "recruiter_email",
+              source: "gmail_scan",
+              date: parsed.date,
+              emailMessageId: parsed.messageId,
+              metadata: {
+                subject: parsed.subject,
+                from: parsed.from,
+                detectedStage: parsed.stage || undefined,
+              },
+            },
+          });
+          results.touchpointsAdded++;
+          if (!match.emailThreadId && parsed.threadId) {
+            await prisma.application.update({
+              where: { id: match.id },
+              data: { emailThreadId: parsed.threadId },
+            });
+          }
+          if (parsed.stage && shouldUpdateStatus(match.status, parsed.stage)) {
+            await prisma.application.update({
+              where: { id: match.id },
+              data: { status: parsed.stage },
+            });
+            results.applicationsUpdated++;
+            match.status = parsed.stage;
+          }
+          if (parsed.isOutbound && !match.followUpDate) {
+            const followUp = new Date(parsed.date);
+            followUp.setDate(followUp.getDate() + 3);
+            await prisma.application.update({
+              where: { id: match.id },
+              data: { followUpDate: followUp },
+            });
+          }
+          if (parsed.role && match.role === "Unknown Role") {
+            await prisma.application.update({
+              where: { id: match.id },
+              data: { role: parsed.role },
+            });
+          }
+        }
+      } else if (parsed.company) {
+        const role = parsed.role || "Unknown Role";
+        if (parsed.role || parsed.stage || parsed.isOutbound) {
+          try {
+            const followUpDate = parsed.isOutbound
+              ? new Date(parsed.date.getTime() + 3 * 24 * 60 * 60 * 1000)
+              : null;
+            await prisma.application.create({
+              data: {
+                userId,
+                company: parsed.company,
+                role,
+                platform: "email",
+                status: parsed.stage || (parsed.isOutbound ? "applied" : "acknowledged"),
+                dateApplied: parsed.date,
+                emailThreadId: parsed.threadId || null,
+                followUpDate,
+              },
+            });
+            results.applicationsCreated++;
+          } catch {
+            // Duplicate — skip
+          }
+        }
+      }
+    } catch {
+      // Skip individual errors
+    }
+  }
+}
+
 export async function searchEmails(
   gmail: ReturnType<typeof google.gmail>,
   query: string,
@@ -1031,110 +1153,43 @@ export async function processBackfill(userId: string) {
 
   // Sort by date ascending so we process oldest first → status updates in order
   parsedEmails.sort((a, b) => a.date.getTime() - b.date.getTime());
+  await processEmailList(userId, parsedEmails, results);
 
-  for (const parsed of parsedEmails) {
-    try {
-      const match = await matchToApplication(userId, parsed);
-
-      if (match) {
-        // Add as touchpoint if not already tracked
-        const existingTouchpoint = await prisma.touchpoint.findFirst({
-          where: { emailMessageId: parsed.messageId },
-        });
-
-        if (!existingTouchpoint) {
-          await prisma.touchpoint.create({
-            data: {
-              applicationId: match.id,
-              type: parsed.isOutbound ? "email_to_hr" : "recruiter_email",
-              source: "gmail_scan",
-              date: parsed.date,
-              emailMessageId: parsed.messageId,
-              metadata: {
-                subject: parsed.subject,
-                from: parsed.from,
-                detectedStage: parsed.stage || undefined,
-              },
-            },
-          });
-          results.touchpointsAdded++;
-
-          // Update emailThreadId if not set
-          if (!match.emailThreadId && parsed.threadId) {
-            await prisma.application.update({
-              where: { id: match.id },
-              data: { emailThreadId: parsed.threadId },
-            });
-          }
-
-          // Update status based on detected stage
-          if (parsed.stage && shouldUpdateStatus(match.status, parsed.stage)) {
-            await prisma.application.update({
-              where: { id: match.id },
-              data: { status: parsed.stage },
-            });
-            results.applicationsUpdated++;
-            match.status = parsed.stage;
-          }
-
-          // For outbound emails, set follow-up date to 3 days after sending
-          if (parsed.isOutbound && !match.followUpDate) {
-            const followUp = new Date(parsed.date);
-            followUp.setDate(followUp.getDate() + 3);
-            await prisma.application.update({
-              where: { id: match.id },
-              data: { followUpDate: followUp },
-            });
-          }
-
-          // If role was unknown and this email has a role, update it
-          if (parsed.role && match.role === "Unknown Role") {
-            await prisma.application.update({
-              where: { id: match.id },
-              data: { role: parsed.role },
-            });
-          }
-        }
-      } else if (parsed.company) {
-        // No existing app matched — create new one
-        const role = parsed.role || "Unknown Role";
-        // Need role, or a detected stage, or it's outbound (cold email = real application)
-        if (parsed.role || parsed.stage || parsed.isOutbound) {
-          try {
-            // For outbound, auto-set follow-up 3 days from send date
-            const followUpDate = parsed.isOutbound
-              ? new Date(parsed.date.getTime() + 3 * 24 * 60 * 60 * 1000)
-              : null;
-
-            await prisma.application.create({
-              data: {
-                userId,
-                company: parsed.company,
-                role,
-                platform: "email",
-                status: parsed.stage || (parsed.isOutbound ? "applied" : "acknowledged"),
-                dateApplied: parsed.date,
-                emailThreadId: parsed.threadId || null,
-                followUpDate,
-              },
-            });
-            results.applicationsCreated++;
-          } catch {
-            // Duplicate — skip
-          }
-        }
-      }
-    } catch {
-      // Skip individual errors
-    }
-  }
-
-  // Update sync state
+  // Update primary account sync state
   await prisma.gmailSyncState.upsert({
     where: { userId },
     update: { lastSyncedAt: new Date(), backfillDone: true },
     create: { userId, lastSyncedAt: new Date(), backfillDone: true },
   });
+
+  // Process linked Gmail accounts (e.g. college email)
+  const linkedAccounts = await prisma.linkedGmailAccount.findMany({ where: { userId } });
+  for (const linked of linkedAccounts) {
+    try {
+      const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
+      const linkedIds = new Set<string>();
+      for (const q of queries) {
+        const ids = await searchEmails(linkedGmail, q);
+        ids.forEach((id) => linkedIds.add(id));
+      }
+      const linkedParsed: ParsedEmail[] = [];
+      for (const msgId of linkedIds) {
+        try {
+          const parsed = await parseEmail(linkedGmail, msgId, linkedEmail);
+          if (parsed) { linkedParsed.push(parsed); results.emailsProcessed++; }
+          else results.emailsSkipped++;
+        } catch { results.emailsSkipped++; }
+      }
+      linkedParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
+      await processEmailList(userId, linkedParsed, results);
+      await prisma.linkedGmailAccount.update({
+        where: { id: linked.id },
+        data: { lastSyncedAt: new Date(), backfillDone: true },
+      });
+    } catch (err) {
+      console.error(`[Gmail Backfill] Failed for linked account ${linked.email}:`, err);
+    }
+  }
 
   return results;
 }
@@ -1184,80 +1239,41 @@ export async function processSync(userId: string) {
   }
 
   parsedEmails.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  for (const parsed of parsedEmails) {
-    try {
-      const match = await matchToApplication(userId, parsed);
-
-      if (match) {
-        const existingTouchpoint = await prisma.touchpoint.findFirst({
-          where: { emailMessageId: parsed.messageId },
-        });
-
-        if (!existingTouchpoint) {
-          await prisma.touchpoint.create({
-            data: {
-              applicationId: match.id,
-              type: parsed.isOutbound ? "email_to_hr" : "recruiter_email",
-              source: "gmail_scan",
-              date: parsed.date,
-              emailMessageId: parsed.messageId,
-              metadata: {
-                subject: parsed.subject,
-                from: parsed.from,
-                detectedStage: parsed.stage || undefined,
-              },
-            },
-          });
-          results.touchpointsAdded++;
-
-          // Update status
-          if (parsed.stage && shouldUpdateStatus(match.status, parsed.stage)) {
-            await prisma.application.update({
-              where: { id: match.id },
-              data: { status: parsed.stage },
-            });
-            results.applicationsUpdated++;
-            match.status = parsed.stage;
-          }
-        }
-      } else if (parsed.company) {
-        // No existing app matched — create new one
-        const role = parsed.role || "Unknown Role";
-        if (parsed.role || parsed.stage || parsed.isOutbound) {
-          try {
-            const followUpDate = parsed.isOutbound
-              ? new Date(parsed.date.getTime() + 3 * 24 * 60 * 60 * 1000)
-              : null;
-
-            await prisma.application.create({
-              data: {
-                userId,
-                company: parsed.company,
-                role,
-                platform: "email",
-                status: parsed.stage || (parsed.isOutbound ? "applied" : "acknowledged"),
-                dateApplied: parsed.date,
-                emailThreadId: parsed.threadId || null,
-                followUpDate,
-              },
-            });
-            results.applicationsCreated++;
-          } catch {
-            // Duplicate — skip
-          }
-        }
-      }
-    } catch {
-      // Skip
-    }
-  }
+  await processEmailList(userId, parsedEmails, results);
 
   await prisma.gmailSyncState.upsert({
     where: { userId },
     update: { lastSyncedAt: new Date() },
     create: { userId, lastSyncedAt: new Date() },
   });
+
+  // Process linked Gmail accounts (e.g. college email)
+  const linkedAccounts = await prisma.linkedGmailAccount.findMany({ where: { userId } });
+  for (const linked of linkedAccounts) {
+    try {
+      const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
+      const adjustedSince = linked.lastSyncedAt
+        ? `after:${Math.floor(linked.lastSyncedAt.getTime() / 1000) - 3600}`
+        : "newer_than:1w";
+      const linkedQuery = query.replace(/after:\d+|newer_than:\w+/, adjustedSince);
+      const linkedIds = await searchEmails(linkedGmail, linkedQuery, 50);
+      const linkedParsed: ParsedEmail[] = [];
+      for (const msgId of linkedIds) {
+        try {
+          const parsed = await parseEmail(linkedGmail, msgId, linkedEmail);
+          if (parsed) { linkedParsed.push(parsed); results.emailsProcessed++; }
+        } catch {}
+      }
+      linkedParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
+      await processEmailList(userId, linkedParsed, results);
+      await prisma.linkedGmailAccount.update({
+        where: { id: linked.id },
+        data: { lastSyncedAt: new Date() },
+      });
+    } catch (err) {
+      console.error(`[Gmail Sync] Failed for linked account ${linked.email}:`, err);
+    }
+  }
 
   return results;
 }
