@@ -9,11 +9,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || `https://${request.headers.get("host")}`;
+  const baseUrl = (process.env.NEXTAUTH_URL || `https://${request.headers.get("host")}`).replace(/\/$/, "");
+  const redirectUri = `${baseUrl}/api/gmail/link/callback`;
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    `${baseUrl}/api/gmail/link/callback`
+    redirectUri
   );
 
   const url = oauth2Client.generateAuthUrl({
