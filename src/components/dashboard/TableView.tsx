@@ -179,7 +179,7 @@ export default function TableView({
                   )}
                   {app.emailThreadId && (
                     <a
-                      href={`https://mail.google.com/mail/u/0/#inbox/${app.emailThreadId}`}
+                      href={`/api/gmail/open?thread=${app.emailThreadId}&app=${app.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
