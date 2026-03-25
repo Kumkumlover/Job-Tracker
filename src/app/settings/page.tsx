@@ -64,7 +64,8 @@ export default function SettingsPage() {
         .catch(() => {});
       window.history.replaceState({}, "", "/settings");
     } else if (params.get("error") === "gmail_link_failed") {
-      setGmailMessage({ type: "error", text: "Failed to connect Gmail. Please try again." });
+      const detail = params.get("detail") || "";
+      setGmailMessage({ type: "error", text: `Failed to connect Gmail: ${detail || "Unknown error"}` });
       window.history.replaceState({}, "", "/settings");
     }
   }, []);

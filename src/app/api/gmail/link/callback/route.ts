@@ -52,7 +52,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(`${baseUrl}/settings?success=gmail_linked`);
   } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     console.error("[Gmail Link Callback]", err);
-    return NextResponse.redirect(`${baseUrl}/settings?error=gmail_link_failed`);
+    return NextResponse.redirect(`${baseUrl}/settings?error=gmail_link_failed&detail=${encodeURIComponent(detail)}`);
   }
 }
