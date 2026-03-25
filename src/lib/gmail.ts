@@ -102,6 +102,8 @@ const APP_SUBJECT_PATTERNS = [
   /we\s*(have\s*)?received\s*your/i,
   /your\s*application\s*(has\s*been|was)\s*(received|submitted|reviewed)/i,
   /applied\s*(for|to)\s+/i,
+  /application\s*was\s*sent\s*to\s+/i,
+  /your\s*application\s*.*\s*was\s*sent/i,
   /confirmation\s*of\s*(your\s*)?(application|submission)/i,
   /update\s*on\s*your\s*application/i,
   /regarding\s*your\s*application/i,
@@ -776,8 +778,9 @@ export async function parseEmail(
     ? from.toLowerCase().includes(userEmail.toLowerCase())
     : false;
 
-  // FILTER: If from a job portal, skip (alerts/notifications)
-  if (!isOutbound && isJobPortalDomain(domain)) return null;
+  // FILTER: If from a job portal, skip UNLESS the subject is application-related
+  // (e.g. LinkedIn sends "Your application was sent to Rooter.gg" which IS relevant)
+  if (!isOutbound && isJobPortalDomain(domain) && !isAppRelatedEmail(subject)) return null;
 
   // FILTER: Must be application-related (check subject OR if from known ATS domain)
   if (!isOutbound && !isAppRelatedEmail(subject) && !isATSDomain(domain)) return null;
@@ -795,6 +798,12 @@ export async function parseEmail(
     company = companyFromDomain(toDomain);
   } else {
     company = extractCompanyFromEmail(from, domain, subject);
+    // For job portal emails that passed the app-related filter,
+    // extract company from subject (e.g. "Your application was sent to Rooter.gg")
+    if (!company && isJobPortalDomain(domain)) {
+      const sentTo = subject.match(/(?:sent|submitted|applied)\s+to\s+(.+?)(?:\s*[!.|]|$)/i);
+      if (sentTo) company = sentTo[1].trim();
+    }
   }
   let role = extractRoleFromSubject(subject);
   let stageFromSubject = detectStageFromSubject(subject);
