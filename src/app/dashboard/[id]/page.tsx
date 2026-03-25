@@ -153,26 +153,18 @@ export default function ApplicationDetailPage() {
                 LinkedIn DM sent
               </span>
             )}
-            {app.emailThreadId && (() => {
-              const threadAccount = app.touchpoints
-                .map((tp) => (tp.metadata as Record<string, string> | null)?.gmailAccount)
-                .find(Boolean);
-              const threadHref = threadAccount
-                ? `https://mail.google.com/mail/?authuser=${encodeURIComponent(threadAccount)}#inbox/${app.emailThreadId}`
-                : `https://mail.google.com/mail/u/0/#inbox/${app.emailThreadId}`;
-              return (
-                <a
-                  href={threadHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm text-green-600 hover:text-green-500 transition-colors"
-                >
-                  <Mail className="w-4 h-4" />
-                  Open email thread
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              );
-            })()}
+            {app.emailThreadId && (
+              <a
+                href={`/api/gmail/open?thread=${app.emailThreadId}&app=${app.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-sm text-green-600 hover:text-green-500 transition-colors"
+              >
+                <Mail className="w-4 h-4" />
+                Open email thread
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
           </div>
           {app.touchpoints.length > 0 ? (
             <div className="space-y-2">
@@ -211,23 +203,15 @@ export default function ApplicationDetailPage() {
                       <span className="text-xs text-[var(--muted-foreground)]">
                         {format(new Date(tp.date), "MMM d, yyyy")}
                       </span>
-                      {tp.emailMessageId && (() => {
-                        const meta = tp.metadata as Record<string, string> | null;
-                        const account = meta?.gmailAccount;
-                        const href = account
-                          ? `https://mail.google.com/mail/?authuser=${encodeURIComponent(account)}#inbox/${tp.emailMessageId}`
-                          : `https://mail.google.com/mail/u/0/#inbox/${tp.emailMessageId}`;
-                        return (
-                          <>
-                            <a href={href} target="_blank" rel="noopener noreferrer"
-                              className="text-blue-500 hover:text-blue-400 transition-colors"
-                              title={`account: ${account || "none"} | msgId: ${tp.emailMessageId} | meta: ${JSON.stringify(meta)}`}>
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                            {account && <span className="text-[10px] text-green-500 ml-1">linked</span>}
-                          </>
-                        );
-                      })()}
+                      {tp.emailMessageId && (
+                        <a href={`/api/gmail/open?tp=${tp.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-400 transition-colors"
+                          title="Open in Gmail">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
                     </div>
                   </div>
                 );
