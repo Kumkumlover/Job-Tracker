@@ -203,17 +203,20 @@ export default function ApplicationDetailPage() {
                       <span className="text-xs text-[var(--muted-foreground)]">
                         {format(new Date(tp.date), "MMM d, yyyy")}
                       </span>
-                      {tp.emailMessageId && (
-                        <a
-                          href={`https://mail.google.com/mail/u/0/#inbox/${tp.emailMessageId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-400 transition-colors"
-                          title="Open in Gmail"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
+                      {tp.emailMessageId && (() => {
+                        const meta = tp.metadata as Record<string, string> | null;
+                        const account = meta?.gmailAccount;
+                        const href = account
+                          ? `https://mail.google.com/mail/u/0/?authuser=${encodeURIComponent(account)}#inbox/${tp.emailMessageId}`
+                          : `https://mail.google.com/mail/u/0/#inbox/${tp.emailMessageId}`;
+                        return (
+                          <a href={href} target="_blank" rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-400 transition-colors"
+                            title="Open in Gmail">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        );
+                      })()}
                     </div>
                   </div>
                 );

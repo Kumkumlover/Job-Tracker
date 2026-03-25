@@ -635,7 +635,8 @@ type SyncResults = {
 async function processEmailList(
   userId: string,
   parsedEmails: ParsedEmail[],
-  results: SyncResults
+  results: SyncResults,
+  gmailAccount?: string  // email address of the account this email came from
 ) {
   for (const parsed of parsedEmails) {
     try {
@@ -656,6 +657,7 @@ async function processEmailList(
                 subject: parsed.subject,
                 from: parsed.from,
                 detectedStage: parsed.stage || undefined,
+                gmailAccount: gmailAccount || undefined,
               },
             },
           });
@@ -1195,7 +1197,7 @@ export async function processBackfill(userId: string) {
         } catch { results.emailsSkipped++; }
       }
       linkedParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-      await processEmailList(userId, linkedParsed, results);
+      await processEmailList(userId, linkedParsed, results, linkedEmail);
       await prisma.linkedGmailAccount.update({
         where: { id: linked.id },
         data: { lastSyncedAt: new Date(), backfillDone: true },
@@ -1279,7 +1281,7 @@ export async function processSync(userId: string) {
         } catch {}
       }
       linkedParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-      await processEmailList(userId, linkedParsed, results);
+      await processEmailList(userId, linkedParsed, results, linkedEmail);
       await prisma.linkedGmailAccount.update({
         where: { id: linked.id },
         data: { lastSyncedAt: new Date() },
