@@ -64,6 +64,30 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "No message ID" }, { status: 400 });
   }
 
+  // Debug mode - return JSON instead of redirecting
+  if (request.nextUrl.searchParams.get("debug") === "1") {
+    const linkedAccounts = await prisma.linkedGmailAccount.findMany({
+      where: { userId: user.id },
+      select: { id: true, email: true },
+    });
+    let tpData = null;
+    if (touchpointId) {
+      tpData = await prisma.touchpoint.findUnique({ where: { id: touchpointId } });
+    }
+    return NextResponse.json({
+      userId: user.id,
+      gmailAccount,
+      messageId,
+      linkedAccounts,
+      touchpoint: tpData ? {
+        id: tpData.id,
+        source: tpData.source,
+        emailMessageId: tpData.emailMessageId,
+        metadata: tpData.metadata,
+      } : null,
+    });
+  }
+
   // Build Gmail URL
   const url = gmailAccount
     ? `https://mail.google.com/mail/?authuser=${encodeURIComponent(gmailAccount)}#inbox/${messageId}`
