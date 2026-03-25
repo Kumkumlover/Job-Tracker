@@ -207,7 +207,7 @@ export default function ApplicationDetailPage() {
                         const meta = tp.metadata as Record<string, string> | null;
                         const account = meta?.gmailAccount;
                         const href = account
-                          ? `https://mail.google.com/mail/u/0/?authuser=${encodeURIComponent(account)}#inbox/${tp.emailMessageId}`
+                          ? `https://mail.google.com/mail/?authuser=${encodeURIComponent(account)}#inbox/${tp.emailMessageId}`
                           : `https://mail.google.com/mail/u/0/#inbox/${tp.emailMessageId}`;
                         return (
                           <a href={href} target="_blank" rel="noopener noreferrer"
