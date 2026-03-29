@@ -1181,12 +1181,15 @@ function companySearchTerms(company: string): string[] {
 function buildCompanyQuery(company: string, since: string): string {
   const terms = companySearchTerms(company);
   if (!terms.length) return "";
-  const termList = terms.map((t) => `"${t}"`).join(" OR ");
-  // Inbound: emails from the company
-  const inbound = `(from:(${termList}) OR subject:(${termList})) ${since} -category:promotions`;
-  // Outbound: emails sent by the user mentioning the company
-  const outbound = `from:me (to:(${termList}) OR subject:(${termList})) ${since}`;
-  return `{${inbound}} OR {${outbound}}`;
+  // Gmail search: from:term OR from:term2 (not from:(a OR b) — that syntax is unsupported)
+  const fromTerms = terms.map((t) => `from:${t}`).join(" OR ");
+  const subjectTerms = terms.map((t) => `subject:${t}`).join(" OR ");
+  const toTerms = terms.map((t) => `to:${t}`).join(" OR ");
+  // Inbound: emails from the company or with company name in subject
+  const inbound = `(${fromTerms} OR ${subjectTerms}) ${since} -category:promotions`;
+  // Outbound: emails sent by the user to the company or mentioning them in subject
+  const outbound = `(from:me (${toTerms} OR ${subjectTerms}) ${since})`;
+  return `(${inbound}) OR ${outbound}`;
 }
 
 // ── Core scanner: runs per Gmail account, scans all stored apps ─
