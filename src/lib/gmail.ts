@@ -1169,195 +1169,208 @@ async function fetchEmailsConcurrently(
   return parsed;
 }
 
+// ── Build Gmail search terms from a company name ───────────────
+function companySearchTerms(company: string): string[] {
+  const norm = normalizeForDedup(company); // strips special chars, lowercases
+  const noSpace = norm.replace(/\s+/g, ""); // "thesleepcompany" → "thesleepcompany"
+  const words = norm.split(/\s+/).filter((w) => w.length >= 4); // meaningful words
+  return [...new Set([noSpace, ...words].filter(Boolean))];
+}
+
+// Build a Gmail search query for a specific company (inbound + outbound)
+function buildCompanyQuery(company: string, since: string): string {
+  const terms = companySearchTerms(company);
+  if (!terms.length) return "";
+  const termList = terms.map((t) => `"${t}"`).join(" OR ");
+  // Inbound: emails from the company
+  const inbound = `(from:(${termList}) OR subject:(${termList})) ${since} -category:promotions`;
+  // Outbound: emails sent by the user mentioning the company
+  const outbound = `from:me (to:(${termList}) OR subject:(${termList})) ${since}`;
+  return `{${inbound}} OR {${outbound}}`;
+}
+
+// ── Core scanner: runs per Gmail account, scans all stored apps ─
+async function scanAccountForApplications(
+  gmail: ReturnType<typeof google.gmail>,
+  accountEmail: string,
+  applications: Array<{ id: string; company: string; role: string; status: string; emailThreadId: string | null }>,
+  existingMessageIds: Set<string>,
+  since: string,
+  results: SyncResults
+): Promise<ParsedEmail[]> {
+  // Run one search per application in parallel (batches of 5 to avoid rate limits)
+  const BATCH = 5;
+  const allIds = new Set<string>();
+
+  for (let i = 0; i < applications.length; i += BATCH) {
+    const batch = applications.slice(i, i + BATCH);
+    const batchResults = await Promise.allSettled(
+      batch.map(async (app) => {
+        const query = buildCompanyQuery(app.company, since);
+        if (!query) return [];
+        return searchEmails(gmail, query, 20);
+      })
+    );
+    for (const r of batchResults) {
+      if (r.status === "fulfilled") r.value.forEach((id) => allIds.add(id));
+    }
+  }
+
+  // Fetch all found emails concurrently (new ones fully, existing ones only if they have a stage)
+  const newIds = [...allIds].filter((id) => !existingMessageIds.has(id));
+  const existingIds = [...allIds].filter((id) => existingMessageIds.has(id));
+
+  const [newParsed, recheckParsed] = await Promise.all([
+    fetchEmailsConcurrently(gmail, newIds, accountEmail, results),
+    fetchEmailsConcurrently(gmail, existingIds, accountEmail, results, true),
+  ]);
+
+  return [...newParsed, ...recheckParsed];
+}
+
 // ── Backfill & Sync ────────────────────────────────────────────
 
 export async function processBackfill(userId: string) {
-  const gmail = await getGmailClient(userId);
+  const [gmail, user, applications, linkedAccounts] = await Promise.all([
+    getGmailClient(userId),
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+    prisma.application.findMany({
+      where: { userId },
+      select: { id: true, company: true, role: true, status: true, emailThreadId: true },
+    }),
+    prisma.linkedGmailAccount.findMany({ where: { userId } }),
+  ]);
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true },
-  });
   const userEmail = user?.email || "";
-
   const results = {
     applicationsCreated: 0,
     applicationsUpdated: 0,
     touchpointsAdded: 0,
     emailsProcessed: 0,
     emailsSkipped: 0,
-    linkedAccountsFound: 0,
+    linkedAccountsFound: linkedAccounts.length,
   };
 
-  // Search for application-related emails with tight queries
-  const queries = [
-    // Acknowledgments
-    'subject:("received your application" OR "thank you for applying" OR "application for" OR "application to" OR "successfully applied" OR "application received" OR "application confirmed" OR "application submitted" OR "thank you for your application" OR "application was sent") newer_than:3m -category:promotions -category:social',
-    // Status updates (shortlisted, interview, assignment)
-    'subject:(shortlisted OR "been selected" OR "interview invite" OR "interview scheduled" OR "assignment" OR "assessment" OR "next steps") newer_than:3m -category:promotions -category:social',
-    // Generic status updates (rejection/update may be in body, not subject)
-    'subject:("job application status" OR "application status" OR "application update" OR "update on your application" OR "regarding your application") newer_than:3m -category:promotions -category:social',
-    // Rejections
-    'subject:("regret to inform" OR "unfortunately" OR "not moving forward" OR "not been selected" OR "other candidates" OR "after careful" OR "position has been filled") newer_than:3m -category:promotions -category:social',
-    // Offers
-    'subject:("offer letter" OR "pleased to offer" OR "extend.*offer" OR "congratulations.*offer") newer_than:3m -category:promotions -category:social',
-    // Emails from known ATS platforms (may have generic subjects)
-    'from:(kekamail.com OR viazohorecruit.in OR icims.com OR greenhouse.io OR lever.co) newer_than:3m -category:promotions -category:social',
-    // Outbound — broader search for cold emails and applications
-    'from:me subject:(application OR applying OR APM OR "product manager" OR "product intern" OR resume OR "interest in" OR "founder\'s office") newer_than:3m',
-  ];
-
-  // Pre-load existing touchpoint messageIds so we can skip already-fetched emails
+  // Pre-load existing touchpoint messageIds
   const existingMessageIds = new Set(
     (await prisma.touchpoint.findMany({
       where: { application: { userId } },
       select: { emailMessageId: true },
-    }))
-      .map((t) => t.emailMessageId)
-      .filter(Boolean) as string[]
+    })).map((t) => t.emailMessageId).filter(Boolean) as string[]
   );
 
-  // Run all search queries in parallel
-  const queryResults = await Promise.all(queries.map((q) => searchEmails(gmail, q)));
-  const allIds = new Set<string>();
-  queryResults.forEach((ids) => ids.forEach((id) => allIds.add(id)));
+  const since = "newer_than:3m";
 
-  // Fetch emails in parallel (max 10 at a time) — skip ones we already have touchpoints for
-  const newIds = [...allIds].filter((id) => !existingMessageIds.has(id));
-  const parsedEmails = await fetchEmailsConcurrently(gmail, newIds, userEmail, results);
-  const allParsed = [
-    ...parsedEmails,
-    // Re-fetch existing IDs only for stage re-evaluation (use metadata only, no body fetch)
-  ];
+  // Scan primary account and all linked accounts in parallel
+  const [primaryParsed, ...linkedParsedArrays] = await Promise.all([
+    scanAccountForApplications(gmail, userEmail, applications, existingMessageIds, since, results),
+    ...linkedAccounts.map(async (linked) => {
+      try {
+        const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
+        return scanAccountForApplications(linkedGmail, linkedEmail, applications, existingMessageIds, since, results);
+      } catch (err) {
+        console.error(`[Backfill] Linked account ${linked.email} failed:`, err);
+        return [] as ParsedEmail[];
+      }
+    }),
+  ]);
 
-  // Also collect existing emails that need stage re-evaluation (e.g. rejection body check)
-  // These we fetch fresh because we need the body to detect stage
-  const existingIdsToRecheck = [...allIds].filter((id) => existingMessageIds.has(id));
-  const recheckParsed = await fetchEmailsConcurrently(gmail, existingIdsToRecheck, userEmail, results, true);
+  // Process primary account emails
+  primaryParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
+  await processEmailList(userId, primaryParsed, results, userEmail);
 
-  allParsed.push(...recheckParsed);
-  allParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-  await processEmailList(userId, allParsed, results, userEmail);
+  // Process each linked account's emails
+  for (let i = 0; i < linkedAccounts.length; i++) {
+    const linked = linkedAccounts[i];
+    const parsed = linkedParsedArrays[i] ?? [];
+    parsed.sort((a, b) => a.date.getTime() - b.date.getTime());
+    const { email: linkedEmail } = await getGmailClientForLinked(linked.id);
+    await processEmailList(userId, parsed, results, linkedEmail);
+    await prisma.linkedGmailAccount.update({
+      where: { id: linked.id },
+      data: { lastSyncedAt: new Date(), backfillDone: true },
+    });
+  }
 
-  // Update primary account sync state
   await prisma.gmailSyncState.upsert({
     where: { userId },
     update: { lastSyncedAt: new Date(), backfillDone: true },
     create: { userId, lastSyncedAt: new Date(), backfillDone: true },
   });
 
-  // Process linked Gmail accounts in parallel
-  const linkedAccounts = await prisma.linkedGmailAccount.findMany({ where: { userId } });
-  results.linkedAccountsFound = linkedAccounts.length;
-  await Promise.all(
-    linkedAccounts.map(async (linked) => {
-      try {
-        const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
-        const linkedQueryResults = await Promise.all(queries.map((q) => searchEmails(linkedGmail, q)));
-        const linkedIds = new Set<string>();
-        linkedQueryResults.forEach((ids) => ids.forEach((id) => linkedIds.add(id)));
-
-        const linkedNew = [...linkedIds].filter((id) => !existingMessageIds.has(id));
-        const linkedExisting = [...linkedIds].filter((id) => existingMessageIds.has(id));
-        const linkedParsed = [
-          ...(await fetchEmailsConcurrently(linkedGmail, linkedNew, linkedEmail, results)),
-          ...(await fetchEmailsConcurrently(linkedGmail, linkedExisting, linkedEmail, results, true)),
-        ];
-        linkedParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-        await processEmailList(userId, linkedParsed, results, linkedEmail);
-        await prisma.linkedGmailAccount.update({
-          where: { id: linked.id },
-          data: { lastSyncedAt: new Date(), backfillDone: true },
-        });
-      } catch (err) {
-        console.error(`[Gmail Backfill] Failed for linked account ${linked.email}:`, err);
-      }
-    })
-  );
-
   return results;
 }
 
 export async function processSync(userId: string) {
-  const gmail = await getGmailClient(userId);
+  const [gmail, user, applications, linkedAccounts, syncState] = await Promise.all([
+    getGmailClient(userId),
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+    prisma.application.findMany({
+      where: { userId },
+      select: { id: true, company: true, role: true, status: true, emailThreadId: true },
+    }),
+    prisma.linkedGmailAccount.findMany({ where: { userId } }),
+    prisma.gmailSyncState.findUnique({ where: { userId } }),
+  ]);
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true },
-  });
   const userEmail = user?.email || "";
-
-  const syncState = await prisma.gmailSyncState.findUnique({
-    where: { userId },
-  });
-
   const results = {
     applicationsCreated: 0,
     applicationsUpdated: 0,
     touchpointsAdded: 0,
     emailsProcessed: 0,
+    emailsSkipped: 0,
   };
 
-  // Use a generous time buffer to avoid missing emails near sync boundaries
-  const adjustedSince = syncState?.lastSyncedAt
-    ? `after:${Math.floor(syncState.lastSyncedAt.getTime() / 1000) - 3600}` // 1 hour buffer
+  const existingMessageIds = new Set(
+    (await prisma.touchpoint.findMany({
+      where: { application: { userId } },
+      select: { emailMessageId: true },
+    })).map((t) => t.emailMessageId).filter(Boolean) as string[]
+  );
+
+  // Use last sync time with 1-hour buffer, or fall back to 1 week
+  const since = syncState?.lastSyncedAt
+    ? `after:${Math.floor(syncState.lastSyncedAt.getTime() / 1000) - 3600}`
     : "newer_than:1w";
 
-  const query = `(subject:("received your application" OR "thank you for applying" OR "application for" OR "application to" OR "your update from" OR "application received" OR "successfully applied" OR "application was sent" OR "thank you for your application" OR "job application status" OR "application status" OR "update on your application" OR "regarding your application" OR "shortlisted" OR "been selected" OR "interview" OR "assignment" OR "assessment" OR "regret to inform" OR "unfortunately" OR "not moving forward" OR "not been selected" OR "other candidates" OR "position has been filled" OR "offer letter") OR from:(kekamail.com OR viazohorecruit.in OR icims.com OR greenhouse.io OR lever.co) OR (from:me subject:(application OR applying OR APM OR "product manager" OR resume))) ${adjustedSince}`;
-  console.log(`[Gmail Sync] lastSyncedAt=${syncState?.lastSyncedAt}, adjustedSince=${adjustedSince}`);
-  const messageIds = await searchEmails(gmail, query, 50);
-  console.log(`[Gmail Sync] found ${messageIds.length} emails`);
-
-  // Parse and sort chronologically
-  const parsedEmails: ParsedEmail[] = [];
-  for (const msgId of messageIds) {
-    try {
-      const parsed = await parseEmail(gmail, msgId, userEmail);
-      if (parsed) {
-        parsedEmails.push(parsed);
-        results.emailsProcessed++;
+  // Scan primary + linked accounts in parallel
+  const [primaryParsed, ...linkedParsedArrays] = await Promise.all([
+    scanAccountForApplications(gmail, userEmail, applications, existingMessageIds, since, results),
+    ...linkedAccounts.map(async (linked) => {
+      try {
+        const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
+        const linkedSince = linked.lastSyncedAt
+          ? `after:${Math.floor(linked.lastSyncedAt.getTime() / 1000) - 3600}`
+          : "newer_than:1w";
+        return scanAccountForApplications(linkedGmail, linkedEmail, applications, existingMessageIds, linkedSince, results);
+      } catch (err) {
+        console.error(`[Sync] Linked account ${linked.email} failed:`, err);
+        return [] as ParsedEmail[];
       }
-    } catch {
-      // Skip
-    }
-  }
+    }),
+  ]);
 
-  parsedEmails.sort((a, b) => a.date.getTime() - b.date.getTime());
-  await processEmailList(userId, parsedEmails, results, userEmail);
+  primaryParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
+  await processEmailList(userId, primaryParsed, results, userEmail);
+
+  for (let i = 0; i < linkedAccounts.length; i++) {
+    const linked = linkedAccounts[i];
+    const parsed = linkedParsedArrays[i] ?? [];
+    parsed.sort((a, b) => a.date.getTime() - b.date.getTime());
+    const { email: linkedEmail } = await getGmailClientForLinked(linked.id);
+    await processEmailList(userId, parsed, results, linkedEmail);
+    await prisma.linkedGmailAccount.update({
+      where: { id: linked.id },
+      data: { lastSyncedAt: new Date() },
+    });
+  }
 
   await prisma.gmailSyncState.upsert({
     where: { userId },
     update: { lastSyncedAt: new Date() },
     create: { userId, lastSyncedAt: new Date() },
   });
-
-  // Process linked Gmail accounts (e.g. college email)
-  const linkedAccounts = await prisma.linkedGmailAccount.findMany({ where: { userId } });
-  for (const linked of linkedAccounts) {
-    try {
-      const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
-      const adjustedSince = linked.lastSyncedAt
-        ? `after:${Math.floor(linked.lastSyncedAt.getTime() / 1000) - 3600}`
-        : "newer_than:1w";
-      const linkedQuery = query.replace(/after:\d+|newer_than:\w+/, adjustedSince);
-      const linkedIds = await searchEmails(linkedGmail, linkedQuery, 50);
-      const linkedParsed: ParsedEmail[] = [];
-      for (const msgId of linkedIds) {
-        try {
-          const parsed = await parseEmail(linkedGmail, msgId, linkedEmail);
-          if (parsed) { linkedParsed.push(parsed); results.emailsProcessed++; }
-        } catch {}
-      }
-      linkedParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-      await processEmailList(userId, linkedParsed, results, linkedEmail);
-      await prisma.linkedGmailAccount.update({
-        where: { id: linked.id },
-        data: { lastSyncedAt: new Date() },
-      });
-    } catch (err) {
-      console.error(`[Gmail Sync] Failed for linked account ${linked.email}:`, err);
-    }
-  }
 
   return results;
 }
