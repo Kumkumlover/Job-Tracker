@@ -1137,6 +1137,38 @@ export async function matchToApplication(
   return match || null;
 }
 
+// ── Concurrent email fetcher ───────────────────────────────────
+// Fetches emails in parallel batches of 10 to avoid rate limits.
+// skipIfNoStage: true = only return emails that have a detectable stage (for re-check)
+async function fetchEmailsConcurrently(
+  gmail: ReturnType<typeof google.gmail>,
+  messageIds: string[],
+  userEmail: string,
+  results: SyncResults,
+  skipIfNoStage = false
+): Promise<ParsedEmail[]> {
+  const CONCURRENCY = 10;
+  const parsed: ParsedEmail[] = [];
+
+  for (let i = 0; i < messageIds.length; i += CONCURRENCY) {
+    const batch = messageIds.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.allSettled(
+      batch.map((id) => parseEmail(gmail, id, userEmail))
+    );
+    for (const result of batchResults) {
+      if (result.status === "fulfilled" && result.value) {
+        if (!skipIfNoStage || result.value.stage) {
+          parsed.push(result.value);
+          results.emailsProcessed++;
+        }
+      } else {
+        results.emailsSkipped = (results.emailsSkipped ?? 0) + 1;
+      }
+    }
+  }
+  return parsed;
+}
+
 // ── Backfill & Sync ────────────────────────────────────────────
 
 export async function processBackfill(userId: string) {
@@ -1175,32 +1207,37 @@ export async function processBackfill(userId: string) {
     'from:me subject:(application OR applying OR APM OR "product manager" OR "product intern" OR resume OR "interest in" OR "founder\'s office") newer_than:3m',
   ];
 
+  // Pre-load existing touchpoint messageIds so we can skip already-fetched emails
+  const existingMessageIds = new Set(
+    (await prisma.touchpoint.findMany({
+      where: { application: { userId } },
+      select: { emailMessageId: true },
+    }))
+      .map((t) => t.emailMessageId)
+      .filter(Boolean) as string[]
+  );
+
+  // Run all search queries in parallel
+  const queryResults = await Promise.all(queries.map((q) => searchEmails(gmail, q)));
   const allIds = new Set<string>();
-  for (const q of queries) {
-    const ids = await searchEmails(gmail, q);
-    ids.forEach((id) => allIds.add(id));
-  }
+  queryResults.forEach((ids) => ids.forEach((id) => allIds.add(id)));
 
-  // Parse all emails first, then sort by date to process chronologically
-  const parsedEmails: ParsedEmail[] = [];
+  // Fetch emails in parallel (max 10 at a time) — skip ones we already have touchpoints for
+  const newIds = [...allIds].filter((id) => !existingMessageIds.has(id));
+  const parsedEmails = await fetchEmailsConcurrently(gmail, newIds, userEmail, results);
+  const allParsed = [
+    ...parsedEmails,
+    // Re-fetch existing IDs only for stage re-evaluation (use metadata only, no body fetch)
+  ];
 
-  for (const msgId of allIds) {
-    try {
-      const parsed = await parseEmail(gmail, msgId, userEmail);
-      if (parsed) {
-        parsedEmails.push(parsed);
-        results.emailsProcessed++;
-      } else {
-        results.emailsSkipped++;
-      }
-    } catch {
-      results.emailsSkipped++;
-    }
-  }
+  // Also collect existing emails that need stage re-evaluation (e.g. rejection body check)
+  // These we fetch fresh because we need the body to detect stage
+  const existingIdsToRecheck = [...allIds].filter((id) => existingMessageIds.has(id));
+  const recheckParsed = await fetchEmailsConcurrently(gmail, existingIdsToRecheck, userEmail, results, true);
 
-  // Sort by date ascending so we process oldest first → status updates in order
-  parsedEmails.sort((a, b) => a.date.getTime() - b.date.getTime());
-  await processEmailList(userId, parsedEmails, results, userEmail);
+  allParsed.push(...recheckParsed);
+  allParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
+  await processEmailList(userId, allParsed, results, userEmail);
 
   // Update primary account sync state
   await prisma.gmailSyncState.upsert({
@@ -1209,38 +1246,34 @@ export async function processBackfill(userId: string) {
     create: { userId, lastSyncedAt: new Date(), backfillDone: true },
   });
 
-  // Process linked Gmail accounts (e.g. college email)
+  // Process linked Gmail accounts in parallel
   const linkedAccounts = await prisma.linkedGmailAccount.findMany({ where: { userId } });
   results.linkedAccountsFound = linkedAccounts.length;
-  console.log(`[Gmail Backfill] Found ${linkedAccounts.length} linked accounts for user ${userId}`);
-  for (const linked of linkedAccounts) {
-    try {
-      console.log(`[Gmail Backfill] Processing linked account: ${linked.email}`);
-      const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
-      const linkedIds = new Set<string>();
-      for (const q of queries) {
-        const ids = await searchEmails(linkedGmail, q);
-        ids.forEach((id) => linkedIds.add(id));
+  await Promise.all(
+    linkedAccounts.map(async (linked) => {
+      try {
+        const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
+        const linkedQueryResults = await Promise.all(queries.map((q) => searchEmails(linkedGmail, q)));
+        const linkedIds = new Set<string>();
+        linkedQueryResults.forEach((ids) => ids.forEach((id) => linkedIds.add(id)));
+
+        const linkedNew = [...linkedIds].filter((id) => !existingMessageIds.has(id));
+        const linkedExisting = [...linkedIds].filter((id) => existingMessageIds.has(id));
+        const linkedParsed = [
+          ...(await fetchEmailsConcurrently(linkedGmail, linkedNew, linkedEmail, results)),
+          ...(await fetchEmailsConcurrently(linkedGmail, linkedExisting, linkedEmail, results, true)),
+        ];
+        linkedParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
+        await processEmailList(userId, linkedParsed, results, linkedEmail);
+        await prisma.linkedGmailAccount.update({
+          where: { id: linked.id },
+          data: { lastSyncedAt: new Date(), backfillDone: true },
+        });
+      } catch (err) {
+        console.error(`[Gmail Backfill] Failed for linked account ${linked.email}:`, err);
       }
-      console.log(`[Gmail Backfill] Linked account ${linked.email}: found ${linkedIds.size} emails`);
-      const linkedParsed: ParsedEmail[] = [];
-      for (const msgId of linkedIds) {
-        try {
-          const parsed = await parseEmail(linkedGmail, msgId, linkedEmail);
-          if (parsed) { linkedParsed.push(parsed); results.emailsProcessed++; }
-          else results.emailsSkipped++;
-        } catch { results.emailsSkipped++; }
-      }
-      linkedParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-      await processEmailList(userId, linkedParsed, results, linkedEmail);
-      await prisma.linkedGmailAccount.update({
-        where: { id: linked.id },
-        data: { lastSyncedAt: new Date(), backfillDone: true },
-      });
-    } catch (err) {
-      console.error(`[Gmail Backfill] Failed for linked account ${linked.email}:`, err);
-    }
-  }
+    })
+  );
 
   return results;
 }
