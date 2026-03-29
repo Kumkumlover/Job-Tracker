@@ -636,11 +636,18 @@ async function processEmailList(
   userId: string,
   parsedEmails: ParsedEmail[],
   results: SyncResults,
-  gmailAccount?: string  // email address of the account this email came from
+  gmailAccount?: string,  // email address of the account this email came from
+  cachedApps?: CachedApp[]
 ) {
+  // Load apps once if not pre-supplied
+  const apps = cachedApps ?? await prisma.application.findMany({
+    where: { userId },
+    select: { id: true, company: true, role: true, status: true, emailThreadId: true, followUpDate: true },
+  });
+
   for (const parsed of parsedEmails) {
     try {
-      const match = await matchToApplication(userId, parsed);
+      const match = matchToApplicationCached(apps, parsed);
       if (match) {
         const existingTouchpoint = await prisma.touchpoint.findFirst({
           where: { emailMessageId: parsed.messageId },
@@ -827,14 +834,21 @@ export async function parseEmail(
       // "Your application was sent to Rooter.gg"
       const sentTo = subject.match(/(?:sent|submitted|applied)\s+to\s+(.+?)(?:\s*[!.|]|$)/i);
       if (sentTo) company = sentTo[1].trim();
-      // "Your application to Associate Product Manager at Rooter.gg"
+      // "Your application to [Role] at Rooter.gg" — match the LAST "at Company"
+      // Use reverse-search: find everything after the final " at "
       if (!company) {
-        const atCompany = subject.match(/\bat\s+([A-Z][\w\s.&'-]+?)(?:\s*[!.|]|$)/i);
-        if (atCompany) company = atCompany[1].trim();
+        const lastAt = subject.lastIndexOf(" at ");
+        if (lastAt !== -1) {
+          const afterAt = subject.slice(lastAt + 4).trim().replace(/[!.|,].*$/, "").trim();
+          // Only use if it looks like a company (not too long, starts uppercase, no common words)
+          if (afterAt && afterAt.length > 1 && afterAt.length < 60 && /^[A-Z]/i.test(afterAt)) {
+            company = afterAt;
+          }
+        }
       }
       // "Your update from Rooter.gg"
       if (!company) {
-        const fromCompany = subject.match(/update\s+from\s+(.+?)(?:\s*[!.|]|$)/i);
+        const fromCompany = subject.match(/(?:update|response|news)\s+from\s+(.+?)(?:\s*[!.|]|$)/i);
         if (fromCompany) company = fromCompany[1].trim();
       }
     }
@@ -1115,26 +1129,26 @@ function roleMatches(stored: string, extracted: string): boolean {
   return a.includes(b) || b.includes(a);
 }
 
-export async function matchToApplication(
-  userId: string,
-  parsed: ParsedEmail
-) {
+type CachedApp = { id: string; company: string; role: string; status: string; emailThreadId: string | null; followUpDate: Date | null };
+
+function matchToApplicationCached(apps: CachedApp[], parsed: ParsedEmail): CachedApp | null {
   if (!parsed.company) return null;
-
-  // Fetch all user apps and match in-memory (bidirectional fuzzy matching)
-  const apps = await prisma.application.findMany({ where: { userId } });
-
-  // Priority 1: company + role match
+  // Priority 1: company + role
   if (parsed.role) {
-    const match = apps.find(
-      (app) => companyMatches(app.company, parsed.company) && roleMatches(app.role, parsed.role!)
-    );
-    if (match) return match;
+    const m = apps.find((a) => companyMatches(a.company, parsed.company) && roleMatches(a.role, parsed.role!));
+    if (m) return m;
   }
-
   // Priority 2: company only
-  const match = apps.find((app) => companyMatches(app.company, parsed.company));
-  return match || null;
+  return apps.find((a) => companyMatches(a.company, parsed.company)) || null;
+}
+
+export async function matchToApplication(userId: string, parsed: ParsedEmail) {
+  if (!parsed.company) return null;
+  const apps = await prisma.application.findMany({
+    where: { userId },
+    select: { id: true, company: true, role: true, status: true, emailThreadId: true, followUpDate: true },
+  });
+  return matchToApplicationCached(apps, parsed);
 }
 
 // ── Concurrent email fetcher ───────────────────────────────────
@@ -1196,7 +1210,7 @@ function buildCompanyQuery(company: string, since: string): string {
 async function scanAccountForApplications(
   gmail: ReturnType<typeof google.gmail>,
   accountEmail: string,
-  applications: Array<{ id: string; company: string; role: string; status: string; emailThreadId: string | null }>,
+  applications: CachedApp[],
   existingMessageIds: Set<string>,
   since: string,
   results: SyncResults
@@ -1239,7 +1253,7 @@ export async function processBackfill(userId: string) {
     prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
     prisma.application.findMany({
       where: { userId },
-      select: { id: true, company: true, role: true, status: true, emailThreadId: true },
+      select: { id: true, company: true, role: true, status: true, emailThreadId: true, followUpDate: true },
     }),
     prisma.linkedGmailAccount.findMany({ where: { userId } }),
   ]);
@@ -1280,7 +1294,7 @@ export async function processBackfill(userId: string) {
 
   // Process primary account emails
   primaryParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-  await processEmailList(userId, primaryParsed, results, userEmail);
+  await processEmailList(userId, primaryParsed, results, userEmail, applications);
 
   // Process each linked account's emails
   for (let i = 0; i < linkedAccounts.length; i++) {
@@ -1288,7 +1302,7 @@ export async function processBackfill(userId: string) {
     const parsed = linkedParsedArrays[i] ?? [];
     parsed.sort((a, b) => a.date.getTime() - b.date.getTime());
     const { email: linkedEmail } = await getGmailClientForLinked(linked.id);
-    await processEmailList(userId, parsed, results, linkedEmail);
+    await processEmailList(userId, parsed, results, linkedEmail, applications);
     await prisma.linkedGmailAccount.update({
       where: { id: linked.id },
       data: { lastSyncedAt: new Date(), backfillDone: true },
@@ -1310,7 +1324,7 @@ export async function processSync(userId: string) {
     prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
     prisma.application.findMany({
       where: { userId },
-      select: { id: true, company: true, role: true, status: true, emailThreadId: true },
+      select: { id: true, company: true, role: true, status: true, emailThreadId: true, followUpDate: true },
     }),
     prisma.linkedGmailAccount.findMany({ where: { userId } }),
     prisma.gmailSyncState.findUnique({ where: { userId } }),
@@ -1355,14 +1369,14 @@ export async function processSync(userId: string) {
   ]);
 
   primaryParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-  await processEmailList(userId, primaryParsed, results, userEmail);
+  await processEmailList(userId, primaryParsed, results, userEmail, applications);
 
   for (let i = 0; i < linkedAccounts.length; i++) {
     const linked = linkedAccounts[i];
     const parsed = linkedParsedArrays[i] ?? [];
     parsed.sort((a, b) => a.date.getTime() - b.date.getTime());
     const { email: linkedEmail } = await getGmailClientForLinked(linked.id);
-    await processEmailList(userId, parsed, results, linkedEmail);
+    await processEmailList(userId, parsed, results, linkedEmail, applications);
     await prisma.linkedGmailAccount.update({
       where: { id: linked.id },
       data: { lastSyncedAt: new Date() },
