@@ -177,17 +177,20 @@ export default function TableView({
                   {app.linkedinDmSent && (
                     <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
                   )}
-                  {app.emailThreadId && (
-                    <a
-                      href={`/api/gmail/open?thread=${app.emailThreadId}&app=${app.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      title="Open in Gmail"
-                    >
-                      <Mail className="w-3.5 h-3.5 text-green-500 hover:text-green-400" />
-                    </a>
-                  )}
+                  {(() => {
+                    const emailTp = app.touchpoints.find(tp => tp.emailMessageId);
+                    return emailTp ? (
+                      <a
+                        href={`/api/gmail/open?tp=${emailTp.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Open latest email"
+                      >
+                        <Mail className="w-3.5 h-3.5 text-green-500 hover:text-green-400" />
+                      </a>
+                    ) : null;
+                  })()}
                 </div>
               </td>
               {customProperties.map((cp) => {

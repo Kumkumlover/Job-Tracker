@@ -690,8 +690,8 @@ async function processEmailList(
               data: { role: parsed.role },
             });
           }
-        } else if (gmailAccount) {
-          // Patch gmailAccount into metadata of touchpoints saved before this field existed
+        } else if (gmailAccount && existingTouchpoint) {
+          // Always patch gmailAccount into metadata if missing
           const meta = (existingTouchpoint.metadata as Record<string, string> | null) || {};
           if (!meta.gmailAccount) {
             await prisma.touchpoint.update({
@@ -1174,7 +1174,7 @@ export async function processBackfill(userId: string) {
 
   // Sort by date ascending so we process oldest first → status updates in order
   parsedEmails.sort((a, b) => a.date.getTime() - b.date.getTime());
-  await processEmailList(userId, parsedEmails, results);
+  await processEmailList(userId, parsedEmails, results, userEmail);
 
   // Update primary account sync state
   await prisma.gmailSyncState.upsert({
@@ -1264,7 +1264,7 @@ export async function processSync(userId: string) {
   }
 
   parsedEmails.sort((a, b) => a.date.getTime() - b.date.getTime());
-  await processEmailList(userId, parsedEmails, results);
+  await processEmailList(userId, parsedEmails, results, userEmail);
 
   await prisma.gmailSyncState.upsert({
     where: { userId },

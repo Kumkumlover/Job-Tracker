@@ -153,17 +153,11 @@ export default function ApplicationDetailPage() {
                 LinkedIn DM sent
               </span>
             )}
-            {app.emailThreadId && (
-              <a
-                href={`/api/gmail/open?thread=${app.emailThreadId}&app=${app.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm text-green-600 hover:text-green-500 transition-colors"
-              >
+            {app.touchpoints.some(tp => tp.emailMessageId) && (
+              <span className="flex items-center gap-1.5 text-sm text-green-600">
                 <Mail className="w-4 h-4" />
-                Open email thread
-                <ExternalLink className="w-3 h-3" />
-              </a>
+                {app.touchpoints.filter(tp => tp.emailMessageId).length} email{app.touchpoints.filter(tp => tp.emailMessageId).length !== 1 ? 's' : ''} tracked
+              </span>
             )}
           </div>
           {app.touchpoints.length > 0 ? (

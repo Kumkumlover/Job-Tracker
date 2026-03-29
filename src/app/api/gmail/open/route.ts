@@ -2,98 +2,64 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// Server-side redirect to correct Gmail inbox for a touchpoint
+// Client-side redirect preserves URL fragments (server redirect drops #hash)
+function clientRedirect(url: string) {
+  const escaped = url.replace(/"/g, "&quot;");
+  return new NextResponse(
+    `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${escaped}"><script>window.location.href="${escaped}";</script></head><body>Redirecting to Gmail...</body></html>`,
+    { headers: { "Content-Type": "text/html; charset=utf-8" } }
+  );
+}
+
+function buildGmailUrl(account: string | null, messageId: string) {
+  if (account) {
+    return `https://mail.google.com/mail/?authuser=${encodeURIComponent(account)}#inbox/${messageId}`;
+  }
+  return `https://mail.google.com/mail/u/0/#inbox/${messageId}`;
+}
+
 export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser(request);
   if (!user) return NextResponse.redirect(new URL("/auth/signin", request.url));
 
   const touchpointId = request.nextUrl.searchParams.get("tp");
-  const threadId = request.nextUrl.searchParams.get("thread");
-  const appId = request.nextUrl.searchParams.get("app");
+  const debug = request.nextUrl.searchParams.get("debug") === "1";
 
-  let gmailAccount: string | null = null;
-  let messageId: string | null = null;
-
-  if (touchpointId) {
-    // Opening a specific touchpoint email
-    const tp = await prisma.touchpoint.findUnique({
-      where: { id: touchpointId },
-      include: { application: { select: { userId: true } } },
-    });
-    if (!tp || tp.application.userId !== user.id) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-    messageId = tp.emailMessageId;
-    const meta = tp.metadata as Record<string, string> | null;
-    gmailAccount = meta?.gmailAccount || null;
-
-    // If no gmailAccount in metadata, try to determine from linked accounts
-    if (!gmailAccount && tp.source === "gmail_scan") {
-      const linked = await prisma.linkedGmailAccount.findMany({
-        where: { userId: user.id },
-        select: { email: true },
-      });
-      if (linked.length === 1) {
-        // Only one linked account - must be from it
-        gmailAccount = linked[0].email;
-      }
-    }
-  } else if (threadId && appId) {
-    // Opening an email thread for an application
-    const app = await prisma.application.findFirst({
-      where: { id: appId, userId: user.id },
-      include: { touchpoints: { where: { source: "gmail_scan" }, take: 1 } },
-    });
-    if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    messageId = threadId;
-    // Check touchpoint metadata for account
-    if (app.touchpoints[0]) {
-      const meta = app.touchpoints[0].metadata as Record<string, string> | null;
-      gmailAccount = meta?.gmailAccount || null;
-    }
-    if (!gmailAccount) {
-      const linked = await prisma.linkedGmailAccount.findMany({
-        where: { userId: user.id },
-        select: { email: true },
-      });
-      if (linked.length === 1) gmailAccount = linked[0].email;
-    }
+  if (!touchpointId) {
+    return NextResponse.json({ error: "Missing tp parameter" }, { status: 400 });
   }
 
-  if (!messageId) {
-    return NextResponse.json({ error: "No message ID" }, { status: 400 });
+  // Look up the specific touchpoint
+  const tp = await prisma.touchpoint.findUnique({
+    where: { id: touchpointId },
+    include: { application: { select: { userId: true } } },
+  });
+
+  if (!tp || tp.application.userId !== user.id) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Debug mode - return JSON instead of redirecting
-  if (request.nextUrl.searchParams.get("debug") === "1") {
-    const linkedAccounts = await prisma.linkedGmailAccount.findMany({
-      where: { userId: user.id },
-      select: { id: true, email: true },
-    });
-    let tpData = null;
-    if (touchpointId) {
-      tpData = await prisma.touchpoint.findUnique({ where: { id: touchpointId } });
-    }
+  if (!tp.emailMessageId) {
+    return NextResponse.json({ error: "No email message ID on this touchpoint" }, { status: 400 });
+  }
+
+  // Use gmailAccount from metadata — this is the source of truth
+  const meta = tp.metadata as Record<string, string> | null;
+  const gmailAccount = meta?.gmailAccount || null;
+
+  const url = buildGmailUrl(gmailAccount, tp.emailMessageId);
+
+  if (debug) {
     return NextResponse.json({
-      userId: user.id,
+      touchpointId: tp.id,
+      emailMessageId: tp.emailMessageId,
       gmailAccount,
-      messageId,
-      linkedAccounts,
-      touchpoint: tpData ? {
-        id: tpData.id,
-        source: tpData.source,
-        emailMessageId: tpData.emailMessageId,
-        metadata: tpData.metadata,
-      } : null,
+      metadata: meta,
+      source: tp.source,
+      redirectUrl: url,
     });
   }
 
-  // Build Gmail URL
-  const url = gmailAccount
-    ? `https://mail.google.com/mail/?authuser=${encodeURIComponent(gmailAccount)}#inbox/${messageId}`
-    : `https://mail.google.com/mail/u/0/#inbox/${messageId}`;
-
-  console.log(`[Gmail Open] account=${gmailAccount}, messageId=${messageId}, url=${url}`);
-
-  return NextResponse.redirect(url);
+  console.log(`[Gmail Open] tp=${tp.id} account=${gmailAccount} msgId=${tp.emailMessageId}`);
+  return clientRedirect(url);
 }
