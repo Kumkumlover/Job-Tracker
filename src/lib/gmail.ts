@@ -690,14 +690,26 @@ async function processEmailList(
               data: { role: parsed.role },
             });
           }
-        } else if (gmailAccount && existingTouchpoint) {
-          // Always patch gmailAccount into metadata if missing
-          const meta = (existingTouchpoint.metadata as Record<string, string> | null) || {};
-          if (!meta.gmailAccount) {
-            await prisma.touchpoint.update({
-              where: { id: existingTouchpoint.id },
-              data: { metadata: { ...meta, gmailAccount } },
+        } else if (existingTouchpoint) {
+          // Touchpoint already exists — patch gmailAccount if missing
+          if (gmailAccount) {
+            const meta = (existingTouchpoint.metadata as Record<string, string> | null) || {};
+            if (!meta.gmailAccount) {
+              await prisma.touchpoint.update({
+                where: { id: existingTouchpoint.id },
+                data: { metadata: { ...meta, gmailAccount } },
+              });
+            }
+          }
+          // Re-evaluate status even for existing touchpoints
+          // (e.g. rejection email was saved but status never updated)
+          if (parsed.stage && shouldUpdateStatus(match.status, parsed.stage)) {
+            await prisma.application.update({
+              where: { id: match.id },
+              data: { status: parsed.stage },
             });
+            results.applicationsUpdated++;
+            match.status = parsed.stage;
           }
         }
       } else if (parsed.company) {
