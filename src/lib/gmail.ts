@@ -1083,43 +1083,46 @@ function detectStageFromBody(body: string): string | null {
 
 // ── Application Matching ───────────────────────────────────────
 
+function companyMatches(stored: string, extracted: string): boolean {
+  const a = normalizeForDedup(stored);
+  const b = normalizeForDedup(extracted);
+  if (!a || !b) return false;
+  // Direct includes (bidirectional)
+  if (a.includes(b) || b.includes(a)) return true;
+  // Also try without spaces: "Urban Company" → "urbancompany" vs "urbancompany"
+  const aNoSpace = a.replace(/\s/g, "");
+  const bNoSpace = b.replace(/\s/g, "");
+  if (aNoSpace.includes(bNoSpace) || bNoSpace.includes(aNoSpace)) return true;
+  return false;
+}
+
+function roleMatches(stored: string, extracted: string): boolean {
+  const a = normalizeForDedup(stored);
+  const b = normalizeForDedup(extracted);
+  if (!a || !b) return false;
+  return a.includes(b) || b.includes(a);
+}
+
 export async function matchToApplication(
   userId: string,
   parsed: ParsedEmail
 ) {
-  // Exact match: company + role
-  if (parsed.company && parsed.role) {
-    const match = await prisma.application.findFirst({
-      where: {
-        userId,
-        company: {
-          contains: normalizeForDedup(parsed.company),
-          mode: "insensitive",
-        },
-        role: {
-          contains: normalizeForDedup(parsed.role),
-          mode: "insensitive",
-        },
-      },
-    });
+  if (!parsed.company) return null;
+
+  // Fetch all user apps and match in-memory (bidirectional fuzzy matching)
+  const apps = await prisma.application.findMany({ where: { userId } });
+
+  // Priority 1: company + role match
+  if (parsed.role) {
+    const match = apps.find(
+      (app) => companyMatches(app.company, parsed.company) && roleMatches(app.role, parsed.role!)
+    );
     if (match) return match;
   }
 
-  // Fuzzy: company only
-  if (parsed.company) {
-    const match = await prisma.application.findFirst({
-      where: {
-        userId,
-        company: {
-          contains: normalizeForDedup(parsed.company),
-          mode: "insensitive",
-        },
-      },
-    });
-    if (match) return match;
-  }
-
-  return null;
+  // Priority 2: company only
+  const match = apps.find((app) => companyMatches(app.company, parsed.company));
+  return match || null;
 }
 
 // ── Backfill & Sync ────────────────────────────────────────────
