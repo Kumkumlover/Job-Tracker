@@ -812,8 +812,19 @@ export async function parseEmail(
     // For job portal emails that passed the app-related filter,
     // extract company from subject (e.g. "Your application was sent to Rooter.gg")
     if (!company && isJobPortalDomain(domain)) {
+      // "Your application was sent to Rooter.gg"
       const sentTo = subject.match(/(?:sent|submitted|applied)\s+to\s+(.+?)(?:\s*[!.|]|$)/i);
       if (sentTo) company = sentTo[1].trim();
+      // "Your application to Associate Product Manager at Rooter.gg"
+      if (!company) {
+        const atCompany = subject.match(/\bat\s+([A-Z][\w\s.&'-]+?)(?:\s*[!.|]|$)/i);
+        if (atCompany) company = atCompany[1].trim();
+      }
+      // "Your update from Rooter.gg"
+      if (!company) {
+        const fromCompany = subject.match(/update\s+from\s+(.+?)(?:\s*[!.|]|$)/i);
+        if (fromCompany) company = fromCompany[1].trim();
+      }
     }
   }
   let role = extractRoleFromSubject(subject);

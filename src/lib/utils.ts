@@ -10,7 +10,7 @@ export function normalizeForDedup(value: string): string {
     .toLowerCase()
     .trim()
     .replace(/\s+/g, " ")
-    .replace(/[.,\-–—]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
     .replace(
       /\b(pvt|private|ltd|limited|inc|incorporated|corp|corporation|llp|llc)\b\.?/gi,
       ""

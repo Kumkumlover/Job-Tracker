@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import {
   ArrowUpDown,
@@ -7,11 +8,90 @@ import {
   Trash2,
   MessageSquare,
   Mail,
+  Send,
+  Inbox,
+  ChevronDown,
 } from "lucide-react";
 import FollowUpBadge from "./FollowUpBadge";
-import { PLATFORM_LABELS, type Platform } from "@/lib/constants";
+import { PLATFORM_LABELS, TOUCHPOINT_LABELS, type Platform } from "@/lib/constants";
 import type { ApplicationWithRelations } from "@/types";
 import type { CustomProperty, CustomStage } from "@prisma/client";
+import type { Touchpoint } from "@prisma/client";
+
+function TouchpointDropdown({ touchpoints }: { touchpoints: Touchpoint[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const emailTps = touchpoints.filter(tp => tp.emailMessageId);
+  if (emailTps.length === 0 && touchpoints.length === 0) return null;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className="flex items-center gap-1 text-green-500 hover:text-green-400 transition-colors"
+        title="View touchpoints"
+      >
+        <span className="text-xs text-[var(--muted-foreground)]">{touchpoints.length}</span>
+        <Mail className="w-3.5 h-3.5" />
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-1 z-50 w-72 rounded-lg border border-[var(--border)] bg-[var(--card)] shadow-lg overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-3 py-2 border-b border-[var(--border)] bg-[var(--secondary)]">
+            <span className="text-xs font-medium">{touchpoints.length} touchpoint{touchpoints.length !== 1 ? "s" : ""}</span>
+          </div>
+          <div className="max-h-60 overflow-y-auto">
+            {touchpoints.map((tp) => {
+              const meta = tp.metadata as Record<string, string> | null;
+              const subject = meta?.subject;
+              const isOutbound = tp.type === "email_to_hr";
+              const Icon = isOutbound ? Send : Inbox;
+              return (
+                <div key={tp.id} className="flex items-center gap-2 px-3 py-2 hover:bg-[var(--secondary)] border-b border-[var(--border)] last:border-0">
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isOutbound ? "text-blue-400" : "text-green-400"}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium truncate">
+                      {TOUCHPOINT_LABELS[tp.type] || tp.type}
+                    </div>
+                    {subject && (
+                      <div className="text-[11px] text-[var(--muted-foreground)] truncate">{subject}</div>
+                    )}
+                    <div className="text-[11px] text-[var(--muted-foreground)]">
+                      {format(new Date(tp.date), "MMM d, yyyy")}
+                    </div>
+                  </div>
+                  {tp.emailMessageId && (
+                    <a
+                      href={`/api/gmail/open?tp=${tp.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-400 shrink-0"
+                      title="Open in Gmail"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface TableViewProps {
   applications: ApplicationWithRelations[];
@@ -168,29 +248,13 @@ export default function TableView({
                 {app.location || "—"}
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-1.5">
-                  {app.touchpoints.length > 0 && (
-                    <span className="text-xs text-[var(--muted-foreground)]">
-                      {app.touchpoints.length}
-                    </span>
-                  )}
+                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                   {app.linkedinDmSent && (
                     <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
                   )}
-                  {(() => {
-                    const emailTp = app.touchpoints.find(tp => tp.emailMessageId);
-                    return emailTp ? (
-                      <a
-                        href={`/api/gmail/open?tp=${emailTp.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        title="Open latest email"
-                      >
-                        <Mail className="w-3.5 h-3.5 text-green-500 hover:text-green-400" />
-                      </a>
-                    ) : null;
-                  })()}
+                  {app.touchpoints.length > 0 && (
+                    <TouchpointDropdown touchpoints={app.touchpoints} />
+                  )}
                 </div>
               </td>
               {customProperties.map((cp) => {
