@@ -1234,50 +1234,41 @@ function buildCompanyQuery(company: string, since: string): string {
   return `(${inbound}) OR ${outbound}`;
 }
 
-// ── Core scanner: runs per Gmail account, scans all stored apps ─
+// ── Core scanner: runs per Gmail account ──────────────────────
+// Uses 4 broad queries instead of N per-company queries.
+// Broad queries are reliable regardless of how company names are stored.
 async function scanAccountForApplications(
   gmail: ReturnType<typeof google.gmail>,
   accountEmail: string,
-  applications: CachedApp[],
+  _applications: CachedApp[],   // kept for signature compat; not used for query building
   existingMessageIds: Set<string>,
   since: string,
   results: SyncResults
 ): Promise<ParsedEmail[]> {
-  // Run one search per application in parallel (batches of 5 to avoid rate limits)
-  const BATCH = 5;
   const allIds = new Set<string>();
 
-  // ── Broad outbound sweep ───────────────────────────────────────
-  // Per-company queries rely on the company name appearing in subject or to: field,
-  // which isn't reliable for outbound emails. This single broad query catches ALL
-  // sent job-application emails regardless of company name.
-  const broadOutboundQuery =
-    `from:me (subject:application OR subject:applying OR subject:resume OR subject:"associate product manager" OR subject:"product manager" OR subject:apm OR subject:internship OR subject:opportunity OR subject:hiring) ${since}`;
-  try {
-    const broadIds = await searchEmails(gmail, broadOutboundQuery, 50);
-    broadIds.forEach((id) => allIds.add(id));
-  } catch (err) {
-    console.error("[Scan] Broad outbound search failed:", err);
-    results.gmailSearchErrors = (results.gmailSearchErrors ?? 0) + 1;
-  }
+  // 4 queries that together cover every job-related email:
+  const queries: string[] = [
+    // 1. All inbound non-promotional emails — catches ACKs, interview invites, rejections
+    `-from:me -category:promotions ${since}`,
+    // 2. Outbound to professional addresses — catches cold outreach, follow-ups
+    `from:me in:sent -to:gmail.com -to:yahoo.com -to:hotmail.com -to:outlook.com -to:rediffmail.com -to:icloud.com -to:live.com -to:ymail.com ${since}`,
+    // 3. LinkedIn/Naukri/portal application emails (often land in promotions, missed by query 1)
+    `(from:linkedin.com OR from:naukri.com OR from:instahyre.com OR from:foundit.com) ${since}`,
+    // 4. ATS system emails (Greenhouse, Lever, Keka, Darwinbox, Zoho, etc.)
+    `(from:greenhouse.io OR from:lever.co OR from:workday.com OR from:ashbyhq.com OR from:kekamail.com OR from:darwinbox.com OR from:zohorecruit.com OR from:smartrecruiters.com) ${since}`,
+  ];
 
-  for (let i = 0; i < applications.length; i += BATCH) {
-    const batch = applications.slice(i, i + BATCH);
-    const batchResults = await Promise.allSettled(
-      batch.map(async (app) => {
-        const query = buildCompanyQuery(app.company, since);
-        if (!query) return [];
-        return searchEmails(gmail, query, 20);
-      })
-    );
-    for (let j = 0; j < batchResults.length; j++) {
-      const r = batchResults[j];
-      if (r.status === "fulfilled") {
-        r.value.forEach((id) => allIds.add(id));
-      } else {
-        console.error(`[Scan] Search failed for "${batch[j].company}":`, r.reason);
-        results.gmailSearchErrors = (results.gmailSearchErrors ?? 0) + 1;
-      }
+  const searchResults = await Promise.allSettled(
+    queries.map((q) => searchEmails(gmail, q, 100))
+  );
+  for (let i = 0; i < searchResults.length; i++) {
+    const r = searchResults[i];
+    if (r.status === "fulfilled") {
+      r.value.forEach((id) => allIds.add(id));
+    } else {
+      console.error(`[Scan] Query ${i} failed:`, (searchResults[i] as PromiseRejectedResult).reason);
+      results.gmailSearchErrors = (results.gmailSearchErrors ?? 0) + 1;
     }
   }
   results.gmailIdsFound = (results.gmailIdsFound ?? 0) + allIds.size;
