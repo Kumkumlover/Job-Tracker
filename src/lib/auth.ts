@@ -24,9 +24,24 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+      }
+      // On every sign-in, update the stored OAuth tokens in the database
+      // (NextAuth's PrismaAdapter doesn't update tokens on re-login by default)
+      if (account && user) {
+        await prisma.account.updateMany({
+          where: { userId: user.id, provider: account.provider },
+          data: {
+            access_token: account.access_token,
+            refresh_token: account.refresh_token,
+            expires_at: account.expires_at,
+            token_type: account.token_type,
+            scope: account.scope,
+            id_token: account.id_token,
+          },
+        });
       }
       return token;
     },
