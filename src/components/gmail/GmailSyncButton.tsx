@@ -39,8 +39,10 @@ export default function GmailSyncButton() {
       if (res.ok) {
         const linkedCount = data._debug?.linkedAccounts?.length ?? data.linkedAccountsFound ?? 0;
         const linked = linkedCount > 0 ? ` (${linkedCount} linked)` : " (0 linked)";
+        const gmailIds = data.gmailIdsFound != null ? ` [${data.gmailIdsFound} found in Gmail]` : "";
+        const errors = data.gmailSearchErrors > 0 ? ` ⚠${data.gmailSearchErrors} search errors` : "";
         setResult(
-          `${data.emailsProcessed} emails scanned${linked}, ${data.applicationsCreated} new apps, ${data.touchpointsAdded} touchpoints`
+          `${data.emailsProcessed} emails scanned${linked}${gmailIds}${errors}, ${data.applicationsCreated} new apps, ${data.touchpointsAdded} touchpoints`
         );
         queryClient.invalidateQueries({ queryKey: ["applications"] });
       } else {

@@ -630,6 +630,8 @@ type SyncResults = {
   touchpointsAdded: number;
   emailsProcessed: number;
   emailsSkipped?: number;
+  gmailIdsFound?: number;
+  gmailSearchErrors?: number;
 };
 
 async function processEmailList(
@@ -726,7 +728,7 @@ async function processEmailList(
             const followUpDate = parsed.isOutbound
               ? new Date(parsed.date.getTime() + 3 * 24 * 60 * 60 * 1000)
               : null;
-            await prisma.application.create({
+            const newApp = await prisma.application.create({
               data: {
                 userId,
                 company: parsed.company,
@@ -739,8 +741,34 @@ async function processEmailList(
               },
             });
             results.applicationsCreated++;
+            // Also create a touchpoint for the triggering email
+            await prisma.touchpoint.create({
+              data: {
+                applicationId: newApp.id,
+                type: parsed.isOutbound ? "email_to_hr" : "recruiter_email",
+                source: "gmail_scan",
+                date: parsed.date,
+                emailMessageId: parsed.messageId,
+                metadata: {
+                  subject: parsed.subject,
+                  from: parsed.from,
+                  detectedStage: parsed.stage || undefined,
+                  gmailAccount: gmailAccount || undefined,
+                },
+              },
+            });
+            results.touchpointsAdded++;
+            // Add the new app to the local cache so later emails for it can match
+            apps.push({
+              id: newApp.id,
+              company: parsed.company,
+              role,
+              status: parsed.stage || (parsed.isOutbound ? "applied" : "acknowledged"),
+              emailThreadId: parsed.threadId || null,
+              followUpDate,
+            });
           } catch {
-            // Duplicate — skip
+            // Duplicate application — skip
           }
         }
       }
@@ -1228,10 +1256,17 @@ async function scanAccountForApplications(
         return searchEmails(gmail, query, 20);
       })
     );
-    for (const r of batchResults) {
-      if (r.status === "fulfilled") r.value.forEach((id) => allIds.add(id));
+    for (let j = 0; j < batchResults.length; j++) {
+      const r = batchResults[j];
+      if (r.status === "fulfilled") {
+        r.value.forEach((id) => allIds.add(id));
+      } else {
+        console.error(`[Scan] Search failed for "${batch[j].company}":`, r.reason);
+        results.gmailSearchErrors = (results.gmailSearchErrors ?? 0) + 1;
+      }
     }
   }
+  results.gmailIdsFound = (results.gmailIdsFound ?? 0) + allIds.size;
 
   // Fetch all found emails concurrently (new ones fully, existing ones only if they have a stage)
   const newIds = [...allIds].filter((id) => !existingMessageIds.has(id));
@@ -1265,6 +1300,8 @@ export async function processBackfill(userId: string) {
     touchpointsAdded: 0,
     emailsProcessed: 0,
     emailsSkipped: 0,
+    gmailIdsFound: 0,
+    gmailSearchErrors: 0,
     linkedAccountsFound: linkedAccounts.length,
   };
 
