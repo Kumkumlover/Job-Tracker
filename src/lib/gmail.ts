@@ -1091,7 +1091,17 @@ function detectStageFromBody(body: string): string | null {
     /pursue\s*other\s*candidates/i.test(s) ||
     /decided\s*to\s*go\s*with/i.test(s) ||
     /another\s*candidate\s*who\s*more\s*closely\s*matches/i.test(s) ||
-    /not\s*(?:be\s*)?(?:able\s*to\s*)?mov(?:e|ing)\s*forward\s*with\s*your/i.test(s)
+    /not\s*(?:be\s*)?(?:able\s*to\s*)?mov(?:e|ing)\s*forward\s*with\s*your/i.test(s) ||
+    // LinkedIn-style rejections
+    /decided\s*to\s*move\s*forward\s*with\s*other/i.test(s) ||
+    /not\s*(?:be\s*)?(?:a\s*)?(?:good\s*)?(?:fit|match)/i.test(s) ||
+    /no\s*longer\s*(?:being\s*)?consider/i.test(s) ||
+    /will\s*not\s*be\s*(?:further\s*)?consider/i.test(s) ||
+    /position\s*(?:has\s*been|was)\s*filled/i.test(s) ||
+    /not\s*(?:be\s*)?(?:moving|proceeding)\s*(?:forward\s*)?with\s*your/i.test(s) ||
+    /after\s*careful\s*(?:review|consideration)/i.test(s) ||
+    /we\s*(?:have\s*)?decided\s*to\s*(?:not|decline)/i.test(s) ||
+    /your\s*(?:application|candidat(?:ure|cy))\s*(?:has\s*been\s*|was\s*)?(?:unsuccessful|declined|rejected)/i.test(s)
   ) {
     return "rejected";
   }
