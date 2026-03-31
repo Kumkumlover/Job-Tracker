@@ -1247,6 +1247,20 @@ async function scanAccountForApplications(
   const BATCH = 5;
   const allIds = new Set<string>();
 
+  // ── Broad outbound sweep ───────────────────────────────────────
+  // Per-company queries rely on the company name appearing in subject or to: field,
+  // which isn't reliable for outbound emails. This single broad query catches ALL
+  // sent job-application emails regardless of company name.
+  const broadOutboundQuery =
+    `from:me (subject:application OR subject:applying OR subject:resume OR subject:"associate product manager" OR subject:"product manager" OR subject:apm OR subject:internship OR subject:opportunity OR subject:hiring) ${since}`;
+  try {
+    const broadIds = await searchEmails(gmail, broadOutboundQuery, 50);
+    broadIds.forEach((id) => allIds.add(id));
+  } catch (err) {
+    console.error("[Scan] Broad outbound search failed:", err);
+    results.gmailSearchErrors = (results.gmailSearchErrors ?? 0) + 1;
+  }
+
   for (let i = 0; i < applications.length; i += BATCH) {
     const batch = applications.slice(i, i + BATCH);
     const batchResults = await Promise.allSettled(
