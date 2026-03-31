@@ -651,6 +651,7 @@ async function processEmailList(
     try {
       const match = matchToApplicationCached(apps, parsed);
       if (match) {
+        console.log(`[Match] "${parsed.company}" → app "${match.company}" (${match.id})`);
         const existingTouchpoint = await prisma.touchpoint.findFirst({
           where: { emailMessageId: parsed.messageId },
         });
@@ -825,7 +826,10 @@ export async function parseEmail(
   const dateStr = getHeader(headers, "Date");
 
   // FILTER: Skip job alert emails
-  if (isAlertEmail(subject)) return null;
+  if (isAlertEmail(subject)) {
+    console.log(`[Parse] SKIP alert: "${subject?.slice(0, 60)}"`);
+    return null;
+  }
 
   // Extract sender domain
   const emailMatch = from.match(/@([\w.-]+)/);
@@ -837,11 +841,16 @@ export async function parseEmail(
     : false;
 
   // FILTER: If from a job portal, skip UNLESS the subject is application-related
-  // (e.g. LinkedIn sends "Your application was sent to Rooter.gg" which IS relevant)
-  if (!isOutbound && isJobPortalDomain(domain) && !isAppRelatedEmail(subject)) return null;
+  if (!isOutbound && isJobPortalDomain(domain) && !isAppRelatedEmail(subject)) {
+    console.log(`[Parse] SKIP portal non-app: "${subject?.slice(0, 60)}" from ${domain}`);
+    return null;
+  }
 
   // FILTER: Must be application-related (check subject OR if from known ATS domain)
-  if (!isOutbound && !isAppRelatedEmail(subject) && !isATSDomain(domain)) return null;
+  if (!isOutbound && !isAppRelatedEmail(subject) && !isATSDomain(domain)) {
+    console.log(`[Parse] SKIP not-app-related: "${subject?.slice(0, 60)}" from ${domain}`);
+    return null;
+  }
 
   // Extract plain text body — use snippet as fallback
   const bodyText = extractBodyText(res.data.payload) || res.data.snippet || "";
@@ -913,8 +922,12 @@ export async function parseEmail(
   }
 
   // Must have a company
-  if (!company) return null;
+  if (!company) {
+    console.log(`[Parse] SKIP no-company: "${subject?.slice(0, 60)}" from ${from?.slice(0, 40)} outbound=${isOutbound}`);
+    return null;
+  }
 
+  console.log(`[Parse] KEEP: company="${company}" role="${role}" stage="${stage}" outbound=${isOutbound} subj="${subject?.slice(0, 50)}"`);
   return {
     company,
     role,
@@ -1235,45 +1248,91 @@ function buildCompanyQuery(company: string, since: string): string {
 }
 
 // ── Core scanner: runs per Gmail account ──────────────────────
-// Uses 4 broad queries instead of N per-company queries.
-// Broad queries are reliable regardless of how company names are stored.
+// Strategy: targeted keyword queries that find job-related emails only,
+// plus a separate outbound query for sent emails to company addresses.
 async function scanAccountForApplications(
   gmail: ReturnType<typeof google.gmail>,
   accountEmail: string,
-  _applications: CachedApp[],   // kept for signature compat; not used for query building
+  _applications: CachedApp[],
   existingMessageIds: Set<string>,
   since: string,
   results: SyncResults
 ): Promise<ParsedEmail[]> {
   const allIds = new Set<string>();
 
-  // 4 queries that together cover every job-related email:
-  const queries: string[] = [
-    // 1. All inbound non-promotional emails — catches ACKs, interview invites, rejections
-    `-from:me -category:promotions ${since}`,
-    // 2. Outbound to professional addresses — catches cold outreach, follow-ups
-    `from:me in:sent -to:gmail.com -to:yahoo.com -to:hotmail.com -to:outlook.com -to:rediffmail.com -to:icloud.com -to:live.com -to:ymail.com ${since}`,
-    // 3. LinkedIn/Naukri/portal application emails (often land in promotions, missed by query 1)
-    `(from:linkedin.com OR from:naukri.com OR from:instahyre.com OR from:foundit.com) ${since}`,
-    // 4. ATS system emails (Greenhouse, Lever, Keka, Darwinbox, Zoho, etc.)
-    `(from:greenhouse.io OR from:lever.co OR from:workday.com OR from:ashbyhq.com OR from:kekamail.com OR from:darwinbox.com OR from:zohorecruit.com OR from:smartrecruiters.com) ${since}`,
+  // ── Query 1: Inbound emails with job-related subjects ──────
+  // This is the primary query — catches ACKs, rejections, interviews, etc.
+  const inboundKeywords = [
+    "application", "applied", "applying", "submitted", "received",
+    "acknowledged", "shortlisted", "selected", "rejected", "regret",
+    "unfortunately", "interview", "assessment", "candidature",
+    "congratulations", "offer", "resume", "hiring",
+  ].map((k) => `subject:${k}`).join(" OR ");
+
+  // ── Query 2: Outbound emails the user sent ─────────────────
+  // Catches cold outreach / follow-ups / application emails
+  const outboundKeywords = [
+    "application", "applying", "resume", "interest",
+    "opportunity", "hiring", "position", "role",
+    "APM", '"product manager"', '"associate product manager"',
+    "internship",
+  ].map((k) => `subject:${k}`).join(" OR ");
+
+  // ── Query 3: ATS platform emails (any subject) ────────────
+  const atsDomains = [
+    "greenhouse.io", "lever.co", "kekamail.com", "darwinbox.com",
+    "zohorecruit.com", "smartrecruiters.com", "ashbyhq.com",
+    "workday.com", "icims.com", "breezy.hr", "freshteam.com",
+    "bamboohr.com", "myworkdayjobs.com",
+  ].map((d) => `from:${d}`).join(" OR ");
+
+  // ── Query 4: Job portal application confirmations ──────────
+  // Portals send "Your application was sent to X" — these are relevant
+  const portalAppQuery = [
+    "from:linkedin.com", "from:naukri.com", "from:instahyre.com", "from:foundit.com",
+  ].join(" OR ");
+
+  const queries: Array<{ label: string; q: string; limit: number }> = [
+    {
+      label: "inbound-keywords",
+      q: `(${inboundKeywords}) -from:me ${since}`,
+      limit: 100,
+    },
+    {
+      label: "outbound",
+      q: `from:me (${outboundKeywords}) ${since}`,
+      limit: 100,
+    },
+    {
+      label: "ats-domains",
+      q: `(${atsDomains}) ${since}`,
+      limit: 50,
+    },
+    {
+      label: "portal-apps",
+      q: `(${portalAppQuery}) (subject:application OR subject:applied OR subject:submitted OR subject:update) ${since}`,
+      limit: 50,
+    },
   ];
 
+  // Run all queries in parallel
   const searchResults = await Promise.allSettled(
-    queries.map((q) => searchEmails(gmail, q, 100))
+    queries.map(({ q, limit }) => searchEmails(gmail, q, limit))
   );
   for (let i = 0; i < searchResults.length; i++) {
     const r = searchResults[i];
     if (r.status === "fulfilled") {
+      console.log(`[Scan] ${queries[i].label}: ${r.value.length} results`);
       r.value.forEach((id) => allIds.add(id));
     } else {
-      console.error(`[Scan] Query ${i} failed:`, (searchResults[i] as PromiseRejectedResult).reason);
+      console.error(`[Scan] ${queries[i].label} FAILED:`, r.reason);
       results.gmailSearchErrors = (results.gmailSearchErrors ?? 0) + 1;
     }
   }
   results.gmailIdsFound = (results.gmailIdsFound ?? 0) + allIds.size;
+  console.log(`[Scan] Total unique IDs: ${allIds.size}, existing: ${existingMessageIds.size}`);
 
-  // Fetch all found emails concurrently (new ones fully, existing ones only if they have a stage)
+  // Split into new vs existing (for re-check)
   const newIds = [...allIds].filter((id) => !existingMessageIds.has(id));
   const existingIds = [...allIds].filter((id) => existingMessageIds.has(id));
 
