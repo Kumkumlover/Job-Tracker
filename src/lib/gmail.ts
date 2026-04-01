@@ -651,7 +651,6 @@ async function processEmailList(
     try {
       const match = matchToApplicationCached(apps, parsed);
       if (match) {
-        console.log(`[Match] "${parsed.company}" → app "${match.company}" (${match.id})`);
         const existingTouchpoint = await prisma.touchpoint.findFirst({
           where: { emailMessageId: parsed.messageId },
         });
@@ -826,10 +825,7 @@ export async function parseEmail(
   const dateStr = getHeader(headers, "Date");
 
   // FILTER: Skip job alert emails
-  if (isAlertEmail(subject)) {
-    console.log(`[Parse] SKIP alert: "${subject?.slice(0, 60)}"`);
-    return null;
-  }
+  if (isAlertEmail(subject)) return null;
 
   // Extract sender domain
   const emailMatch = from.match(/@([\w.-]+)/);
@@ -841,16 +837,10 @@ export async function parseEmail(
     : false;
 
   // FILTER: If from a job portal, skip UNLESS the subject is application-related
-  if (!isOutbound && isJobPortalDomain(domain) && !isAppRelatedEmail(subject)) {
-    console.log(`[Parse] SKIP portal non-app: "${subject?.slice(0, 60)}" from ${domain}`);
-    return null;
-  }
+  if (!isOutbound && isJobPortalDomain(domain) && !isAppRelatedEmail(subject)) return null;
 
   // FILTER: Must be application-related (check subject OR if from known ATS domain)
-  if (!isOutbound && !isAppRelatedEmail(subject) && !isATSDomain(domain)) {
-    console.log(`[Parse] SKIP not-app-related: "${subject?.slice(0, 60)}" from ${domain}`);
-    return null;
-  }
+  if (!isOutbound && !isAppRelatedEmail(subject) && !isATSDomain(domain)) return null;
 
   // Extract plain text body — use snippet as fallback
   const bodyText = extractBodyText(res.data.payload) || res.data.snippet || "";
@@ -922,12 +912,8 @@ export async function parseEmail(
   }
 
   // Must have a company
-  if (!company) {
-    console.log(`[Parse] SKIP no-company: "${subject?.slice(0, 60)}" from ${from?.slice(0, 40)} outbound=${isOutbound}`);
-    return null;
-  }
+  if (!company) return null;
 
-  console.log(`[Parse] KEEP: company="${company}" role="${role}" stage="${stage}" outbound=${isOutbound} subj="${subject?.slice(0, 50)}"`);
   return {
     company,
     role,
@@ -1332,7 +1318,6 @@ async function scanAccountForApplications(
   for (let i = 0; i < searchResults.length; i++) {
     const r = searchResults[i];
     if (r.status === "fulfilled") {
-      console.log(`[Scan] ${queries[i].label}: ${r.value.length} results`);
       r.value.forEach((id) => allIds.add(id));
     } else {
       console.error(`[Scan] ${queries[i].label} FAILED:`, r.reason);
@@ -1340,7 +1325,6 @@ async function scanAccountForApplications(
     }
   }
   results.gmailIdsFound = (results.gmailIdsFound ?? 0) + allIds.size;
-  console.log(`[Scan] Total unique IDs: ${allIds.size}, existing: ${existingMessageIds.size}`);
 
   // Split into new vs existing (for re-check)
   const newIds = [...allIds].filter((id) => !existingMessageIds.has(id));

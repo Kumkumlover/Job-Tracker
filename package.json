@@ -1,8 +1,7 @@
 {
-  "name": "web",
+  "name": "job-tracker",
   "version": "1.0.0",
-  "description": "",
-  "private": true,
+  "description": "AI-powered job application tracker with Gmail integration",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
