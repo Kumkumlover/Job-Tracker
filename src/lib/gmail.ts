@@ -1338,82 +1338,13 @@ async function scanAccountForApplications(
   return [...newParsed, ...recheckParsed];
 }
 
-// ── Backfill & Sync ────────────────────────────────────────────
+// ── Smart Sync ────────────────────────────────────────────────
+// Single entry point for all Gmail scanning.
+// - "full": scans 3 months of history (first run or manual re-scan)
+// - "incremental": scans since last sync (daily usage)
+// - Auto-detects: if no previous sync exists, does a full scan automatically.
 
-export async function processBackfill(userId: string) {
-  const [gmail, user, applications, linkedAccounts] = await Promise.all([
-    getGmailClient(userId),
-    prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
-    prisma.application.findMany({
-      where: { userId },
-      select: { id: true, company: true, role: true, status: true, emailThreadId: true, followUpDate: true },
-    }),
-    prisma.linkedGmailAccount.findMany({ where: { userId } }),
-  ]);
-
-  const userEmail = user?.email || "";
-  const results = {
-    applicationsCreated: 0,
-    applicationsUpdated: 0,
-    touchpointsAdded: 0,
-    emailsProcessed: 0,
-    emailsSkipped: 0,
-    gmailIdsFound: 0,
-    gmailSearchErrors: 0,
-    linkedAccountsFound: linkedAccounts.length,
-  };
-
-  // Pre-load existing touchpoint messageIds
-  const existingMessageIds = new Set(
-    (await prisma.touchpoint.findMany({
-      where: { application: { userId } },
-      select: { emailMessageId: true },
-    })).map((t) => t.emailMessageId).filter(Boolean) as string[]
-  );
-
-  const since = "newer_than:3m";
-
-  // Scan primary account and all linked accounts in parallel
-  const [primaryParsed, ...linkedParsedArrays] = await Promise.all([
-    scanAccountForApplications(gmail, userEmail, applications, existingMessageIds, since, results),
-    ...linkedAccounts.map(async (linked) => {
-      try {
-        const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
-        return scanAccountForApplications(linkedGmail, linkedEmail, applications, existingMessageIds, since, results);
-      } catch (err) {
-        console.error(`[Backfill] Linked account ${linked.email} failed:`, err);
-        return [] as ParsedEmail[];
-      }
-    }),
-  ]);
-
-  // Process primary account emails
-  primaryParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-  await processEmailList(userId, primaryParsed, results, userEmail, applications);
-
-  // Process each linked account's emails
-  for (let i = 0; i < linkedAccounts.length; i++) {
-    const linked = linkedAccounts[i];
-    const parsed = linkedParsedArrays[i] ?? [];
-    parsed.sort((a, b) => a.date.getTime() - b.date.getTime());
-    const { email: linkedEmail } = await getGmailClientForLinked(linked.id);
-    await processEmailList(userId, parsed, results, linkedEmail, applications);
-    await prisma.linkedGmailAccount.update({
-      where: { id: linked.id },
-      data: { lastSyncedAt: new Date(), backfillDone: true },
-    });
-  }
-
-  await prisma.gmailSyncState.upsert({
-    where: { userId },
-    update: { lastSyncedAt: new Date(), backfillDone: true },
-    create: { userId, lastSyncedAt: new Date(), backfillDone: true },
-  });
-
-  return results;
-}
-
-export async function processSync(userId: string) {
+export async function smartSync(userId: string, mode: "full" | "incremental" = "incremental") {
   const [gmail, user, applications, linkedAccounts, syncState] = await Promise.all([
     getGmailClient(userId),
     prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
@@ -1425,6 +1356,9 @@ export async function processSync(userId: string) {
     prisma.gmailSyncState.findUnique({ where: { userId } }),
   ]);
 
+  // Auto-detect: if never synced before, do a full scan
+  const effectiveMode = (!syncState?.lastSyncedAt) ? "full" : mode;
+
   const userEmail = user?.email || "";
   const results = {
     applicationsCreated: 0,
@@ -1432,6 +1366,10 @@ export async function processSync(userId: string) {
     touchpointsAdded: 0,
     emailsProcessed: 0,
     emailsSkipped: 0,
+    gmailIdsFound: 0,
+    gmailSearchErrors: 0,
+    linkedAccountsFound: linkedAccounts.length,
+    mode: effectiveMode,
   };
 
   const existingMessageIds = new Set(
@@ -1441,20 +1379,24 @@ export async function processSync(userId: string) {
     })).map((t) => t.emailMessageId).filter(Boolean) as string[]
   );
 
-  // Use last sync time with 1-hour buffer, or fall back to 1 week
-  const since = syncState?.lastSyncedAt
-    ? `after:${Math.floor(syncState.lastSyncedAt.getTime() / 1000) - 3600}`
-    : "newer_than:1w";
+  // Full = 3 months, incremental = since last sync (1-hour buffer) or 1 week fallback
+  const primarySince = effectiveMode === "full"
+    ? "newer_than:3m"
+    : syncState?.lastSyncedAt
+      ? `after:${Math.floor(syncState.lastSyncedAt.getTime() / 1000) - 3600}`
+      : "newer_than:1w";
 
   // Scan primary + linked accounts in parallel
   const [primaryParsed, ...linkedParsedArrays] = await Promise.all([
-    scanAccountForApplications(gmail, userEmail, applications, existingMessageIds, since, results),
+    scanAccountForApplications(gmail, userEmail, applications, existingMessageIds, primarySince, results),
     ...linkedAccounts.map(async (linked) => {
       try {
         const { gmail: linkedGmail, email: linkedEmail } = await getGmailClientForLinked(linked.id);
-        const linkedSince = linked.lastSyncedAt
-          ? `after:${Math.floor(linked.lastSyncedAt.getTime() / 1000) - 3600}`
-          : "newer_than:1w";
+        const linkedSince = effectiveMode === "full"
+          ? "newer_than:3m"
+          : linked.lastSyncedAt
+            ? `after:${Math.floor(linked.lastSyncedAt.getTime() / 1000) - 3600}`
+            : "newer_than:1w";
         return scanAccountForApplications(linkedGmail, linkedEmail, applications, existingMessageIds, linkedSince, results);
       } catch (err) {
         console.error(`[Sync] Linked account ${linked.email} failed:`, err);
@@ -1463,9 +1405,11 @@ export async function processSync(userId: string) {
     }),
   ]);
 
+  // Process primary account emails
   primaryParsed.sort((a, b) => a.date.getTime() - b.date.getTime());
   await processEmailList(userId, primaryParsed, results, userEmail, applications);
 
+  // Process linked account emails
   for (let i = 0; i < linkedAccounts.length; i++) {
     const linked = linkedAccounts[i];
     const parsed = linkedParsedArrays[i] ?? [];
@@ -1474,14 +1418,20 @@ export async function processSync(userId: string) {
     await processEmailList(userId, parsed, results, linkedEmail, applications);
     await prisma.linkedGmailAccount.update({
       where: { id: linked.id },
-      data: { lastSyncedAt: new Date() },
+      data: {
+        lastSyncedAt: new Date(),
+        ...(effectiveMode === "full" ? { backfillDone: true } : {}),
+      },
     });
   }
 
   await prisma.gmailSyncState.upsert({
     where: { userId },
-    update: { lastSyncedAt: new Date() },
-    create: { userId, lastSyncedAt: new Date() },
+    update: {
+      lastSyncedAt: new Date(),
+      ...(effectiveMode === "full" ? { backfillDone: true } : {}),
+    },
+    create: { userId, lastSyncedAt: new Date(), backfillDone: effectiveMode === "full" },
   });
 
   return results;
