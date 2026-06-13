@@ -151,7 +151,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3 py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--background)] mb-2">
             <Mail className="w-4 h-4 text-[var(--muted-foreground)]" />
             <span className="flex-1 text-sm">{(session?.user as { email?: string })?.email || "Primary account"}</span>
-            <span className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">Primary</span>
+            <span className="text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">Primary</span>
           </div>
 
           {/* Linked accounts */}

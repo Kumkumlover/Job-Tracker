@@ -14,7 +14,7 @@ export default function FollowUpBadge({ date }: { date: string | null }) {
 
   if (isToday(followUp)) {
     className =
-      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 animate-pulse";
+      "bg-indigo-500/10 text-indigo-400  dark:bg-amber-900/30 dark:text-amber-300 animate-pulse";
     label = "Follow up today!";
   } else if (diff < 0) {
     className =
@@ -26,7 +26,7 @@ export default function FollowUpBadge({ date }: { date: string | null }) {
     label = "Tomorrow";
   } else if (diff <= 7) {
     className =
-      "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+      "bg-indigo-500/10 text-indigo-400  dark:bg-blue-900/30 dark:text-blue-300";
     label = `In ${diff}d`;
   } else {
     className =

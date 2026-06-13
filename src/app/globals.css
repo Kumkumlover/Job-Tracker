@@ -1,50 +1,81 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
+  --card: #f8fafc;
+  --card-hover: #f1f5f9;
   --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #2563eb;
-  --radius: 0.5rem;
+  --primary: #4e6bff;
+  --primary-foreground: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #1a1a1a;
-    --card-foreground: #ededed;
-    --primary: #3b82f6;
+    --background: #181c31;
+    --foreground: #ffffff;
+    --card: #222740;
+    --card-hover: #2a304d;
+    --border: #3c4556;
+    --primary: #4e6bff;
     --primary-foreground: #ffffff;
-    --secondary: #1e293b;
-    --secondary-foreground: #f1f5f9;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --accent: #1e293b;
-    --accent-foreground: #f1f5f9;
-    --destructive: #dc2626;
-    --destructive-foreground: #ffffff;
-    --border: #334155;
-    --input: #334155;
-    --ring: #3b82f6;
   }
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+}
+
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+html {
+  scrollbar-color: var(--border) var(--background);
+  scrollbar-width: thin;
+}
+
+/* Modern Web Guidance: Typography & Readability */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Modern Web Guidance: Smooth interactions and @starting-style */
+button, .btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+dialog, [popover] {
+  transition: opacity 0.3s allow-discrete, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
+  opacity: 0;
+}
+dialog[open], [popover]:popover-open {
+  opacity: 1;
+}
+@starting-style {
+  dialog[open], [popover]:popover-open {
+    opacity: 0;
+  }
+}
+
+/* Modern Web Guidance: Form input validation */
+input:not(:placeholder-shown):user-invalid {
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.05);
 }
