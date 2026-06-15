@@ -51,6 +51,9 @@ model User {
   customStages     CustomStage[]
   gmailSyncState       GmailSyncState?
   linkedGmailAccounts  LinkedGmailAccount[]
+  profileContext       ProfileContext?
+  emailGuessHistories  EmailGuessHistory[]
+  outreachCampaigns    OutreachCampaign[]
 }
 
 model VerificationToken {
@@ -176,4 +179,50 @@ model LinkedGmailAccount {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, email])
+}
+
+// ── Outreach Tool Models ─────────────────────────────────────────
+
+model ProfileContext {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  resume     String?  @db.Text
+  skills     String?  @db.Text
+  background String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailGuessHistory {
+  id         String   @id @default(cuid())
+  userId     String
+  company    String
+  domain     String
+  pattern    String   // e.g. "{first}.{last}@{domain}"
+  isSuccess  Boolean  @default(false)
+  bounced    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([company])
+  @@index([domain])
+}
+
+model OutreachCampaign {
+  id            String   @id @default(cuid())
+  userId        String
+  company       String
+  role          String
+  hiringManager String?
+  emails        Json     // List of emails sent to
+  subject       String
+  body          String   @db.Text
+  status        String   @default("draft") // draft, sent, bounced, replied
+  sentAt        DateTime?
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

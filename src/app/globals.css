@@ -1,50 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  --background: #101010;
+  --foreground: #f2f2f2;
+  --card: #1a1a1a;
+  --card-hover: #212121;
+  --card-foreground: #f2f2f2;
+  --primary: #00d992;
+  --primary-foreground: #101010;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #f2f2f2;
+  --muted: #1a1a1a;
+  --muted-foreground: #8b949e;
+  --accent: #1a1a1a;
+  --accent-foreground: #f2f2f2;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #2563eb;
-  --radius: 0.5rem;
+  --border: #3d3a39;
+  --input: #3d3a39;
+  --ring: #00d992;
+  --radius: 0.375rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #1a1a1a;
-    --card-foreground: #ededed;
-    --primary: #3b82f6;
-    --primary-foreground: #ffffff;
-    --secondary: #1e293b;
-    --secondary-foreground: #f1f5f9;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --accent: #1e293b;
-    --accent-foreground: #f1f5f9;
-    --destructive: #dc2626;
-    --destructive-foreground: #ffffff;
-    --border: #334155;
-    --input: #334155;
-    --ring: #3b82f6;
-  }
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+html {
+  scrollbar-color: var(--border) var(--background);
+  scrollbar-width: thin;
+}
+
+/* Voltagent typography resets */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+code, pre {
+  font-family: var(--font-mono);
+}
+
+/* Modern Web Guidance: Smooth interactions and @starting-style */
+button, .btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+dialog, [popover] {
+  transition: opacity 0.3s allow-discrete, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
+  opacity: 0;
+}
+dialog[open], [popover]:popover-open {
+  opacity: 1;
+}
+@starting-style {
+  dialog[open], [popover]:popover-open {
+    opacity: 0;
+  }
+}
+
+/* Modern Web Guidance: Form input validation */
+input:not(:placeholder-shown):user-invalid {
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.05);
 }

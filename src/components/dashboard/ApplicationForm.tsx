@@ -87,7 +87,7 @@ export default function ApplicationForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-[var(--card)] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
         <div className="flex items-center justify-between p-5 border-b border-[var(--border)]">
           <h2 className="text-lg font-semibold">
             {application ? "Edit Application" : "New Application"}
@@ -387,13 +387,13 @@ export default function ApplicationForm({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm hover:bg-[var(--secondary)] transition-colors"
+              className="px-6 py-3 rounded-md border border-[var(--border)] text-sm hover:bg-[var(--secondary)] transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] text-sm font-medium hover:opacity-90 transition-opacity"
+              className="px-6 py-3 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] text-sm font-medium hover:opacity-90 transition-colors"
             >
               {application ? "Save Changes" : "Create Application"}
             </button>

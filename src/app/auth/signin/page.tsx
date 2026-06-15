@@ -5,8 +5,8 @@ import { signIn } from "next-auth/react";
 export default function SignInPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
-      <div className="w-full max-w-sm p-8 rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-lg">
-        <h1 className="text-2xl font-bold text-center mb-2">
+      <div className="w-full max-w-sm p-8 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+        <h1 className="text-2xl font-semibold text-center mb-2">
           Job Application Tracker
         </h1>
         <p className="text-[var(--muted-foreground)] text-center mb-8 text-sm">
@@ -14,7 +14,7 @@ export default function SignInPage() {
         </p>
         <button
           onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-[var(--border)] hover:bg-[var(--secondary)] transition-colors font-medium"
+          className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-md border border-[var(--border)] hover:bg-[var(--secondary)] transition-colors font-medium text-[var(--foreground)]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

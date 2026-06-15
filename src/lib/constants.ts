@@ -52,14 +52,14 @@ export const PROPERTY_TYPES = [
 ] as const;
 
 export const DEFAULT_STAGES = [
-  { name: "Applied", slug: "applied", color: "#3b82f6", sortOrder: 0 },
-  { name: "Acknowledged", slug: "acknowledged", color: "#8b5cf6", sortOrder: 1 },
-  { name: "Phone Screen", slug: "phone_screen", color: "#f59e0b", sortOrder: 2 },
-  { name: "Assignment", slug: "assignment", color: "#f97316", sortOrder: 3 },
-  { name: "Interview 1", slug: "interview_1", color: "#06b6d4", sortOrder: 4 },
-  { name: "Interview 2", slug: "interview_2", color: "#0891b2", sortOrder: 5 },
-  { name: "Interview 3", slug: "interview_3", color: "#0e7490", sortOrder: 6 },
-  { name: "Offer", slug: "offer", color: "#22c55e", sortOrder: 7 },
+  { name: "Applied", slug: "applied", color: "#a1a1aa", sortOrder: 0 },
+  { name: "Acknowledged", slug: "acknowledged", color: "#d4d4d8", sortOrder: 1 },
+  { name: "Phone Screen", slug: "phone_screen", color: "#fcd34d", sortOrder: 2 },
+  { name: "Assignment", slug: "assignment", color: "#fbbf24", sortOrder: 3 },
+  { name: "Interview 1", slug: "interview_1", color: "#34d399", sortOrder: 4 },
+  { name: "Interview 2", slug: "interview_2", color: "#10b981", sortOrder: 5 },
+  { name: "Interview 3", slug: "interview_3", color: "#059669", sortOrder: 6 },
+  { name: "Offer", slug: "offer", color: "#00d992", sortOrder: 7 },
   { name: "Rejected", slug: "rejected", color: "#ef4444", sortOrder: 8 },
-  { name: "Withdrawn", slug: "withdrawn", color: "#6b7280", sortOrder: 9 },
+  { name: "Withdrawn", slug: "withdrawn", color: "#71717a", sortOrder: 9 },
 ];

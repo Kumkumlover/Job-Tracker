@@ -38,7 +38,7 @@ function TouchpointDropdown({ touchpoints }: { touchpoints: Touchpoint[] }) {
     <div ref={ref} className="relative">
       <button
         onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-        className="flex items-center gap-1 text-green-500 hover:text-green-400 transition-colors"
+        className="flex items-center gap-1 text-[var(--primary)] hover:opacity-80 transition-opacity"
         title="View touchpoints"
       >
         <span className="text-xs text-[var(--muted-foreground)]">{touchpoints.length}</span>
@@ -60,7 +60,7 @@ function TouchpointDropdown({ touchpoints }: { touchpoints: Touchpoint[] }) {
               const Icon = isOutbound ? Send : Inbox;
               return (
                 <div key={tp.id} className="flex items-center gap-2 px-3 py-2 hover:bg-[var(--secondary)] border-b border-[var(--border)] last:border-0">
-                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isOutbound ? "text-blue-400" : "text-green-400"}`} />
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isOutbound ? "text-[var(--primary-deep)]" : "text-[var(--primary)]"}`} />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium truncate">
                       {TOUCHPOINT_LABELS[tp.type] || tp.type}
@@ -77,7 +77,7 @@ function TouchpointDropdown({ touchpoints }: { touchpoints: Touchpoint[] }) {
                       href={`/api/gmail/open?tp=${tp.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-500 hover:text-blue-400 shrink-0"
+                      className="text-[var(--primary-deep)] hover:opacity-80 shrink-0"
                       title="Open in Gmail"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -148,7 +148,7 @@ export default function TableView({
     stages.find((s) => s.slug === slug)?.color || "#6b7280";
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
+    <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
       <table className="w-full text-sm">
         <thead className="bg-[var(--secondary)]">
           <tr>
@@ -250,7 +250,7 @@ export default function TableView({
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                   {app.linkedinDmSent && (
-                    <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+                    <MessageSquare className="w-3.5 h-3.5 text-[var(--primary-deep)]" />
                   )}
                   {app.touchpoints.length > 0 && (
                     <TouchpointDropdown touchpoints={app.touchpoints} />
@@ -276,7 +276,7 @@ export default function TableView({
                     e.stopPropagation();
                     if (confirm("Delete this application?")) onDelete(app.id);
                   }}
-                  className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-[var(--muted-foreground)] hover:text-red-600 transition-colors"
+                  className="p-1.5 rounded hover:bg-red-500/10 text-[var(--muted-foreground)] hover:text-red-400 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

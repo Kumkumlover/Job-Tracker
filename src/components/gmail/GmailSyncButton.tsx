@@ -69,7 +69,7 @@ export default function GmailSyncButton() {
           </button>
         </div>
         {menuOpen && (
-          <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-lg z-50">
+          <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--card)] border border-[var(--border)] rounded-lg z-50">
             <button
               onClick={() => handleSync("full")}
               className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--secondary)] rounded-lg transition-colors"

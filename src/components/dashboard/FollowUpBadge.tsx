@@ -14,23 +14,23 @@ export default function FollowUpBadge({ date }: { date: string | null }) {
 
   if (isToday(followUp)) {
     className =
-      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 animate-pulse";
+      "bg-amber-900/30 text-amber-300 animate-pulse";
     label = "Follow up today!";
   } else if (diff < 0) {
     className =
-      "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+      "bg-red-900/30 text-red-300";
     label = `Overdue by ${Math.abs(diff)}d`;
   } else if (isTomorrow(followUp)) {
     className =
-      "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300";
+      "bg-orange-900/30 text-orange-300";
     label = "Tomorrow";
   } else if (diff <= 7) {
     className =
-      "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+      "bg-[var(--primary)]/10 text-[var(--primary)]";
     label = `In ${diff}d`;
   } else {
     className =
-      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+      "bg-[var(--secondary)] text-[var(--muted-foreground)]";
     label = format(followUp, "MMM d");
   }
 

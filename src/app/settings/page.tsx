@@ -131,7 +131,7 @@ export default function SettingsPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-6 space-y-8">
         {/* Gmail Accounts */}
-        <section className="p-5 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+        <section className="p-5 rounded-lg border border-[var(--border)] bg-[var(--card)]">
           <h2 className="text-lg font-semibold flex items-center gap-2 mb-1">
             <Mail className="w-5 h-5" />
             Gmail Accounts
@@ -141,7 +141,7 @@ export default function SettingsPage() {
           </p>
 
           {gmailMessage && (
-            <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg mb-3 ${gmailMessage.type === "success" ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"}`}>
+            <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg mb-3 ${gmailMessage.type === "success" ? "bg-[#00d992]/10 text-[#00d992]" : "bg-red-500/10 text-red-400"}`}>
               {gmailMessage.type === "success" ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
               {gmailMessage.text}
             </div>
@@ -151,7 +151,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3 py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--background)] mb-2">
             <Mail className="w-4 h-4 text-[var(--muted-foreground)]" />
             <span className="flex-1 text-sm">{(session?.user as { email?: string })?.email || "Primary account"}</span>
-            <span className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">Primary</span>
+            <span className="text-xs px-2 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)]">Primary</span>
           </div>
 
           {/* Linked accounts */}
@@ -166,7 +166,7 @@ export default function SettingsPage() {
               )}
               <button
                 onClick={() => handleUnlinkGmail(account.id)}
-                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-[var(--muted-foreground)] hover:text-red-600"
+                className="p-1 rounded hover:bg-red-500/10 text-[var(--muted-foreground)] hover:text-red-400"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -183,7 +183,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Extension API Key */}
-        <section className="p-5 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+        <section className="p-5 rounded-lg border border-[var(--border)] bg-[var(--card)]">
           <h2 className="text-lg font-semibold flex items-center gap-2 mb-3">
             <Key className="w-5 h-5" />
             Extension API Key
@@ -206,7 +206,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Custom Stages */}
-        <section className="p-5 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+        <section className="p-5 rounded-lg border border-[var(--border)] bg-[var(--card)]">
           <h2 className="text-lg font-semibold mb-3">Pipeline Stages</h2>
           <p className="text-sm text-[var(--muted-foreground)] mb-4">
             Customize your application pipeline. Drag to reorder, or add new
@@ -243,7 +243,7 @@ export default function SettingsPage() {
                     )
                       deleteStage.mutate(stage.id);
                   }}
-                  className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-[var(--muted-foreground)] hover:text-red-600"
+                  className="p-1 rounded hover:bg-red-500/10 text-[var(--muted-foreground)] hover:text-red-400"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -275,7 +275,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Custom Properties */}
-        <section className="p-5 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+        <section className="p-5 rounded-lg border border-[var(--border)] bg-[var(--card)]">
           <h2 className="text-lg font-semibold mb-3">Custom Properties</h2>
           <p className="text-sm text-[var(--muted-foreground)] mb-4">
             Add custom columns to track additional information per application.
@@ -299,7 +299,7 @@ export default function SettingsPage() {
                     )
                       deleteProperty.mutate(prop.id);
                   }}
-                  className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-[var(--muted-foreground)] hover:text-red-600"
+                  className="p-1 rounded hover:bg-red-500/10 text-[var(--muted-foreground)] hover:text-red-400"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -341,8 +341,8 @@ export default function SettingsPage() {
         </section>
 
         {/* Danger Zone */}
-        <section className="p-5 rounded-xl border border-red-300 dark:border-red-900 bg-[var(--card)]">
-          <h2 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-1">Danger Zone</h2>
+        <section className="p-5 rounded-lg border border-red-500/20 bg-red-500/5">
+          <h2 className="text-lg font-semibold text-red-400 mb-1">Danger Zone</h2>
           <p className="text-sm text-[var(--muted-foreground)] mb-4">
             These actions are destructive and cannot be undone.
           </p>
@@ -372,7 +372,7 @@ export default function SettingsPage() {
                 setResetting(false);
               }}
               disabled={resetting}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-300 dark:border-red-800 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/20 text-sm text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50 shrink-0"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${resetting ? "animate-spin" : ""}`} />
               {resetting ? "Resetting..." : "Reset Gmail Data"}

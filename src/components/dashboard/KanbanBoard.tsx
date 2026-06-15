@@ -43,7 +43,7 @@ export default function KanbanBoard({
           return (
             <div
               key={stage.id}
-              className="flex-shrink-0 w-72 flex flex-col rounded-xl border border-[var(--border)] bg-[var(--secondary)]"
+              className="flex-shrink-0 w-72 flex flex-col rounded-lg border border-[var(--border)] bg-[var(--secondary)]"
             >
               {/* Column Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
@@ -81,8 +81,8 @@ export default function KanbanBoard({
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className={`p-3 rounded-lg border border-[var(--border)] bg-[var(--card)] cursor-pointer hover:shadow-md transition-shadow ${
-                              snapshot.isDragging ? "shadow-lg rotate-1" : ""
+                            className={`p-3 rounded-lg border border-[var(--border)] bg-[var(--card)] cursor-pointer hover:border-[var(--primary)] transition-colors ${
+                              snapshot.isDragging ? "border-[var(--primary)] rotate-1" : ""
                             }`}
                             onClick={() => onEdit(app)}
                           >
@@ -113,10 +113,10 @@ export default function KanbanBoard({
                               </span>
                               <div className="flex items-center gap-1">
                                 {app.linkedinDmSent && (
-                                  <MessageSquare className="w-3 h-3 text-blue-500" />
+                                  <MessageSquare className="w-3 h-3 text-[var(--primary-deep)]" />
                                 )}
                                 {app.emailThreadId && (
-                                  <Mail className="w-3 h-3 text-green-500" />
+                                  <Mail className="w-3 h-3 text-[var(--primary)]" />
                                 )}
                               </div>
                             </div>

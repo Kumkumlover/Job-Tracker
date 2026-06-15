@@ -33,7 +33,7 @@ export default function ApplicationDetailPage() {
   if (isLoading || !app) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-pulse text-lg">Loading...</div>
+        <div className="animate-pulse text-lg text-[var(--primary)]">Loading...</div>
       </div>
     );
   }
@@ -85,7 +85,7 @@ export default function ApplicationDetailPage() {
       <main className="max-w-4xl mx-auto px-6 py-6 space-y-6">
         {/* Key Info */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
             <div className="flex items-center gap-2 text-[var(--muted-foreground)] mb-1">
               <Briefcase className="w-4 h-4" />
               <span className="text-xs uppercase">Platform</span>
@@ -94,7 +94,7 @@ export default function ApplicationDetailPage() {
               {PLATFORM_LABELS[app.platform as Platform] || app.platform}
             </p>
           </div>
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
             <div className="flex items-center gap-2 text-[var(--muted-foreground)] mb-1">
               <Calendar className="w-4 h-4" />
               <span className="text-xs uppercase">Applied</span>
@@ -103,7 +103,7 @@ export default function ApplicationDetailPage() {
               {format(new Date(app.dateApplied), "MMM d, yyyy")}
             </p>
           </div>
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
             <div className="flex items-center gap-2 text-[var(--muted-foreground)] mb-1">
               <MapPin className="w-4 h-4" />
               <span className="text-xs uppercase">Location</span>
@@ -117,7 +117,7 @@ export default function ApplicationDetailPage() {
               )}
             </p>
           </div>
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
             <div className="flex items-center gap-2 text-[var(--muted-foreground)] mb-1">
               <DollarSign className="w-4 h-4" />
               <span className="text-xs uppercase">Salary</span>
@@ -132,7 +132,7 @@ export default function ApplicationDetailPage() {
 
         {/* Follow Up */}
         {app.followUpDate && (
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
             <h3 className="text-sm font-medium mb-2">Follow Up</h3>
             <div className="flex items-center gap-3">
               <FollowUpBadge date={app.followUpDate.toString()} />
@@ -144,17 +144,17 @@ export default function ApplicationDetailPage() {
         )}
 
         {/* Touchpoints & Channels */}
-        <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+        <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
           <h3 className="text-sm font-medium mb-3">Touchpoints & Channels</h3>
           <div className="flex items-center gap-4 mb-3">
             {app.linkedinDmSent && (
-              <span className="flex items-center gap-1.5 text-sm text-blue-600">
+              <span className="flex items-center gap-1.5 text-sm text-[var(--primary-deep)]">
                 <MessageSquare className="w-4 h-4" />
                 LinkedIn DM sent
               </span>
             )}
             {app.touchpoints.some(tp => tp.emailMessageId) && (
-              <span className="flex items-center gap-1.5 text-sm text-green-600">
+              <span className="flex items-center gap-1.5 text-sm text-[var(--primary)]">
                 <Mail className="w-4 h-4" />
                 {app.touchpoints.filter(tp => tp.emailMessageId).length} email{app.touchpoints.filter(tp => tp.emailMessageId).length !== 1 ? 's' : ''} tracked
               </span>
@@ -201,7 +201,7 @@ export default function ApplicationDetailPage() {
                         <a href={`/api/gmail/open?tp=${tp.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-400 transition-colors"
+                          className="text-[var(--primary-deep)] hover:text-[var(--primary)] transition-colors"
                           title="Open in Gmail">
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
@@ -220,7 +220,7 @@ export default function ApplicationDetailPage() {
 
         {/* Custom Values */}
         {app.customValues.length > 0 && (
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
             <h3 className="text-sm font-medium mb-3">Custom Fields</h3>
             <div className="grid grid-cols-2 gap-3">
               {app.customValues.map((cv) => (
@@ -237,7 +237,7 @@ export default function ApplicationDetailPage() {
 
         {/* Notes */}
         {app.notes && (
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
             <h3 className="text-sm font-medium mb-2">Notes</h3>
             <p className="text-sm whitespace-pre-wrap">{app.notes}</p>
           </div>
@@ -245,7 +245,7 @@ export default function ApplicationDetailPage() {
 
         {/* Job Description */}
         {app.jobDescription && (
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
             <h3 className="text-sm font-medium mb-2">Job Description</h3>
             <p className="text-sm whitespace-pre-wrap text-[var(--muted-foreground)]">
               {app.jobDescription}
