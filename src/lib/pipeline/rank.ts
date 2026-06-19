@@ -48,15 +48,16 @@ export async function rankCandidates(
     // (not just someone who mentions the company in a past role or endorsement)
     const safeComp = companyLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     
-    // Check if they are an ex-employee (e.g., "ex-Fixerra", "former Fixerra")
-    const isExEmployee = new RegExp(`\\b(?:ex|former|previous)[-\\s]*${safeComp}\\b`).test(text);
+    // Smart ex-employee check: only look at the specific LinkedIn title section (separated by | or •) that contains the company
+    const relevantSection = text.split(/[|•]/).find(part => part.includes(companyLower)) || text;
+    const isExEmployee = new RegExp(`\\b(?:ex|former|previous)\\b`).test(relevantSection);
     if (isExEmployee) continue;
 
     // Strict confirmation they CURRENTLY work there
-    // Matches: "at Fixerra", "@ Fixerra", "Building Fixerra", "Fixerra |", "- Fixerra"
     const companyConfirmed =
-      new RegExp(`(?:at|@|for|of|building|in)\\s+${safeComp}`).test(text) ||
-      new RegExp(`(?:^|[\\s|-])${safeComp}\\s*(?:[|\\-:]|$)`).test(text);
+      new RegExp(`\\b(?:at|@|building)\\s+${safeComp}\\b`).test(text) ||
+      new RegExp(`\\b(?:founder|ceo|cpo|cto|director|co-founder)\\s+of\\s+${safeComp}\\b`).test(text) ||
+      new RegExp(`(?:^|[\\s\\-])${safeComp}\\s*(?:[|\\-:]|$)`).test(text);
 
 
     const isFounder = /\b(founder|co-founder|ceo|chief executive)\b/.test(text);
