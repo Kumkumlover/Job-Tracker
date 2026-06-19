@@ -23,6 +23,7 @@ export interface ResearchProblem {
   matchedStrengths: string;
   linkedinHook: string;
   speculativePitch: string;
+  aboutMeBullets: string;
 }
 
 export interface ResearchInput {

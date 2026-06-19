@@ -58,11 +58,12 @@ const RESPONSE_SCHEMA = {
           matchedStrengths: { type: "STRING" },
           linkedinHook: { type: "STRING" },
           speculativePitch: { type: "STRING" },
+          aboutMeBullets: { type: "STRING" },
         },
         required: [
           "id", "title", "problem", "hypothesis", "pmGoal",
           "hook", "citation", "companyMission", "matchedStrengths",
-          "linkedinHook", "speculativePitch",
+          "linkedinHook", "speculativePitch", "aboutMeBullets"
         ],
       },
     },
@@ -139,7 +140,7 @@ async function callGemini(
     try {
       const { ask } = await import("../automation/llm");
       const appendix = useSchema
-        ? "\n\nYou MUST return valid JSON matching this structure: { problems: [{ id, title, problem, hypothesis, pmGoal, hook, citation, companyMission, matchedStrengths, linkedinHook, speculativePitch }] }. Return ONLY the JSON, no markdown."
+        ? "\n\nYou MUST return valid JSON matching this structure: { problems: [{ id, title, problem, hypothesis, pmGoal, hook, citation, companyMission, matchedStrengths, linkedinHook, speculativePitch, aboutMeBullets }] }. Return ONLY the JSON, no markdown."
         : "";
       return await ask(prompt + appendix);
     } catch (fallbackErr) {
@@ -189,7 +190,8 @@ ${profile?.systemPrompt ? profile.systemPrompt : `1. Identify 3 critical UX or p
 4. 'companyMission': Write a short noun phrase completing the sentence "Your vision of building...". DO NOT repeat "Your vision of building" or write a full sentence. Example: "an intuitive clinical AI ecosystem".
 5. 'matchedStrengths': Analyze the [JOB DESCRIPTION]. Select 2 hard skills/metrics from my EVIDENCE LIBRARY that align perfectly with the JD. Write a short phrase completing "Given my background in...". DO NOT write a full sentence. DO NOT repeat "Given my background in". Example: "0-1 product delivery and scaling AI agents".
 6. 'linkedinHook': If a LEAD LINKEDIN URL is provided, formulate a personalized, warm 1-2 sentence opening hook using the [LEAD SCRAPED CONTEXT]. If context is missing, use Google Search. DO NOT return an empty string if a URL is provided. ONLY return "" if LEAD LINKEDIN URL is 'None provided'.
-7. 'speculativePitch': Analyze the [COMPANY WEBSITE CONTEXT]. Write a 1-2 sentence observation identifying their core product value proposition and 1-2 likely competitors/alternatives in their space. Frame this as an exciting challenge for a 0-1 Product Manager to tackle.`}
+7. 'speculativePitch': Analyze the [COMPANY WEBSITE CONTEXT]. Write a 1-2 sentence observation identifying their core product value proposition and 1-2 likely competitors/alternatives in their space. Frame this as an exciting challenge for a 0-1 Product Manager to tackle.
+8. 'aboutMeBullets': Write EXACTLY 3 bullet points summarizing my most impressive achievements from the EVIDENCE LIBRARY that perfectly match the [JOB DESCRIPTION]. Use short, punchy sentences. Prefix each with '• '. Do NOT use 'Highlight 1:'. Example: '• Replaced internal support tools with LLMs, saving $150k annually.'`}
 
 OUTPUT REQUIREMENTS: You MUST return ONLY a raw, perfectly formatted JSON object. Do NOT include markdown fences, and do NOT include any text outside the JSON. Follow this exact structure:
 {
@@ -205,7 +207,8 @@ OUTPUT REQUIREMENTS: You MUST return ONLY a raw, perfectly formatted JSON object
       "companyMission": "an intuitive clinical AI ecosystem",
       "matchedStrengths": "0-1 product delivery and scaling AI agents",
       "linkedinHook": "Your hook here",
-      "speculativePitch": "Your speculative pitch here"
+      "speculativePitch": "Your speculative pitch here",
+      "aboutMeBullets": "• Built an onboarding agent reducing costs by 60%.\n• Managed cross-functional teams of 15+ engineers."
     }
   ]
 }`;

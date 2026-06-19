@@ -25,7 +25,7 @@ export function generateCopy(
   const defaultBullets = `• Highlight 1: Replaced internal tools saving 150k.
 • Highlight 2: Built an onboarding agent reducing costs by 60%.
 • Highlight 3: Experienced in full-stack development and automation.`;
-  const bullets = profile?.aboutMeBullets || defaultBullets;
+  const bullets = problem.aboutMeBullets || profile?.aboutMeBullets || defaultBullets;
 
   // Custom Template Logic
   if (profile?.emailTemplateStructure && outputType === "Cold Email") {
