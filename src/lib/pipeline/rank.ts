@@ -33,7 +33,7 @@ Below are Google search results from LinkedIn profiles.
 Your goal is to find people who CURRENTLY work at ${company} (or its direct variants like Fixed Invest).
 
 CRITICAL RULES:
-1. EXCLUDE ANYONE who is an ex-employee (e.g. "ex-Fixerra", "former PM at Fixerra", "past: Fixerra").
+1. STRICTLY EXCLUDE ANYONE who is an ex-employee. If the snippet contains "ex-${company}", "former ${company}", "previously at ${company}", or if they list a DIFFERENT company as their current employer, YOU MUST REJECT THEM. There are absolutely ZERO exceptions. Ex-employees must NEVER show up.
 2. EXCLUDE ANYONE who works at a completely different company and just mentioned ${company} in passing.
 3. INCLUDE current employees. They might be founders, product managers, or engineers. If the company is very small, a founder or engineer is a highly relevant decision-maker for a product role.
 4. If a snippet says "DevOps Engineer. Fixerra.", that means they work there. If it says "At Fixerra, I designed...", evaluate if it sounds like a current or past role.
