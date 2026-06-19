@@ -71,9 +71,9 @@ async function handleFindContacts(body: {
     );
   }
   
-  if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
+  if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY) {
     return NextResponse.json(
-      { error: "Missing LLM API Key. You must add either OPENAI_API_KEY or GROQ_API_KEY to your Vercel Environment Variables to analyze job descriptions." },
+      { error: "Missing LLM API Key. You must add either OPENAI_API_KEY, GROQ_API_KEY, or GEMINI_API_KEY to your Vercel Environment Variables to analyze job descriptions." },
       { status: 400 }
     );
   }
