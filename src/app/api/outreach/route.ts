@@ -81,7 +81,7 @@ async function handleFindContacts(body: {
 
   // Step 2: Rank LLM-discovered contacts
   const ranked = searchResults.length
-    ? await rankCandidates(searchResults, company, jobTitle, jd)
+    ? await rankCandidates(searchResults, company, jobTitle, jd, excludeNames)
     : [];
 
   // Step 3: Prepend JD-extracted contacts at top (they're confirmed)

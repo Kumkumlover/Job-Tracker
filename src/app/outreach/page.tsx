@@ -146,6 +146,8 @@ export default function OutreachPage() {
  // Step 2: Contacts
  const [candidates, setCandidates] = useState<RankedCandidate[]>([]);
  const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
+ // Cumulative exclusion list — grows across ALL cycles so no one can reappear
+ const [seenNames, setSeenNames] = useState<Set<string>>(new Set());
 
  // Step 3: Emails
  const [emailResults, setEmailResults] = useState<PersonResult[]>([]);
@@ -278,9 +280,14 @@ export default function OutreachPage() {
  ? candidates.filter((_, i) => selectedContacts.has(i))
  : [];
  
+ // On a fresh search, reset the seen names. On cycle, pass ALL ever-seen names.
  const excludeNames = isCycle
- ? candidates.map(c => c.name)
+ ? [...seenNames] // Use the full cumulative set — not just current page
  : [];
+
+ // Also reset seenNames on a fresh search
+ if (!isCycle) setSeenNames(new Set());
+
 
  setPhaseStatus("loading");
  setLoadingAction(isCycle ? "cycle" : "contacts");
@@ -305,8 +312,15 @@ export default function OutreachPage() {
  }
 
  const data = await res.json();
- const newRanked = data.rankedCandidates || [];
+ const newRanked: RankedCandidate[] = data.rankedCandidates || [];
  const combinedCandidates = [...keptCandidates, ...newRanked];
+
+ // Accumulate all seen names to prevent any reappearance across future cycles
+ setSeenNames(prev => {
+  const next = new Set(prev);
+  for (const c of combinedCandidates) next.add(c.name.trim().toLowerCase());
+  return next;
+ });
 
  // Update local usage safely
  if (data.localApiUsage) {

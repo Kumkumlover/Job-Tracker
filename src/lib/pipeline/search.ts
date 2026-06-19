@@ -25,24 +25,10 @@ function extractDepartmentKeywords(jobTitle: string): string {
  */
 function extractDepartmentFromJD(jd: string): string {
   if (!jd) return "";
-  const commonDepartments = [
-    "Credit Cards", "Cards", "Retail Banking", "Retail", "Wholesale", "SME",
-    "Wealth Management", "Risk", "Compliance", "Marketing", "Sales",
-    "Data Science", "Machine Learning", "Payments", "Loans", "Mortgage",
-    "Cloud", "Security", "AI", "Platform", "Growth", "Analytics"
-  ];
-  for (const dept of commonDepartments) {
-    if (jd.toLowerCase().includes(dept.toLowerCase())) return dept;
-  }
-  // Regex: look for "for <Dept>" or "in <Dept>" patterns
-  const specificDeptRegex = /(?:for|in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g;
-  let match;
-  while ((match = specificDeptRegex.exec(jd)) !== null) {
-    const word = match[1].toLowerCase();
-    if (!["a", "an", "the", "this", "that", "all", "any"].includes(word)) {
-      return match[1].trim();
-    }
-  }
+  // NEVER use a hardcoded department list — derive from JD content only.
+  // Only extract if there is an explicit "Department: X" or "Team: X" label.
+  const explicitLabel = /(?:department|team|division|group|vertical|business unit)\s*:\s*([A-Z][a-zA-Z &]+)/i.exec(jd);
+  if (explicitLabel) return explicitLabel[1].trim();
   return "";
 }
 

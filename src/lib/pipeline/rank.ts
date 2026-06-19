@@ -16,11 +16,15 @@ export async function rankCandidates(
   results: SearchResult[],
   company: string,
   jobTitle: string,
-  jd?: string
+  jd?: string,
+  excludeNames: string[] = []
 ): Promise<RankedCandidate[]> {
   if (!results.length) return [];
 
+  const excludeSet = new Set(excludeNames.map(n => n.trim().toLowerCase()));
+
   const companyLower = company.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const companyFirstWord = company.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
   const verified: RankedCandidate[] = [];
   const deptKeywords = extractDeptKeywords(jobTitle);
 
@@ -34,8 +38,15 @@ export async function rankCandidates(
     
     if (!worksAtCompany) continue;
 
+    // Confirm the candidate actually works at the target company right now
+    // (not just someone who mentions the company in a past role or endorsement)
+    const safeComp = companyLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const companyConfirmed =
+      text.includes(companyLower) ||
+      (companyFirstWord.length > 2 && text.includes(companyFirstWord)) ||
+      new RegExp(`(?:at|@|for|of)\\s+${safeComp}`).test(text);
+
     const isFounder = /\b(founder|co-founder|ceo|chief executive)\b/.test(text);
-    // Tightened: 'people' alone no longer triggers HR — requires specific HR role keywords
     const isHR = /\b(human resources|talent acquisition|recruiter|hrbp|hr business partner|people partner|people ops|people operations)\b/.test(text);
 
     const relevance = deptRelevanceScore(text, deptKeywords);
@@ -46,11 +57,18 @@ export async function rankCandidates(
     let reason = "";
     let role_type: "hiring_manager" | "team_lead" | "recruiter_hr" | "other" = "other";
 
-    if (relevance > 0) {
+    if (relevance > 0 && companyConfirmed) {
+      // Strong dept match AND confirmed at company → high confidence
       isValid = true;
       confidence = 0.85;
       role_type = "hiring_manager";
       reason = `Matches target department keywords`;
+    } else if (relevance > 0 && !companyConfirmed) {
+      // Dept keywords match but company NOT confirmed — could be ex-employee or unrelated result
+      isValid = true;
+      confidence = 0.45;
+      role_type = "other";
+      reason = `Dept keyword match but company not confirmed in profile`;
     } else if (isFounder) {
       isValid = true;
       confidence = 0.8;
@@ -96,6 +114,12 @@ export async function rankCandidates(
   } else {
     // No strong dept matches—keep founders and HR, drop only confirmed wrong-dept people
     finalCandidates = verified.filter(c => c.confidence >= 0.5);
+  }
+
+  // Final safety net: strip anyone in the exclude list (catches cases where
+  // query-level exclusions didn't work due to formatting differences)
+  if (excludeSet.size > 0) {
+    finalCandidates = finalCandidates.filter(c => !excludeSet.has(c.name.trim().toLowerCase()));
   }
 
   return finalCandidates.slice(0, 5);
