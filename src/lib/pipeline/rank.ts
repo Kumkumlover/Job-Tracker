@@ -47,10 +47,17 @@ export async function rankCandidates(
     // Confirm the candidate actually works at the target company right now
     // (not just someone who mentions the company in a past role or endorsement)
     const safeComp = companyLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // Check if they are an ex-employee (e.g., "ex-Fixerra", "former Fixerra")
+    const isExEmployee = new RegExp(`\\b(?:ex|former|previous)[-\\s]*${safeComp}\\b`).test(text);
+    if (isExEmployee) continue;
+
+    // Strict confirmation they CURRENTLY work there
+    // Matches: "at Fixerra", "@ Fixerra", "Building Fixerra", "Fixerra |", "- Fixerra"
     const companyConfirmed =
-      text.includes(companyLower) ||
-      (companyFirstWord.length > 2 && text.includes(companyFirstWord)) ||
-      new RegExp(`(?:at|@|for|of)\\s+${safeComp}`).test(text);
+      new RegExp(`(?:at|@|for|of|building|in)\\s+${safeComp}`).test(text) ||
+      new RegExp(`(?:^|[\\s|-])${safeComp}\\s*(?:[|\\-:]|$)`).test(text);
+
 
     const isFounder = /\b(founder|co-founder|ceo|chief executive)\b/.test(text);
     const isHR = /\b(human resources|talent acquisition|recruiter|hrbp|hr business partner|people partner|people ops|people operations)\b/.test(text);
