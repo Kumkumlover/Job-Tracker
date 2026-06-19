@@ -67,11 +67,22 @@ Return ONLY a valid JSON object matching this schema: { "department": string, "r
     }
 
     const cleanJobTitle = jobTitle.replace(/"/g, '');
-    // Ensure the exact job title is always in the list
-    const allVariants = [`"${cleanJobTitle}"`, ...strategy.roleVariants.map(r => `"${r}"`)];
+    
+    // Always include heuristic fallback variants as a safety net
+    const { deptQuery: fallbackQuery } = buildQueriesFallback(company, jobTitle, []);
+    const fallbackMatch = fallbackQuery.match(/\((.*?)\)/);
+    const fallbackVariants = fallbackMatch ? fallbackMatch[1].split(" OR ") : [];
+
+    // Combine exact title + LLM specific variants + generic fallback variants
+    const rawVariants = [`"${cleanJobTitle}"`, ...strategy.roleVariants.map(r => `"${r}"`), ...fallbackVariants];
+    
+    // Deduplicate and filter out empties, then truncate to max 6 variants to avoid Google's 32-word query limit!
+    const uniqueVariants = Array.from(new Set(rawVariants)).filter(Boolean).slice(0, 6);
     const exclusions = excludeNames.length > 0 ? excludeNames.map(n => `-"${n}"`).join(" ") : "";
 
-    const deptQuery = `site:linkedin.com/in "${company}" (${allVariants.join(" OR ")})${exclusions ? ` ${exclusions}` : ""}`;
+    const deptQuery = `site:linkedin.com/in "${company}" (${uniqueVariants.join(" OR ")})${exclusions ? ` ${exclusions}` : ""}`;
+
+
     const hrQuery = `site:linkedin.com/in "${company}" (Recruiter OR "Talent Acquisition" OR "HR Business Partner") "${strategy.department}"${exclusions ? ` ${exclusions}` : ""}`;
 
     console.log(`[search] LLM strategy — dept: "${strategy.department}", variants: ${strategy.roleVariants.slice(0, 3).join(", ")}`);
