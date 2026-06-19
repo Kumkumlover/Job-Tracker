@@ -425,10 +425,23 @@ async function processPerson(
   let domain = extractDomain(person.domain ?? "");
 
   if (!domain) {
+    // Step 1: Ask the LLM to guess the email domain
     const guesses = await llmGuessDomains(person.company, "");
     if (guesses.length > 0) {
       domain = guesses[0];
     } else {
+      // Step 2: Derive domain from company name as last resort
+      // e.g. "Fixerra" → "fixerra.com", "Fixed Invest" → "fixedinvest.com"
+      const derived = person.company
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "")  // strip special chars
+        .trim();
+      domain = derived ? `${derived}.com` : "";
+    }
+
+    // If we still have no domain at all, return empty — nothing we can do
+    if (!domain) {
+      console.warn(`[email-finder] Cannot resolve domain for ${person.company} — skipping.`);
       return formatOutput({ ...person, domain: "Unknown" }, []);
     }
   }

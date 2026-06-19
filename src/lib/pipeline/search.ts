@@ -20,70 +20,104 @@ function extractDepartmentKeywords(jobTitle: string): string {
 }
 
 /**
- * Extract department hint from job description text.
- * Looks for explicit department mentions.
+ * LLM-driven search strategy.
+ * Sends the full JD to the LLM and asks it to reason about:
+ *   1. Which team/department this role actually belongs to
+ *   2. What seniority/role titles would be the relevant hiring managers
+ *   3. A concrete LinkedIn search query for Serper
+ *
+ * Falls back to heuristic buildQueriesFallback() if the LLM call fails or no JD is provided.
  */
-function extractDepartmentFromJD(jd: string): string {
-  if (!jd) return "";
-  // NEVER use a hardcoded department list — derive from JD content only.
-  // Only extract if there is an explicit "Department: X" or "Team: X" label.
-  const explicitLabel = /(?:department|team|division|group|vertical|business unit)\s*:\s*([A-Z][a-zA-Z &]+)/i.exec(jd);
-  if (explicitLabel) return explicitLabel[1].trim();
-  return "";
+interface LLMSearchStrategy {
+  department: string;
+  roleVariants: string[];
+  deptKeywords: string;
 }
 
-/** Build specific LinkedIn search queries to find dept-specific people AND HR separately */
-function buildQueries(
+async function buildSearchStrategyWithLLM(
   company: string,
   jobTitle: string,
-  excludeNames: string[] = [],
-  jd: string = ""
-): { deptQuery: string; hrQuery: string; deptKeywords: string } {
-  // Use the full job title as primary signal, plus extracted dept from JD
-  const titleKeywords = extractDepartmentKeywords(jobTitle);
-  const jdDept = jd ? extractDepartmentFromJD(jd) : "";
+  jd: string,
+  excludeNames: string[] = []
+): Promise<{ deptQuery: string; hrQuery: string; deptKeywords: string }> {
+  
+  // If no JD is provided, fall straight to heuristic
+  if (!jd?.trim()) {
+    return buildQueriesFallback(company, jobTitle, excludeNames);
+  }
 
-  // Build role variants from the job title itself
+  try {
+    const prompt = `You are a recruiting intelligence engine. Analyse the job description below and return a JSON object with:
+
+1. "department": The specific team or domain this role belongs to (e.g. "AI Product", "Fintech Lending", "Growth Marketing"). Be specific — do NOT return generic labels like "Product" alone.
+2. "roleVariants": An array of 5-7 LinkedIn job title strings that represent the most likely direct hiring managers or team leads who would interview someone for this role at a ${company}-sized company. Include the exact job title if it's likely, plus senior/lead variants, founders, VPs. Do NOT include unrelated departments.
+3. "deptKeywords": A short 2-4 word string summarising the domain (used for internal scoring).
+
+Job Title: "${jobTitle}"
+Company: "${company}"
+Job Description (first 1500 chars):
+${jd.substring(0, 1500)}
+
+Return ONLY a valid JSON object matching this schema: { "department": string, "roleVariants": string[], "deptKeywords": string }`;
+
+    const strategy = await askJSON<LLMSearchStrategy>(prompt);
+    
+    if (!strategy?.roleVariants?.length) {
+      throw new Error("LLM returned empty strategy");
+    }
+
+    const cleanJobTitle = jobTitle.replace(/"/g, '');
+    // Ensure the exact job title is always in the list
+    const allVariants = [`"${cleanJobTitle}"`, ...strategy.roleVariants.map(r => `"${r}"`)];
+    const exclusions = excludeNames.length > 0 ? excludeNames.map(n => `-"${n}"`).join(" ") : "";
+
+    const deptQuery = `site:linkedin.com/in "${company}" (${allVariants.join(" OR ")})${exclusions ? ` ${exclusions}` : ""}`;
+    const hrQuery = `site:linkedin.com/in "${company}" (Recruiter OR "Talent Acquisition" OR "HR Business Partner") "${strategy.department}"${exclusions ? ` ${exclusions}` : ""}`;
+
+    console.log(`[search] LLM strategy — dept: "${strategy.department}", variants: ${strategy.roleVariants.slice(0, 3).join(", ")}`);
+
+    return { deptQuery, hrQuery, deptKeywords: strategy.deptKeywords || strategy.department };
+
+  } catch (err) {
+    console.warn("[search] LLM strategy failed, falling back to heuristic:", err);
+    return buildQueriesFallback(company, jobTitle, excludeNames);
+  }
+}
+
+/** Fallback heuristic query builder — used when no JD is provided or LLM fails */
+function buildQueriesFallback(
+  company: string,
+  jobTitle: string,
+  excludeNames: string[] = []
+): { deptQuery: string; hrQuery: string; deptKeywords: string } {
+  const seniority = ["senior","junior","lead","staff","principal","associate","assistant","executive","vice","president","chief"];
+  let deptKeywords = jobTitle.toLowerCase();
+  for (const g of seniority) deptKeywords = deptKeywords.replace(new RegExp(`\\b${g}\\b`, "gi"), "");
+  deptKeywords = deptKeywords.replace(/[^a-z0-9 ]/gi, " ").trim().replace(/\s+/g, " ");
+
   const titleLower = jobTitle.toLowerCase();
-  const cleanJobTitle = jobTitle.replace(/"/g, '');
+  const cleanJobTitle = jobTitle.replace(/"/g, "");
   const roleVariants: string[] = [`"${cleanJobTitle}"`];
 
   if (titleLower.includes("product") || titleLower.includes(" pm") || titleLower.includes("apm")) {
-    roleVariants.push("Product Manager", "Product Lead", "Head of Product", "VP Product", "Group Product Manager", "Director of Product", "Founder");
+    roleVariants.push('"Product Manager"', '"Product Lead"', '"Head of Product"', '"VP Product"', '"Director of Product"', '"Founder"');
   } else if (titleLower.includes("engineer") || titleLower.includes("developer")) {
-    roleVariants.push("Engineer", "Tech Lead", "Engineering Manager", "CTO", "Founder");
+    roleVariants.push('"Engineer"', '"Tech Lead"', '"Engineering Manager"', '"CTO"', '"Founder"');
   } else if (titleLower.includes("data") || titleLower.includes("analyst")) {
-    roleVariants.push("Data Analyst", "Data Scientist", "Analytics Lead", "Head of Data");
+    roleVariants.push('"Data Analyst"', '"Data Scientist"', '"Analytics Lead"', '"Head of Data"');
   } else if (titleLower.includes("design")) {
-    roleVariants.push("Designer", "Design Lead", "UX Lead", "Head of Design");
+    roleVariants.push('"Designer"', '"Design Lead"', '"UX Lead"', '"Head of Design"');
   } else {
-    roleVariants.push("Manager", "Lead", "Director", "Head", "Founder");
+    roleVariants.push('"Manager"', '"Lead"', '"Director"', '"Head"', '"Founder"');
   }
 
-  // Dept query: search directly for role variants at the company.
-  // We use the company name directly to avoid edge cases where the company name matches a first name (e.g., "Tal").
-  let deptQuery = `site:linkedin.com/in "${company}" (${roleVariants.map(r => r.startsWith('"') ? r : `"${r}"`).join(" OR ")})`;
+  const exclusions = excludeNames.length > 0 ? excludeNames.map(n => `-"${n}"`).join(" ") : "";
+  const deptQuery = `site:linkedin.com/in "${company}" (${roleVariants.join(" OR ")})${exclusions ? ` ${exclusions}` : ""}`;
+  const hrQuery = `site:linkedin.com/in "${company}" (Recruiter OR "Talent Acquisition" OR "HR Business Partner" OR "People Partner") "${deptKeywords}"${exclusions ? ` ${exclusions}` : ""}`;
 
-  // Only add JD dept hint if it adds real signal beyond the role variants
-  if (jdDept && !titleKeywords.toLowerCase().includes(jdDept.toLowerCase())) {
-    deptQuery += ` "${jdDept}"`;
-  }
-
-  // HR query: look for recruiters/HR at the company
-  const hrDeptHint = jdDept || titleKeywords || jobTitle;
-  let hrQuery = `site:linkedin.com/in "${company}" (Recruiter OR "Talent Acquisition" OR "HR Business Partner" OR "People Partner") "${hrDeptHint}"`;
-
-  const exclusions = excludeNames.length > 0
-    ? excludeNames.map(n => `-"${n}"`).join(" ")
-    : "";
-
-  if (exclusions) {
-    deptQuery += ` ${exclusions}`;
-    hrQuery += ` ${exclusions}`;
-  }
-
-  return { deptQuery, hrQuery, deptKeywords: titleKeywords || jdDept };
+  return { deptQuery, hrQuery, deptKeywords };
 }
+
 
 /**
  * Heuristic score for a LinkedIn search result.
@@ -203,11 +237,13 @@ export async function searchCandidates(
   excludeNames: string[] = [],
   jd: string = ""
 ): Promise<SearchResult[]> {
-  const { deptQuery, hrQuery, deptKeywords } = buildQueries(company, jobTitle, excludeNames, jd);
+  // Use LLM to build the search strategy — reads the full JD and infers department + role targets
+  const { deptQuery, hrQuery, deptKeywords } = await buildSearchStrategyWithLLM(company, jobTitle, jd, excludeNames);
   const serperKey = process.env.SERPER_API_KEY;
 
   console.log(`[search] deptQuery: ${deptQuery}`);
   console.log(`[search] hrQuery: ${hrQuery}`);
+
 
   if (!serperKey) {
     throw new Error("SERPER_API_KEY is not configured.");
@@ -380,7 +416,8 @@ export async function searchCandidatesAuto(
   let searchResults: SearchResult[] = [];
   let searchCalls = 0;
 
-  const { deptKeywords } = buildQueries(company, jobTitle, combinedExcludes, jd ?? "");
+  const { deptKeywords } = await buildSearchStrategyWithLLM(company, jobTitle, jd ?? "", combinedExcludes);
+
   
   // Extract primary search keyword to pass to the OSINT engine
   let osintKeyword = "";

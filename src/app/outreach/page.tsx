@@ -411,8 +411,22 @@ export default function OutreachPage() {
  allResults.push(...results);
  }
 
- if (allResults.length === 0) {
- throw new Error("Failed to find any emails. Please try again.");
+ // Count total emails found across all people (any type — verified, predicted, discovered)
+ const totalEmailsFound = allResults.reduce((sum, r) => sum + r.emails.length, 0);
+
+ if (totalEmailsFound === 0) {
+  const missingKeys: string[] = [];
+  if (!apiKeys.hunter.trim()) missingKeys.push("Hunter.io");
+  if (!apiKeys.apollo.trim()) missingKeys.push("Apollo.io");
+  if (missingKeys.length > 0) {
+   throw new Error(
+    `No emails found. You haven't added your ${missingKeys.join(" or ")} API key. ` +
+    `Click "API Keys" above to add your key — both services have a free tier. ` +
+    `The pattern engine also ran but couldn't generate predictions without a known domain. ` +
+    `Try adding the company website above (e.g. fixerra.com) and retry.`
+   );
+  }
+  throw new Error("No emails could be found for the selected contacts. The email finder tried Hunter.io, Apollo.io, public web search and the pattern engine but came up empty. Try adding the company website domain above and retry.");
  }
 
  setEmailResults(allResults);
