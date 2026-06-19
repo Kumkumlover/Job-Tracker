@@ -63,6 +63,22 @@ async function handleFindContacts(body: {
     );
   }
 
+  // Enforce required backend API keys
+  if (!process.env.SERPER_API_KEY) {
+    return NextResponse.json(
+      { error: "Missing SERPER_API_KEY. You must add this to your Vercel Environment Variables to search LinkedIn." },
+      { status: 400 }
+    );
+  }
+  
+  if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
+    return NextResponse.json(
+      { error: "Missing LLM API Key. You must add either OPENAI_API_KEY or GROQ_API_KEY to your Vercel Environment Variables to analyze job descriptions." },
+      { status: 400 }
+    );
+  }
+
+
   // Step 1: Search for candidates (Google CSE or LLM fallback)
   // This also extracts any contacts mentioned in the JD
   const { results: searchResults, jdContacts, localApiUsage, deptKeywords } = await searchCandidatesAuto(
