@@ -17,7 +17,8 @@ export async function rankCandidates(
   company: string,
   jobTitle: string,
   jd?: string,
-  excludeNames: string[] = []
+  excludeNames: string[] = [],
+  llmDeptKeywords?: string
 ): Promise<RankedCandidate[]> {
   if (!results.length) return [];
 
@@ -26,7 +27,12 @@ export async function rankCandidates(
   const companyLower = company.toLowerCase().replace(/[^a-z0-9]/g, '');
   const companyFirstWord = company.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
   const verified: RankedCandidate[] = [];
-  const deptKeywords = extractDeptKeywords(jobTitle);
+  
+  // Use intelligent LLM keywords if available, otherwise fall back to heuristic
+  const deptKeywords = llmDeptKeywords 
+    ? extractDeptKeywords(llmDeptKeywords + " " + jobTitle)
+    : extractDeptKeywords(jobTitle);
+
 
   for (const r of results) {
     const text = (r.title + " " + r.snippet).toLowerCase();

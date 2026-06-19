@@ -47,22 +47,53 @@ async function buildSearchStrategyWithLLM(
   }
 
   try {
-    const prompt = `You are a recruiting intelligence engine. Analyse the job description below and return a JSON object with:
+    const prompt = `You are an expert Recruiting & OSINT Intelligence Engine.
+Your task is to analyze a Job Description and identify the exact LinkedIn titles of the Hiring Managers and HR personnel for this role.
 
-1. "department": The specific team or domain this role belongs to (e.g. "AI Product", "Fintech Lending", "Growth Marketing"). Be specific — do NOT return generic labels like "Product" alone.
-2. "roleVariants": An array of 5-7 LinkedIn job title strings that represent the most likely direct hiring managers or team leads who would interview someone for this role at a ${company}-sized company. Include the exact job title if it's likely, plus senior/lead variants, founders, VPs. Do NOT include unrelated departments.
-3. "deptKeywords": A short 2-4 word string summarising the domain (used for internal scoring).
-
+CONTEXT:
 Job Title: "${jobTitle}"
 Company: "${company}"
+
+EDGE CASES & VARIABLES TO CONSIDER:
+1. Company Size / Stage:
+   - If this looks like an early-stage startup, the hiring manager is often the "Founder", "Co-Founder", or "CEO".
+   - If it's a mid-size or enterprise company, the hiring manager will be "Manager", "Director", "VP", or "Head of". DO NOT include "Founder" for large enterprises.
+2. Title Specificity (The "AI Product" problem):
+   - Some companies use hyper-specific titles (e.g. "Head of AI Product").
+   - Many companies use generic structural titles (e.g. just "Product Manager" or "VP Product").
+   - You MUST include BOTH the specific niche variations AND the broad functional variations.
+3. Search Engine Limits:
+   - We will use your output to build a Google site:linkedin.com query.
+   - Google has a strict 32-word limit. Keep role variants concise (1-3 words max).
+
+YOUR TASK:
+Return a valid JSON object with the following schema:
+{
+  "department": "The specific functional team (e.g., 'Product Management', 'Engineering', 'Growth Marketing').",
+  "hiringManagerTitles": [
+    // Array of EXACTLY 4 to 6 concise LinkedIn job titles for the likely hiring managers.
+    // Must include a mix of:
+    // - Direct manager (e.g., "Director of Product")
+    // - Department head (e.g., "Head of Product", "VP Product")
+    // - Functional peer/lead (e.g., "Lead Product Manager")
+    // - (If startup) "Founder" or "Co-Founder"
+  ],
+  "hrTitles": [
+    // Array of 2 to 3 concise HR/Recruiter titles specifically suited for this role
+    // e.g., ["Technical Recruiter", "Talent Acquisition"] for engineering, or ["Campus Recruiter"] for freshers.
+  ],
+  "deptKeywords": "A short 2-4 word string summarizing the core domain for internal scoring (e.g., 'AI Product', 'Frontend', 'B2B Sales')."
+}
+
 Job Description (first 1500 chars):
 ${jd.substring(0, 1500)}
 
-Return ONLY a valid JSON object matching this schema: { "department": string, "roleVariants": string[], "deptKeywords": string }`;
+Return ONLY the JSON. No markdown formatting, no explanations.`;
 
-    const strategy = await askJSON<LLMSearchStrategy>(prompt);
+    const strategy = await askJSON<any>(prompt);
+
     
-    if (!strategy?.roleVariants?.length) {
+    if (!strategy?.hiringManagerTitles?.length) {
       throw new Error("LLM returned empty strategy");
     }
 
@@ -74,7 +105,7 @@ Return ONLY a valid JSON object matching this schema: { "department": string, "r
     const fallbackVariants = fallbackMatch ? fallbackMatch[1].split(" OR ") : [];
 
     // Combine exact title + LLM specific variants + generic fallback variants
-    const rawVariants = [`"${cleanJobTitle}"`, ...strategy.roleVariants.map(r => `"${r}"`), ...fallbackVariants];
+    const rawVariants = [`"${cleanJobTitle}"`, ...strategy.hiringManagerTitles.map((r: string) => `"${r}"`), ...fallbackVariants];
     
     // Deduplicate and filter out empties, then truncate to max 6 variants to avoid Google's 32-word query limit!
     const uniqueVariants = Array.from(new Set(rawVariants)).filter(Boolean).slice(0, 6);
@@ -83,9 +114,15 @@ Return ONLY a valid JSON object matching this schema: { "department": string, "r
     const deptQuery = `site:linkedin.com/in "${company}" (${uniqueVariants.join(" OR ")})${exclusions ? ` ${exclusions}` : ""}`;
 
 
-    const hrQuery = `site:linkedin.com/in "${company}" (Recruiter OR "Talent Acquisition" OR "HR Business Partner") "${strategy.department}"${exclusions ? ` ${exclusions}` : ""}`;
+    // HR Query
+    const hrRawVariants = strategy.hrTitles && strategy.hrTitles.length > 0
+      ? strategy.hrTitles.map((r: string) => `"${r}"`)
+      : ['"Recruiter"', '"Talent Acquisition"', '"HR Business Partner"'];
+    const hrUnique = Array.from(new Set(hrRawVariants)).slice(0, 4);
 
-    console.log(`[search] LLM strategy — dept: "${strategy.department}", variants: ${strategy.roleVariants.slice(0, 3).join(", ")}`);
+    const hrQuery = `site:linkedin.com/in "${company}" (${hrUnique.join(" OR ")}) "${strategy.department}"${exclusions ? ` ${exclusions}` : ""}`;
+
+    console.log(`[search] LLM strategy — dept: "${strategy.department}", variants: ${strategy.hiringManagerTitles.slice(0, 3).join(", ")}`);
 
     return { deptQuery, hrQuery, deptKeywords: strategy.deptKeywords || strategy.department };
 
@@ -415,7 +452,7 @@ export async function searchCandidatesAuto(
   jobTitle: string,
   jd?: string,
   excludeNames: string[] = []
-): Promise<{ results: SearchResult[]; jdContacts: any[]; localApiUsage: { search: number } }> {
+): Promise<{ results: SearchResult[]; jdContacts: any[]; localApiUsage: { search: number }; deptKeywords: string }> {
   let jdContacts: any[] = [];
   if (jd && jd.trim().length > 10) {
     jdContacts = extractContactsFromJD(jd);
@@ -428,6 +465,7 @@ export async function searchCandidatesAuto(
   let searchCalls = 0;
 
   const { deptKeywords } = await buildSearchStrategyWithLLM(company, jobTitle, jd ?? "", combinedExcludes);
+
 
   
   // Extract primary search keyword to pass to the OSINT engine
@@ -543,5 +581,5 @@ export async function searchCandidatesAuto(
     }
   }
 
-  return { results: finalResults, jdContacts, localApiUsage: { search: searchCalls } };
+  return { results: finalResults, jdContacts, localApiUsage: { search: searchCalls }, deptKeywords };
 }
