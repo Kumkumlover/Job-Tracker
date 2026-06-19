@@ -24,117 +24,69 @@ export async function rankCandidates(
 
   const excludeSet = new Set(excludeNames.map(n => n.trim().toLowerCase()));
 
-  const companyLower = company.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const companyFirstWord = company.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-  const verified: RankedCandidate[] = [];
-  
-  // Use intelligent LLM keywords if available, otherwise fall back to heuristic
-  const deptKeywords = llmDeptKeywords 
-    ? extractDeptKeywords(llmDeptKeywords + " " + jobTitle)
-    : extractDeptKeywords(jobTitle);
+  // Deduplicate results by URL to save tokens and avoid duplicate ranking
+  const uniqueResults = results.filter((v,i,a)=>a.findIndex(v2=>(v2.url===v.url))===i);
 
+  const prompt = `You are an expert technical recruiter sourcing candidates for the company "${company}" for the role of "${jobTitle}".
+Below are Google search results from LinkedIn profiles.
 
-  for (const r of results) {
-    const text = (r.title + " " + r.snippet).toLowerCase();
-    
-    // Check if the snippet or title contains the company name
-    // (fuzzy match for company by taking first word if it's long)
-    const companyFirstWord = company.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-    const worksAtCompany = text.includes(companyLower) || (companyFirstWord.length > 2 && text.includes(companyFirstWord));
-    
-    if (!worksAtCompany) continue;
+Your goal is to find people who CURRENTLY work at ${company} (or its direct variants like Fixed Invest).
 
-    // Confirm the candidate actually works at the target company right now
-    // (not just someone who mentions the company in a past role or endorsement)
-    const safeComp = companyLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    
-    // Smart ex-employee check: only look at the specific LinkedIn title section (separated by | or •) that contains the company
-    const relevantSection = text.split(/[|•]/).find(part => part.includes(companyLower)) || text;
-    const isExEmployee = new RegExp(`\\b(?:ex|former|previous)\\b`).test(relevantSection);
-    if (isExEmployee) continue;
+CRITICAL RULES:
+1. EXCLUDE ANYONE who is an ex-employee (e.g. "ex-Fixerra", "former PM at Fixerra", "past: Fixerra").
+2. EXCLUDE ANYONE who works at a completely different company and just mentioned ${company} in passing.
+3. INCLUDE current employees. They might be founders, product managers, or engineers. If the company is very small, a founder or engineer is a highly relevant decision-maker for a product role.
+4. If a snippet says "DevOps Engineer. Fixerra.", that means they work there. If it says "At Fixerra, I designed...", evaluate if it sounds like a current or past role.
 
-    // Strict confirmation they CURRENTLY work there
-    const companyConfirmed =
-      new RegExp(`\\b(?:at|@|building)\\s+${safeComp}\\b`).test(text) ||
-      new RegExp(`\\b(?:founder|ceo|cpo|cto|director|co-founder)\\s+of\\s+${safeComp}\\b`).test(text) ||
-      new RegExp(`(?:^|[\\s\\-])${safeComp}\\s*(?:[|\\-:]|$)`).test(text);
+Search Results:
+${uniqueResults.map((r, i) => `[${i}] Name: ${r.title.split(/[-—|]/)[0].trim()}\nSnippet: ${r.snippet}`).join('\n\n')}
 
+Return a JSON object containing an array 'topCandidates'. For each valid CURRENT employee, provide:
+{
+  "topCandidates": [
+    {
+      "index": <number from the list above>,
+      "role_type": "hiring_manager" (for founders/directors/PMs) OR "team_lead" OR "other",
+      "confidence": <number between 0.5 and 0.95. Give 0.9+ for Founders/PMs, 0.7 for engineers>,
+      "reason": "<Short 5-word explanation>"
+    }
+  ]
+}
+Only include people you are confident CURRENTLY work at ${company}. Return ONLY JSON.`;
 
-    const isFounder = /\b(founder|co-founder|ceo|chief executive)\b/.test(text);
-    const isHR = /\b(human resources|talent acquisition|recruiter|hrbp|hr business partner|people partner|people ops|people operations)\b/.test(text);
+  try {
+    const { topCandidates } = await askJSON<{
+      topCandidates: { index: number, role_type: any, confidence: number, reason: string }[]
+    }>(prompt);
 
-    const relevance = deptRelevanceScore(text, deptKeywords);
-    const wrongDeptLabel = detectWrongDept(text);
+    let verified = (topCandidates || [])
+      .map(c => {
+        const r = uniqueResults[c.index];
+        if (!r) return null;
+        return {
+          name: r.title.split(/[-—|]/)[0].trim(),
+          profile_url: (r as any).url || (r as any).link || '',
+          current_title: r.snippet.substring(0, 60).trim(),
+          role_type: c.role_type || "other",
+          confidence: c.confidence || 0.5,
+          reason: `Verified: ${c.reason || 'Matches criteria'}`
+        } as RankedCandidate;
+      })
+      .filter(Boolean) as RankedCandidate[];
 
-    let isValid = false;
-    let confidence = 0.5;
-    let reason = "";
-    let role_type: "hiring_manager" | "team_lead" | "recruiter_hr" | "other" = "other";
+    // Sort by confidence
+    verified.sort((a, b) => b.confidence - a.confidence);
 
-    if (relevance > 0 && companyConfirmed) {
-      // Strong dept match AND confirmed at company → high confidence
-      isValid = true;
-      confidence = 0.85;
-      role_type = "hiring_manager";
-      reason = `Matches target department keywords`;
-    } else if (relevance > 0 && !companyConfirmed) {
-      // Dept keywords match but company NOT confirmed — could be ex-employee or unrelated result
-      isValid = true;
-      confidence = 0.45;
-      role_type = "other";
-      reason = `Dept keyword match but company not confirmed in profile`;
-    } else if (isFounder) {
-      isValid = true;
-      confidence = 0.8;
-      role_type = "hiring_manager";
-      reason = "Founder/CEO - always acceptable";
-    } else if (isHR) {
-      isValid = true;
-      confidence = 0.6;
-      role_type = "recruiter_hr";
-      reason = "Recruiter/HR fallback";
-    } else if (relevance === 0 && !wrongDeptLabel && /manager|lead|director|head|vp|chief/.test(text)) {
-      isValid = true;
-      confidence = 0.5;
-      role_type = "hiring_manager";
-      reason = "Generic manager - neutral department";
-    } else if (wrongDeptLabel && /manager|lead|director|head|vp|chief/.test(text)) {
-      isValid = true;
-      confidence = 0.2;
-      role_type = "hiring_manager";
-      reason = `Wrong department (${wrongDeptLabel}) - last resort`;
+    let finalCandidates = verified;
+
+    // Final safety net: strip anyone in the exclude list
+    if (excludeSet.size > 0) {
+      finalCandidates = finalCandidates.filter(c => !excludeSet.has(c.name.trim().toLowerCase()));
     }
 
-    if (isValid) {
-      verified.push({
-        name: r.title.split(/[-—|]/)[0].trim(),
-        profile_url: (r as any).url || (r as any).link || '',
-        current_title: r.snippet.substring(0, 50).trim(),
-        role_type,
-        confidence,
-        reason: `Verified: ${reason}`
-      });
-    }
+    return finalCandidates.slice(0, 5);
+  } catch (err) {
+    console.error("Error in LLM ranking:", err);
+    return [];
   }
-
-  // Sort by confidence descending
-  verified.sort((a, b) => b.confidence - a.confidence);
-
-  // If we have strong dept matches (>=0.85), exclude HR (0.6) entirely—they're a last resort only
-  const hasDeptMatches = verified.some(c => c.confidence >= 0.85);
-  let finalCandidates = verified;
-  if (hasDeptMatches) {
-    finalCandidates = verified.filter(c => c.confidence >= 0.8);
-  } else {
-    // No strong dept matches—keep founders and HR, drop only confirmed wrong-dept people
-    finalCandidates = verified.filter(c => c.confidence >= 0.5);
-  }
-
-  // Final safety net: strip anyone in the exclude list (catches cases where
-  // query-level exclusions didn't work due to formatting differences)
-  if (excludeSet.size > 0) {
-    finalCandidates = finalCandidates.filter(c => !excludeSet.has(c.name.trim().toLowerCase()));
-  }
-
-  return finalCandidates.slice(0, 5);
 }
