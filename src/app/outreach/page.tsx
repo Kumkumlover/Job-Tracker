@@ -525,35 +525,11 @@ export default function OutreachPage() {
 
  const handleApproveMasterDraft = () => {
  if (masterDrafts.length === 0) return;
- const masterDraft = masterDrafts[selectedMasterIdx];
+ const masterDraft = masterDrafts[0]; // Always 1 draft now
 
- let formattedHtmlBody = masterDraft.htmlBody;
- if (masterDraft.rawText) {
- let htmlBody = `<body style="font-family: Arial, Helvetica, sans-serif; color: #000; line-height: 1.5; font-size: 14px;">\n`;
- const paragraphs = masterDraft.rawText.split("\n\n");
- for (const para of paragraphs) {
- if (para.includes("• ")) {
- htmlBody += ` <ul style="margin: 0; padding-left: 20px;">\n`;
- const lines = para.split("\n").filter(l => l.trim());
- for (const line of lines) {
- htmlBody += ` <li style="margin-bottom: 8px; margin-left: 15px;">${line.replace("• ", "")}</li>\n`;
- }
- htmlBody += ` </ul>\n`;
- } else {
- const formattedPara = para.split("\n").join("<br>");
- htmlBody += ` <p>${formattedPara}</p>\n`;
- }
- }
- 
- const portfolio = userProfile?.portfolioUrl || "[Your Portfolio URL]";
- const phone = userProfile?.phone || "[Your Phone Number]";
- const linkedin = userProfile?.linkedinUrl || "[Your LinkedIn URL]";
- const cv = userProfile?.resume || "[Your CV URL]";
- 
- htmlBody += ` <p>For your reference, you can view my <a href="${portfolio}" style="color:#0366d6; text-decoration:underline;">Portfolio</a> (reachable at ${phone}), connect with me on <a href="${linkedin}" style="color:#0366d6; text-decoration:underline;">LinkedIn</a>, or review my <a href="${cv}" style="color:#0366d6; text-decoration:underline;">CV</a>.</p>\n`;
- htmlBody += `</body>`;
- formattedHtmlBody = htmlBody;
- }
+ // The backend already built the HTML; just use it as-is.
+ // The {{contactName}} placeholder will be swapped per-person below.
+ const formattedHtmlBody = masterDraft.htmlBody;
 
  const targets = Array.from(selectedEmails.entries()).filter(([_, email]) => email);
  const newDrafts: EmailDraft[] = [];
@@ -1110,7 +1086,7 @@ export default function OutreachPage() {
  </div>
  )}
 
- {/* ═══════ STEP 4: MASTER TEMPLATE ═══════ */}
+ {/* ═══════ STEP 4: REVIEW TEMPLATE ═══════ */}
  {step === 4 && masterDrafts.length > 0 && (
  <div className="bg-[var(--card)] rounded-2xl p-6 border border-[var(--border)] space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
  <div className="flex items-center gap-3 pb-4 border-b border-[var(--border)]">
@@ -1118,32 +1094,11 @@ export default function OutreachPage() {
  <FileText className="w-5 h-5" />
  </div>
  <div>
- <h2 className="text-lg font-bold text-[var(--foreground)]">Master Template Options</h2>
+ <h2 className="text-lg font-bold text-[var(--foreground)]">Review Email Template</h2>
  <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
- Select an option, review, and edit. We will replace <code className="text-[var(--primary)] font-mono text-[10px]">{"{{contactName}}"}</code> with each person's first name.
+ Edit if needed. <code className="text-[var(--primary)] font-mono text-[10px]">{"{{contactName}}"}</code> will be replaced with each person's first name when you approve.
  </p>
  </div>
- </div>
-
- {/* Template Selection Tabs */}
- <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
- {masterDrafts.map((draft, idx) => (
- <button
- key={idx}
- onClick={() => setSelectedMasterIdx(idx)}
- className={`flex-shrink-0 px-4 py-3 rounded-xl border text-left flex flex-col gap-1 transition-all ${
- selectedMasterIdx === idx
- ? "bg-[var(--primary)]/10 border-[var(--primary)]/30 text-[var(--primary)]"
- : "bg-[var(--background)] border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--border)]"
- }`}
- style={{ minWidth: "160px" }}
- >
- <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Option {idx + 1}</span>
- <span className="text-xs font-medium truncate w-full" title={draft.problemTitle || "Template"}>
- {draft.problemTitle || "Template Option"}
- </span>
- </button>
- ))}
  </div>
 
  <div className="space-y-4 bg-[#060608] p-5 rounded-xl border border-[var(--border)]">
@@ -1151,10 +1106,10 @@ export default function OutreachPage() {
  <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest mb-2 block">Subject</label>
  <input
  type="text"
- value={masterDrafts[selectedMasterIdx].subject}
+ value={masterDrafts[0].subject}
  onChange={(e) => {
  const updated = [...masterDrafts];
- updated[selectedMasterIdx].subject = e.target.value;
+ updated[0].subject = e.target.value;
  setMasterDrafts(updated);
  }}
  className="w-full bg-black/20 border border-[var(--border)] focus:ring-2 focus:ring-[var(--primary)] rounded-xl px-4 py-3 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
@@ -1163,17 +1118,17 @@ export default function OutreachPage() {
  <div>
  <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest mb-2 block">Email Body</label>
  <textarea
- value={masterDrafts[selectedMasterIdx].rawText !== undefined ? masterDrafts[selectedMasterIdx].rawText : masterDrafts[selectedMasterIdx].htmlBody}
+ value={masterDrafts[0].rawText !== undefined ? masterDrafts[0].rawText : masterDrafts[0].htmlBody}
  onChange={(e) => {
  const updated = [...masterDrafts];
- if (updated[selectedMasterIdx].rawText !== undefined) {
- updated[selectedMasterIdx].rawText = e.target.value;
+ if (updated[0].rawText !== undefined) {
+ updated[0].rawText = e.target.value;
  } else {
- updated[selectedMasterIdx].htmlBody = e.target.value;
+ updated[0].htmlBody = e.target.value;
  }
  setMasterDrafts(updated);
  }}
- rows={15}
+ rows={18}
  className="w-full bg-black/20 border border-[var(--border)] focus:ring-2 focus:ring-[var(--primary)] rounded-xl px-4 py-3 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors leading-relaxed"
  />
  </div>

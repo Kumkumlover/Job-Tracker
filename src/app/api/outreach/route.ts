@@ -11,7 +11,7 @@ import { searchCandidatesAuto } from "@/lib/pipeline/search";
 import { rankCandidates } from "@/lib/pipeline/rank";
 import { enrichAll, type PersonInput } from "@/lib/automation/email-finder";
 import { executeResearch } from "@/lib/email-generator/research";
-import { generateCopy } from "@/lib/email-generator/templates";
+import { generateSimpleEmail } from "@/lib/email-generator/templates";
 import { sendOutboundEmail } from "@/lib/pipeline/send";
 import { prisma, getDefaultUserId } from "@/lib/prisma";
 
@@ -133,7 +133,25 @@ async function handleFindContacts(body: {
     };
   }));
 
-  const allCandidates = [...jdRanked, ...ranked];
+  const allCandidatesUnfiltered = [...jdRanked, ...ranked];
+  
+  // Deduplicate candidates by name or profile_url
+  const allCandidates: typeof allCandidatesUnfiltered = [];
+  const seenNames = new Set<string>();
+  const seenUrls = new Set<string>();
+
+  for (const c of allCandidatesUnfiltered) {
+    const normName = c.name.toLowerCase().trim();
+    const normUrl = (c.profile_url || "").toLowerCase().trim();
+    
+    if (seenNames.has(normName)) continue;
+    if (normUrl && seenUrls.has(normUrl)) continue;
+    
+    seenNames.add(normName);
+    if (normUrl) seenUrls.add(normUrl);
+    
+    allCandidates.push(c);
+  }
 
   return NextResponse.json({
     searchResults,
@@ -201,15 +219,20 @@ async function handleFindEmails(
 }
 
 // ─── Phase 3: Generate Email ────────────────────────────────────
+//
+// Outreach automation flow — simple, fast, hallucination-free.
+// Only 2 fields are LLM-generated (from the JD alone, no web scraping):
+//   • companyMission  — noun phrase describing what the company is building
+//   • matchedStrengths — noun phrase describing relevant skills
+// All body bullets are hardcoded verbatim in generateSimpleEmail().
 
 async function handleGenerateEmail(body: {
   recipientName: string;
   company: string;
   jobTitle: string;
   jd?: string;
-  profileUrl?: string;
 }) {
-  const { recipientName, company, jobTitle, jd, profileUrl } = body;
+  const { recipientName, company, jobTitle, jd } = body;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
@@ -217,77 +240,95 @@ async function handleGenerateEmail(body: {
   const userId = await getDefaultUserId();
   const profile = await prisma.profileContext.findUnique({ where: { userId } });
 
-  // Step 1: Run the ACTUAL Email Generator Research Pipeline (RAG + Jina + Search)
-  const research = await executeResearch({
-    companyName: company,
-    industry: "Technology", // Default or extract if possible
-    role: jobTitle,
-    contactName: recipientName,
-    jobDescription: jd,
-  }, apiKey, profile);
+  // ── Lightweight LLM call: extract 2 noun phrases from the JD ──
+  const llmPrompt = `You are helping write a job application email.
 
-  if (!research.problems || research.problems.length === 0) {
-    throw new Error("Research pipeline failed to generate hypotheses.");
-  }
+Company: ${company}
+Role: ${jobTitle}
+${jd ? `Job Description:\n${jd.slice(0, 2000)}` : ""}
 
-  const drafts = await Promise.all(research.problems.slice(0, 3).map(async (problem) => {
-    // Step 2: Use the exact templates the user built
-    const rawText = await generateCopy(
-      problem,
-      "Cold Email", // default format
-      recipientName,
-      company,
-      jobTitle,
-      profile || undefined
+Return ONLY a valid JSON object with exactly two fields:
+1. "companyMission": A short noun phrase (5-12 words) describing what this company is building. Complete the sentence "Your vision of building ___". Do NOT write a full sentence. Example: "an AI-powered contextual advertising platform"
+2. "matchedStrengths": A short noun phrase (4-10 words) matching the JD to a PM with AI product and 0-1 execution experience. Complete the sentence "Given my background in ___". Do NOT write a full sentence. Example: "0-1 product delivery and generative AI integration"
+
+Return ONLY the JSON, no markdown fences, no explanation.`;
+
+  // Fallback values used if Gemini call fails
+  let companyMission = "innovative technology solutions";
+  let matchedStrengths = "0-1 product delivery and AI-powered feature development";
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: llmPrompt }] }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 200 },
+        }),
+      }
     );
 
-    // Step 3: Parse the raw text template into beautifully formatted HTML
-    let htmlBody = `<body style="font-family: Arial, Helvetica, sans-serif; color: #000; line-height: 1.5; font-size: 14px;">\n`;
-    
-    const sections = rawText.split("For your reference:");
-    const mainBody = sections[0].trim();
-    
-    const paragraphs = mainBody.split("\n\n");
-    for (const para of paragraphs) {
-      if (para.includes("• ")) {
-        htmlBody += `  <ul style="margin: 0; padding-left: 20px;">\n`;
-        const lines = para.split("\n").filter(l => l.trim());
-        for (const line of lines) {
-          htmlBody += `    <li style="margin-bottom: 8px; margin-left: 15px;">${line.replace("• ", "")}</li>\n`;
-        }
-        htmlBody += `  </ul>\n`;
-      } else {
-        const formattedPara = para.split("\n").join("<br>");
-        htmlBody += `  <p>${formattedPara}</p>\n`;
+    if (res.ok) {
+      const data = await res.json();
+      const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      if (parsed.companyMission) companyMission = parsed.companyMission;
+      if (parsed.matchedStrengths) matchedStrengths = parsed.matchedStrengths;
+    }
+  } catch (e) {
+    console.warn("[generate-email] LLM call failed, using fallback values:", e);
+  }
+
+  // ── Build the email using the hardcoded outreach template ──
+  const rawText = generateSimpleEmail(
+    recipientName || "{{contactName}}",
+    company,
+    jobTitle,
+    companyMission,
+    matchedStrengths,
+    profile || undefined
+  );
+
+  // ── Convert to HTML for Gmail ──
+  let htmlBody = `<body style="font-family: Arial, Helvetica, sans-serif; color: #000; line-height: 1.5; font-size: 14px;">\n`;
+  const sections = rawText.split("For your reference:");
+  const mainBody = sections[0].trim();
+  const paragraphs = mainBody.split("\n\n");
+
+  for (const para of paragraphs) {
+    if (para.includes("• ")) {
+      htmlBody += `  <ul style="margin: 0; padding-left: 20px;">\n`;
+      const lines = para.split("\n").filter((l) => l.trim());
+      for (const line of lines) {
+        htmlBody += `    <li style="margin-bottom: 8px; margin-left: 15px;">${line.replace("• ", "")}</li>\n`;
       }
+      htmlBody += `  </ul>\n`;
+    } else {
+      const formattedPara = para.split("\n").join("<br>");
+      htmlBody += `  <p>${formattedPara}</p>\n`;
     }
+  }
 
-    // Inject the clean inline reference links
-    const portfolio = profile?.portfolioUrl || "[Your Portfolio URL]";
-    const phone = profile?.phone || "[Your Phone Number]";
-    const linkedin = profile?.linkedinUrl || "[Your LinkedIn URL]";
-    const cv = profile?.resume || "[Your CV URL]";
-    
-    htmlBody += `  <p>For your reference, you can view my <a href="${portfolio}" style="color:#0366d6; text-decoration:underline;">Portfolio</a> (reachable at ${phone}), connect with me on <a href="${linkedin}" style="color:#0366d6; text-decoration:underline;">LinkedIn</a>, or review my <a href="${cv}" style="color:#0366d6; text-decoration:underline;">CV</a>.</p>\n`;
-    if (profileUrl) {
-      htmlBody += `  <div data-linkedin-url="${profileUrl}" style="display:none;">${profileUrl}</div>\n`;
-    }
-    htmlBody += `</body>`;
+  const portfolio = profile?.portfolioUrl || "[Your Portfolio URL]";
+  const phone = profile?.phone || "[Your Phone Number]";
+  const linkedin = profile?.linkedinUrl || "[Your LinkedIn URL]";
+  const cv = profile?.resume || "[Your CV URL]";
+  htmlBody += `  <p>For your reference, you can view my <a href="${portfolio}" style="color:#0366d6; text-decoration:underline;">Portfolio</a> (reachable at ${phone}), connect with me on <a href="${linkedin}" style="color:#0366d6; text-decoration:underline;">LinkedIn</a>, or review my <a href="${cv}" style="color:#0366d6; text-decoration:underline;">CV</a>.</p>\n`;
+  htmlBody += `</body>`;
 
-    // Generate subject
-    const subject = `Application: ${jobTitle} — ${company}`;
-
-    return {
-      subject,
-      htmlBody,
-      rawText: mainBody, // Pass the clean raw text for UI editing
-      reason: problem.hypothesis, // Pass back hypothesis as context
-      problemTitle: problem.title || "Option",
-    };
-  }));
+  const subject = `Application: ${jobTitle} — ${company}`;
 
   return NextResponse.json({
-    drafts,
+    drafts: [{
+      subject,
+      htmlBody,
+      rawText: mainBody,
+      reason: `Generated for ${company} — ${jobTitle}`,
+      problemTitle: `${company} — ${jobTitle}`,
+    }],
   });
 }
 

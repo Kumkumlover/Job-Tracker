@@ -45,7 +45,11 @@ export function generateCopy(
   }
 
   if (outputType === "Cold Email") {
-    return `Hi ${name},
+    const hookLine = (problem.linkedinHook && problem.linkedinHook.trim() !== "") 
+      ? `\n\n${problem.linkedinHook}`
+      : "";
+
+    return `Hi ${name},${hookLine}
 
 I came across your post about ${companyName}'s search for a ${role}, and I couldn't be more excited! Your vision of building ${problem.companyMission} resonates deeply with me. Given my background in ${problem.matchedStrengths}, I'd love to explore how I can contribute to this journey.
 
@@ -141,4 +145,50 @@ I'd love to send over the full logic if you're curious. Cheers!`;
 ${problem.hook}
 
 I'd love to send over the full logic if you're curious. Cheers!`;
+}
+
+// ─── Outreach Automation Template ───────────────────────────────
+//
+// Used ONLY by the outreach automation flow (api/outreach generate-email).
+// Hardcoded bullets — no RAG, no LinkedIn scraping, zero hallucination risk.
+// The standalone /email-generator tool continues to use generateCopy above.
+
+const OUTREACH_BULLETS = `• I am Shikhar Gupta, an AI Product Intern at SuperAGI (AI CRM), currently owning end-to-end discovery and execution for Analytics, Chat, and Project Management modules, built them from 0–1 and replaced tools like Slack and Jira for internal usage saving more than 150k in cost.
+• I have led the development of multiple AI-agents including an AI onboarding agent that reduced customer success costs by 60% and a chat-native PM agent that automated task tracking and reduced project management overhead by 40% in SuperAGI.
+• I am a Top PM fellow at Nextleap (Top 10%), Ex Product Analyst @Digital Harbor and have built multiple AI automations such as a targeted cold outreach tool and a job tracker CRM as a browser extension.`;
+
+export function generateSimpleEmail(
+  contactName: string,
+  companyName: string,
+  role: string,
+  companyMission: string,
+  matchedStrengths: string,
+  profile?: any
+): string {
+  const name = contactName || "Hiring Manager";
+  const senderName = profile?.senderName || "Shikhar Gupta";
+  const portfolio = profile?.portfolioUrl || "[Your Portfolio URL]";
+  const phone = profile?.phone || "[Your Phone Number]";
+  const linkedin = profile?.linkedinUrl || "[Your LinkedIn URL]";
+  const cv = profile?.resume || "[Your CV URL]";
+
+  return `Hi ${name},
+
+I came across your post about ${companyName}'s search for a ${role}, and I couldn't be more excited! Your vision of building ${companyMission} resonates deeply with me. Given my background in ${matchedStrengths}, I'd love to explore how I can contribute to this journey.
+
+A little bit about myself:
+
+${OUTREACH_BULLETS}
+
+Why am I writing to you?
+
+I have snapped my head while building AI agents more times than I'd like to admit. Coming from a non technical background, I've learnt to build and break automations embedding LLMs, write evals and understand their limitations out of genuine curiosity. If you are looking to add a forward deployed ${role} at ${companyName}, then I'd love to discuss this further.
+
+For your reference:
+• Portfolio: ${portfolio} (Reachable at ${phone})
+• LinkedIn: ${linkedin}
+• CV: ${cv}
+
+Best,
+${senderName}`;
 }

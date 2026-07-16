@@ -304,7 +304,7 @@ export async function executeResearch(
   );
 
   try {
-    const rawText = await callGemini(prompt, apiKey, false, true);
+    const rawText = await callGemini(prompt, apiKey, true, true);
 
     if (!rawText) {
       throw new Error("LLM returned an empty payload.");
@@ -339,6 +339,7 @@ export async function executeResearch(
           citation: "Led 0-1 product launches resulting in 30% growth.",
           companyMission: "an innovative tech platform",
           matchedStrengths: "0-1 product delivery and scaling AI agents",
+          aboutMeBullets: "Led 0-1 product delivery. Scaled AI agents.",
           linkedinHook: "I noticed your work on the latest product launch and was really impressed.",
           speculativePitch: "Your focus on scaling presents an exciting challenge for a 0-1 Product Manager to tackle."
         }
