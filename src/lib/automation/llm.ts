@@ -35,28 +35,36 @@ function getDefaultModel(provider: Provider): string {
   }
 }
 
+import { wrapOpenAI } from "braintrust";
+
 function buildClient(provider: Provider): OpenAI {
+  let client: OpenAI;
   switch (provider) {
     case "groq":
       if (!process.env.GROQ_API_KEY) throw new Error("GROQ_API_KEY is not set");
-      return new OpenAI({
+      client = new OpenAI({
         apiKey: process.env.GROQ_API_KEY,
         baseURL: "https://api.groq.com/openai/v1",
       });
+      break;
 
     case "ollama":
-      return new OpenAI({
+      client = new OpenAI({
         apiKey: "ollama",  // Ollama doesn't need a real key
         baseURL: process.env.OLLAMA_BASE_URL ?? "http://localhost:11434/v1",
       });
+      break;
 
     case "gemini":
       if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set");
-      return new OpenAI({
+      client = new OpenAI({
         apiKey: process.env.GEMINI_API_KEY,
         baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
       });
+      break;
   }
+  
+  return process.env.BRAINTRUST_API_KEY ? wrapOpenAI(client) : client;
 }
 
 // Lazy singleton — built once per process
@@ -105,4 +113,12 @@ export async function askJSON<T>(prompt: string, model?: string): Promise<T> {
     .replace(/```\s*/g, "")
     .trim();
   return JSON.parse(cleaned) as T;
+}
+
+import { z } from "zod";
+export async function askJSONValidated<T>(
+  prompt: string, schema: z.ZodSchema<T>, model?: string
+): Promise<T> {
+  const raw = await askJSON<any>(prompt, model);
+  return schema.parse(raw);
 }

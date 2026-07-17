@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-
+import { traced } from "braintrust";
 import { searchCandidatesAuto } from "@/lib/pipeline/search";
 import { rankCandidates } from "@/lib/pipeline/rank";
 import { enrichAll, type PersonInput } from "@/lib/automation/email-finder";
@@ -241,42 +241,45 @@ async function handleGenerateEmail(body: {
   const profile = await prisma.profileContext.findUnique({ where: { userId } });
 
   // ── Lightweight LLM call: extract 2 noun phrases from the JD ──
-  const llmPrompt = `You are helping write a job application email.
-
-Company: ${company}
-Role: ${jobTitle}
-${jd ? `Job Description:\n${jd.slice(0, 2000)}` : ""}
-
-Return ONLY a valid JSON object with exactly two fields:
-1. "companyMission": A short noun phrase (5-12 words) describing what this company is building. Complete the sentence "Your vision of building ___". Do NOT write a full sentence. Example: "an AI-powered contextual advertising platform"
-2. "matchedStrengths": A short noun phrase (4-10 words) matching the JD to a PM with AI product and 0-1 execution experience. Complete the sentence "Given my background in ___". Do NOT write a full sentence. Example: "0-1 product delivery and generative AI integration"
-
-Return ONLY the JSON, no markdown fences, no explanation.`;
+  const { loadPrompt } = require("../../../lib/automation/prompts/index");
+  
+  const llmPrompt = loadPrompt("missionExtract_v1", {
+    company,
+    jobTitle,
+    jobDescription: jd ? `Job Description:\n${jd.slice(0, 2000)}` : ""
+  });
 
   // Fallback values used if Gemini call fails
   let companyMission = "innovative technology solutions";
   let matchedStrengths = "0-1 product delivery and AI-powered feature development";
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: llmPrompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 200 },
-        }),
-      }
-    );
+    await traced(async (span) => {
+      span.log({ input: llmPrompt });
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: llmPrompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 200 },
+          }),
+        }
+      );
 
-    if (res.ok) {
-      const data = await res.json();
-      const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-      if (parsed.companyMission) companyMission = parsed.companyMission;
-      if (parsed.matchedStrengths) matchedStrengths = parsed.matchedStrengths;
+      if (res.ok) {
+        const data = await res.json();
+        const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        span.log({ output: text });
+        const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        const parsed = JSON.parse(cleaned);
+        if (parsed.companyMission) companyMission = parsed.companyMission;
+        if (parsed.matchedStrengths) matchedStrengths = parsed.matchedStrengths;
+      } else {
+        span.log({ output: "HTTP Error: " + res.status });
+      }
+    }, { name: "MissionExtract" });
     }
   } catch (e) {
     console.warn("[generate-email] LLM call failed, using fallback values:", e);

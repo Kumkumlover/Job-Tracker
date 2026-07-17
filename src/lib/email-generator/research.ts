@@ -163,55 +163,29 @@ function buildResearchPrompt(
   inspirationDocs: VaultItem[],
   profile?: any
 ): string {
-  return `You are a strict RAG-enabled Product Strategy Analyst.
-TARGET COMPANY: ${input.companyName} (${input.industry}).
-TARGET ROLE: ${input.role || "Product Manager"}
-LEAD LINKEDIN URL: ${input.leadUrl || "None provided"}
-COMPANY WEBSITE URL: ${input.companyWebsite || "None provided"}
-
-[JOB DESCRIPTION]:
-${input.jobDescription || "None provided. Infer standard requirements for the target role."}
-
-[LEAD SCRAPED CONTEXT]: ${leadContext || "Direct scrape failed. Use google_search."}
-[COMPANY WEBSITE CONTEXT]: ${companyContext || "Direct scrape failed. Use google_search."}
-
-USER PROFILE: ${USER_PERSONA}
-
-[EVIDENCE LIBRARY - My verified past work]:
-${evidenceDocs.length ? evidenceDocs.map((d) => `TITLE: ${d.title}\nCONTENT: ${d.content}`).join("\n\n") : "None provided."}
-
-[INSPIRATION LIBRARY - Industry best practices/theories]:
-${inspirationDocs.length ? inspirationDocs.map((d) => `TITLE: ${d.title}\nCONTENT: ${d.content}`).join("\n\n") : "None provided."}
-
-TASK:
-${profile?.systemPrompt ? profile.systemPrompt : `1. Identify 3 critical UX or product friction points for the target company.
+  const { loadPrompt } = require("../automation/prompts/index");
+  
+  return loadPrompt("research_v1", {
+    companyName: input.companyName,
+    industry: input.industry,
+    role: input.role || "Product Manager",
+    leadUrl: input.leadUrl || "None provided",
+    companyWebsite: input.companyWebsite || "None provided",
+    jobDescription: input.jobDescription || "None provided. Infer standard requirements for the target role.",
+    leadContext: leadContext || "Direct scrape failed. Use google_search.",
+    companyContext: companyContext || "Direct scrape failed. Use google_search.",
+    userPersona: USER_PERSONA,
+    evidenceDocs: evidenceDocs.length ? evidenceDocs.map((d) => `TITLE: ${d.title}\nCONTENT: ${d.content}`).join("\n\n") : "None provided.",
+    inspirationDocs: inspirationDocs.length ? inspirationDocs.map((d) => `TITLE: ${d.title}\nCONTENT: ${d.content}`).join("\n\n") : "None provided.",
+    systemPrompt: profile?.systemPrompt ? profile.systemPrompt : `1. Identify 3 critical UX or product friction points for the target company.
 2. Cross-reference the EVIDENCE LIBRARY to solve the problem.
 3. 'hook': MUST cite the exact TITLE of the document you used from the Evidence Library to prove you can solve the problem.
 4. 'companyMission': Write a short noun phrase completing the sentence "Your vision of building...". DO NOT repeat "Your vision of building" or write a full sentence. Example: "an intuitive clinical AI ecosystem".
 5. 'matchedStrengths': Analyze the [JOB DESCRIPTION]. Select 2 hard skills/metrics from my EVIDENCE LIBRARY that align perfectly with the JD. Write a short phrase completing "Given my background in...". DO NOT write a full sentence. DO NOT repeat "Given my background in". Example: "0-1 product delivery and scaling AI agents".
 6. 'linkedinHook': If a LEAD LINKEDIN URL is provided, formulate a personalized, warm 1-2 sentence opening hook using the [LEAD SCRAPED CONTEXT]. If context is missing, use Google Search. DO NOT return an empty string if a URL is provided. ONLY return "" if LEAD LINKEDIN URL is 'None provided'.
 7. 'speculativePitch': Analyze the [COMPANY WEBSITE CONTEXT]. Write a 1-2 sentence observation identifying their core product value proposition and 1-2 likely competitors/alternatives in their space. Frame this as an exciting challenge for a 0-1 Product Manager to tackle.
-8. 'aboutMeBullets': Write EXACTLY 3 bullet points summarizing my most impressive achievements from the EVIDENCE LIBRARY that perfectly match the [JOB DESCRIPTION]. Use short, punchy sentences. Prefix each with '• '. Do NOT use 'Highlight 1:'. Example: '• Replaced internal support tools with LLMs, saving $150k annually.'`}
-
-OUTPUT REQUIREMENTS: You MUST return ONLY a raw, perfectly formatted JSON object. Do NOT include markdown fences, and do NOT include any text outside the JSON. Follow this exact structure:
-{
-  "problems": [
-    {
-      "id": "1",
-      "title": "Short title",
-      "problem": "Description",
-      "hypothesis": "Hypothesis",
-      "pmGoal": "Goal",
-      "hook": "Exact TITLE of the Evidence document",
-      "citation": "Summary of evidence",
-      "companyMission": "an intuitive clinical AI ecosystem",
-      "matchedStrengths": "0-1 product delivery and scaling AI agents",
-      "linkedinHook": "Your hook here",
-      "speculativePitch": "Your speculative pitch here",
-      "aboutMeBullets": "• Built an onboarding agent reducing costs by 60%.\n• Managed cross-functional teams of 15+ engineers."
-    }
-  ]
-}`;
+8. 'aboutMeBullets': Write EXACTLY 3 bullet points summarizing my most impressive achievements from the EVIDENCE LIBRARY that perfectly match the [JOB DESCRIPTION]. Use short, punchy sentences. Prefix each with '• '. Do NOT use 'Highlight 1:'. Example: '• Replaced internal support tools with LLMs, saving $150k annually.'`
+  });
 }
 
 // ─── Ingestion: Extract text from URLs via Gemini + Search ──────

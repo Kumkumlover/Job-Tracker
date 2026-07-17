@@ -39,49 +39,24 @@ export async function rankCandidates(
   };
 
   // Bug 5 Fix: All references to specific companies replaced with ${company}
-  const prompt = `You are an expert technical recruiter sourcing candidates for the company "${company}" for the role of "${jobTitle}".
-${jd ? `\nCOMPANY CONTEXT (from Job Description):\n${jd.substring(0, 1000)}\n\nCRITICAL: Use the above context (especially location, industry, or product details) to differentiate between companies that share the exact same name. If the snippet shows a person working at an "${company}" that does not match this context (e.g., wrong industry or wrong location), EXCLUDE THEM.\n` : ""}
-Below are LinkedIn search results. Each result indicates which search engines found it — profiles confirmed by multiple independent engines are far more likely to be current employees.
+  const { loadPrompt } = await import("../automation/prompts/index");
+  const { TopCandidatesResponseSchema } = await import("../evalArtifacts");
+  const { askJSONValidated } = await import("../automation/llm");
 
-Your goal is to find people who CURRENTLY work at "${company}" (or its direct variants/subsidiaries). Focus heavily on finding people in the specific department: "${llmDeptKeywords || jobTitle}".
+  const companyContext = jd ? `\nCOMPANY CONTEXT (from Job Description):\n${jd.substring(0, 1000)}\n\nCRITICAL: Use the above context (especially location, industry, or product details) to differentiate between companies that share the exact same name. If the snippet shows a person working at an "${company}" that does not match this context (e.g., wrong industry or wrong location), EXCLUDE THEM.\n` : "";
 
-CRITICAL RULES:
-1. STRICTLY EXCLUDE ANYONE who is an ex-employee. Look carefully at employment dates in the snippet. If the snippet contains "ex-${company}", "former ${company}", "previously at ${company}", or if they list a DIFFERENT company as their current employer, REJECT THEM. Zero exceptions.
-2. EXCLUDE ANYONE who works at a subsidiary, parent company, or partner company instead of the EXACT company named "${company}".
-3. STRICTLY EXCLUDE ANYONE whose current job title indicates they belong to a different department than the one we are hiring for. If we are hiring a Product role, REJECT engineers, sales, marketing, HR, and finance people. ONLY accept founders, C-level executives, and managers/leads in the specific target department.
-4. If the candidate passes ALL rules, output a JSON object: { "confidence": <0-100>, "current_title": "<their current title at ${company}>", "reasoning": "<why they are a perfect fit>" }
-5. If they fail ANY rule, you MUST return confidence 0.
+  const searchResults = uniqueResults.map((r, i) => `[${i}] Name: ${r.title.split(/[-—|]/)[0].trim()}${getCorroborationLabel(r)}\nSnippet: ${r.snippet}`).join("\n\n");
 
-Search Results:
-${uniqueResults
-  .map(
-    (r, i) =>
-      `[${i}] Name: ${r.title.split(/[-—|]/)[0].trim()}${getCorroborationLabel(r)}\nSnippet: ${r.snippet}`
-  )
-  .join("\n\n")}
-
-Return a JSON object with array 'topCandidates'. For each valid CURRENT employee:
-{
-  "topCandidates": [
-    {
-      "index": <number from list above>,
-      "role_type": "hiring_manager" | "team_lead" | "other",
-      "confidence": <0.5–0.95. Give 0.95 to people whose title matches the specific target department (e.g. Product Managers). Give 0.85 to Founders/Executives. Give bonus for 2-3 engine confirmation.>,
-      "reason": "<Short 5-word explanation>"
-    }
-  ]
-}
-Only include people you are confident CURRENTLY work at "${company}". Return ONLY JSON.`;
+  const prompt = loadPrompt("candidateRank_v1", {
+    company,
+    jobTitle,
+    companyContext,
+    llmDeptKeywords: llmDeptKeywords || jobTitle,
+    searchResults
+  });
 
   try {
-    const { topCandidates } = await askJSON<{
-      topCandidates: {
-        index: number;
-        role_type: any;
-        confidence: number;
-        reason: string;
-      }[];
-    }>(prompt);
+    const { topCandidates } = await askJSONValidated(prompt, TopCandidatesResponseSchema);
 
     let verified = (topCandidates || [])
       .map((c) => {

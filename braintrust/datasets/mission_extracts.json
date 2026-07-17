@@ -1,0 +1,57 @@
+[
+  {
+    "input": {
+      "company": "Payme",
+      "jobTitle": "Product intern",
+      "jobDescription": "🚀 Hiring: Product Intern (AI & SaaS)\nWe're looking for a Product Intern to work on AI and SaaS products from our office in Noida Sector 62.\nPreferred candidates:\n• Recent Engineering graduates (2024/2025/2026 pass-outs)\n• Recent MBA graduates\n• Strong interest in Product Management, AI, and SaaS\n• Prior Product Management internship experience is a plus\nYou'll work closely with product and engineering teams on product research, requirement gathering, feature planning, and execution.\n📍 Work from Office: Noida Sector 62"
+    },
+    "expected": {
+      "companyMission": "AI and SaaS products",
+      "matchedStrengths": "product research and requirement gathering"
+    }
+  },
+  {
+    "input": {
+      "company": "Saber money",
+      "jobTitle": "Associate product manager",
+      "jobDescription": "We're hiring an Associate Product Manager at Saber Money!\nAt Saber, we are building one of India’s most comprehensive B2B payment platforms. Our unified infrastructure helps businesses orchestrate payments seamlessly across PGs, wallets, and direct banking channels. We’re processing millions of transactions and growing fast.\nWe are looking for a high-agency APM to join our core product team. You will work directly with our engineering and operations teams to launch new features, optimize payment success rates, and build robust internal tools.\nYou are a great fit if:\n- You have 1-2 years of product experience (Fintech/Payments is a huge plus)\n- You understand APIs, webhooks, and basic system architecture\n- You are obsessed with metrics and user flows\n- You have an engineering or highly analytical background"
+    },
+    "expected": {
+      "companyMission": "a comprehensive B2B payment platform",
+      "matchedStrengths": "API integrations and metric-driven optimization"
+    }
+  },
+  {
+    "input": {
+      "company": "Blue Machines",
+      "jobTitle": "AI Product Intern",
+      "jobDescription": "We are looking for a highly motivated AI Product Intern to join us at Blue Machines.\nAbout us:\nBlue Machines is building state-of-the-art multi-agent infrastructure for enterprise workflows. We are backed by top-tier VCs and have a fast-growing waitlist of B2B clients.\nYour Role:\n- Research cutting-edge LLM architectures and agentic frameworks\n- Help structure and manage product roadmaps\n- Work closely with our founding engineering team to prototype agent workflows\n- Assist in customer discovery and defining user requirements\nRequirements:\n- Strong passion for AI, LLMs, and Generative models\n- Previous internship experience in product management or software engineering"
+    },
+    "expected": {
+      "companyMission": "multi-agent infrastructure for enterprise workflows",
+      "matchedStrengths": "prototyping agent workflows and LLM architectures"
+    }
+  },
+  {
+    "input": {
+      "company": "Firstcry",
+      "jobTitle": "Associate product manager",
+      "jobDescription": "We're Hiring: Assistant Product Manager at hashtag#Firstcry \nLocation: Pune\nExperience: 0 to 3 Years\nAre you passionate about building products that users love? We're looking for an enthusiastic Assistant Product Manager to join our Product team!\nWhat you'll do: \n- Assist in feature planning and execution\n- Write PRDs and user stories\n- Work closely with Engineering, QA, UX/UI, and Product Marketing teams\n- Conduct user research and competitive analysis\n- Track product metrics and support A/B testing initiatives\n- Help deliver seamless product experiences"
+    },
+    "expected": {
+      "companyMission": "products that users love",
+      "matchedStrengths": "feature planning and writing PRDs"
+    }
+  },
+  {
+    "input": {
+      "company": "Silverpush",
+      "jobTitle": "Associate product manager",
+      "jobDescription": "We're Hiring: Associate Product Manager (APM) at Silverpush!\nAre you passionate about building products that blend AI, data, and advertising technology? Do you thrive in fast-paced environments where your work directly impacts global brands and campaigns?\nAt Silverpush, we're looking for an Associate Product Manager (APM) to join our Product team and help shape the future of advertising intelligence across YouTube, CTV, Programmatic, and Open Web channels.\nWhat You'll Do:\n  Drive product roadmaps from ideation to launch\n  Collaborate with Engineering, Design, Data Science, and GTM teams\n  Define AI/ML-powered product features and success metrics"
+    },
+    "expected": {
+      "companyMission": "the future of advertising intelligence",
+      "matchedStrengths": "AI/ML-powered product features"
+    }
+  }
+]

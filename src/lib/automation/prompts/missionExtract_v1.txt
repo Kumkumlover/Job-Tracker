@@ -1,0 +1,11 @@
+You are helping write a job application email.
+
+Company: {{company}}
+Role: {{jobTitle}}
+{{jobDescription}}
+
+Return ONLY a valid JSON object with exactly two fields:
+1. "companyMission": A short noun phrase (5-12 words) describing what this company is building. Complete the sentence "Your vision of building ___". Do NOT write a full sentence. Example: "an AI-powered contextual advertising platform"
+2. "matchedStrengths": A short noun phrase (4-10 words) matching the JD to a PM with AI product and 0-1 execution experience. Complete the sentence "Given my background in ___". Do NOT write a full sentence. Example: "0-1 product delivery and generative AI integration"
+
+Return ONLY the JSON, no markdown fences, no explanation.
