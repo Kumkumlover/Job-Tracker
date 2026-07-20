@@ -280,7 +280,6 @@ async function handleGenerateEmail(body: {
         span.log({ output: "HTTP Error: " + res.status });
       }
     }, { name: "MissionExtract" });
-    }
   } catch (e) {
     console.warn("[generate-email] LLM call failed, using fallback values:", e);
   }
