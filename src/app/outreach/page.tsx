@@ -199,8 +199,15 @@ export default function OutreachPage() {
  const savedCompanyWebsite = localStorage.getItem("outreach_companyWebsite");
  if (savedCompanyWebsite) setCompanyWebsite(savedCompanyWebsite);
 
- const savedCandidates = localStorage.getItem("outreach_candidates");
- if (savedCandidates) setCandidates(JSON.parse(savedCandidates));
+  const savedCandidates = localStorage.getItem("outreach_candidates");
+  if (savedCandidates) {
+    // Deduplicate by name on restore to fix any stale duplicated state
+    const raw: RankedCandidate[] = JSON.parse(savedCandidates);
+    const deduped = raw.filter((c, idx, arr) =>
+      arr.findIndex(x => x.name.trim().toLowerCase() === c.name.trim().toLowerCase()) === idx
+    );
+    setCandidates(deduped);
+  }
  const savedSelectedContacts = localStorage.getItem("outreach_selectedContacts");
  if (savedSelectedContacts) setSelectedContacts(new Set(JSON.parse(savedSelectedContacts)));
  
@@ -311,9 +318,13 @@ export default function OutreachPage() {
  throw new Error(d.error || `Server error: ${res.status}`);
  }
 
- const data = await res.json();
- const newRanked: RankedCandidate[] = data.rankedCandidates || [];
- const combinedCandidates = [...keptCandidates, ...newRanked];
+  const data = await res.json();
+  const newRanked: RankedCandidate[] = data.rankedCandidates || [];
+  const rawCombined = [...keptCandidates, ...newRanked];
+  // Deduplicate by name (case-insensitive) — last line of defense against any source of duplicates
+  const combinedCandidates = rawCombined.filter((c, idx, arr) =>
+    arr.findIndex(x => x.name.trim().toLowerCase() === c.name.trim().toLowerCase()) === idx
+  );
 
  // Accumulate all seen names to prevent any reappearance across future cycles
  setSeenNames(prev => {
