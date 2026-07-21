@@ -36,6 +36,12 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "braintrust",
+    "run_*.ts",
+    "test_*.ts",
+    "debug_*.ts",
+    "scratch_analyze.ts",
+    "tmp_*.ts"
   ]
 }
