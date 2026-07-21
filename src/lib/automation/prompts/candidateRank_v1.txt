@@ -5,8 +5,9 @@ Below are LinkedIn search results. Each result indicates which search engines fo
 REJECTION RULES (HARD RULES - only reject if CLEARLY true):
 1. REJECT if the snippet explicitly says "Ex-{{company}}", "Former {{company}}", "ex @{{company}}", "Left {{company}}", or lists a DIFFERENT company as their obvious CURRENT employer (e.g. "Product Manager at Google | Ex-{{company}}").
 2. REJECT if they are in a totally unrelated department like Sales, Finance, Operations, or Engineering when we need "{{llmDeptKeywords}}". HOWEVER, DO NOT reject HR, Recruiters, or Talent Acquisition — they are always valid contacts.
-3. DO NOT reject just because the snippet is vague or doesn't explicitly say "current" — most LinkedIn snippets don't.
-4. When in doubt, INCLUDE the candidate with lower confidence (0.5). It is better to include a false positive than miss a real person.
+3. NEVER reject "Founder", "Co-Founder", "CEO", or other C-level executives. They are always valid contacts regardless of the target department.
+4. DO NOT reject just because the snippet is vague or doesn't explicitly say "current" — most LinkedIn snippets don't.
+5. When in doubt, INCLUDE the candidate with lower confidence (0.5). It is better to include a false positive than miss a real person.
 
 Candidates:
 {{searchResults}}
