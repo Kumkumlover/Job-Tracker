@@ -208,18 +208,22 @@ export default function OutreachPage() {
     );
     setCandidates(deduped);
   }
- const savedSelectedContacts = localStorage.getItem("outreach_selectedContacts");
- if (savedSelectedContacts) setSelectedContacts(new Set(JSON.parse(savedSelectedContacts)));
- 
- const savedEmailResults = localStorage.getItem("outreach_emailResults");
- if (savedEmailResults) setEmailResults(JSON.parse(savedEmailResults));
- const savedSelectedEmails = localStorage.getItem("outreach_selectedEmails");
- if (savedSelectedEmails) setSelectedEmails(new Map(JSON.parse(savedSelectedEmails)));
- 
- const savedDrafts = localStorage.getItem("outreach_drafts");
- if (savedDrafts) setDrafts(JSON.parse(savedDrafts));
- const savedStep = localStorage.getItem("outreach_step");
- if (savedStep) setStep(Number(savedStep) as Step);
+  const savedSelectedContacts = localStorage.getItem("outreach_selectedContacts");
+  if (savedSelectedContacts) setSelectedContacts(new Set(JSON.parse(savedSelectedContacts)));
+  // Restore seenNames so cycle exclusions survive page refreshes
+  const savedSeenNames = localStorage.getItem("outreach_seenNames");
+  if (savedSeenNames) setSeenNames(new Set(JSON.parse(savedSeenNames)));
+
+  const savedEmailResults = localStorage.getItem("outreach_emailResults");
+  if (savedEmailResults) setEmailResults(JSON.parse(savedEmailResults));
+  const savedSelectedEmails = localStorage.getItem("outreach_selectedEmails");
+  if (savedSelectedEmails) setSelectedEmails(new Map(JSON.parse(savedSelectedEmails)));
+
+  const savedDrafts = localStorage.getItem("outreach_drafts");
+  if (savedDrafts) setDrafts(JSON.parse(savedDrafts));
+  const savedStep = localStorage.getItem("outreach_step");
+  if (savedStep) setStep(Number(savedStep) as Step);
+
 
  fetch("/api/gmail/status")
  .then(res => res.json())
@@ -241,7 +245,9 @@ export default function OutreachPage() {
  localStorage.setItem("outreach_selectedEmails", JSON.stringify(Array.from(selectedEmails.entries())));
  localStorage.setItem("outreach_drafts", JSON.stringify(drafts));
  localStorage.setItem("outreach_step", String(step));
- }, [company, jobTitle, jd, companyWebsite, candidates, selectedContacts, emailResults, selectedEmails, drafts, step]);
+ // Persist seenNames so cycle exclusions survive page refreshes
+ localStorage.setItem("outreach_seenNames", JSON.stringify(Array.from(seenNames)));
+ }, [company, jobTitle, jd, companyWebsite, candidates, selectedContacts, emailResults, selectedEmails, drafts, step, seenNames]);
 
  const handleReset = () => {
  if (!window.confirm("Are you sure you want to start over? This will clear your current candidates and progress.")) return;
@@ -263,6 +269,7 @@ export default function OutreachPage() {
  setPhaseStatus("idle");
  setError("");
  setLocalUsage({ search: 0, apollo: 0, hunter: 0 });
+ setSeenNames(new Set());
  localStorage.removeItem("outreach_company");
  localStorage.removeItem("outreach_jobTitle");
  localStorage.removeItem("outreach_jd");
@@ -273,6 +280,7 @@ export default function OutreachPage() {
  localStorage.removeItem("outreach_selectedEmails");
  localStorage.removeItem("outreach_drafts");
  localStorage.removeItem("outreach_step");
+ localStorage.removeItem("outreach_seenNames");
  };
 
  // ── Step 1: Find Contacts ──
