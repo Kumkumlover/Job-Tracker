@@ -413,62 +413,32 @@ function extractDomain(input: string): string {
   }
 }
 
-async function processPerson(
+async function processCandidateOptimized(
   person: PersonInput,
   hunterKey: string,
   apolloKey: string,
+  isVerificationMode: boolean,
   preFetchedResults?: Map<string, any>,
-  localApiUsage: { hunter: number; apollo: number } = { hunter: 0, apollo: 0 },
-  localApiTrack?: Map<string, number>
+  localApiUsage: { hunter: number; apollo: number } = { hunter: 0, apollo: 0 }
 ): Promise<PersonResult> {
   const { first, last } = parseName(person.name);
-  let domain = extractDomain(person.domain ?? "");
+  const domain = extractDomain(person.domain ?? "");
+  const resolvedPerson = { ...person, domain };
 
   if (!domain) {
-    // Step 1: Ask the LLM to guess the email domain
-    const guesses = await llmGuessDomains(person.company, "");
-    if (guesses.length > 0) {
-      domain = guesses[0];
-    } else {
-      // Step 2: Derive domain from company name as last resort
-      // e.g. "Fixerra" → "fixerra.com", "Fixed Invest" → "fixedinvest.com"
-      const derived = person.company
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "")  // strip special chars
-        .trim();
-      domain = derived ? `${derived}.com` : "";
-    }
-
-    // If we still have no domain at all, return empty — nothing we can do
-    if (!domain) {
-      console.warn(`[email-finder] Cannot resolve domain for ${person.company} — skipping.`);
-      return formatOutput({ ...person, domain: "Unknown" }, []);
-    }
+    return formatOutput({ ...person, domain: "Unknown" }, []);
   }
 
-  // Ensure the person object reflects the resolved domain
-  const resolvedPerson = { ...person, domain };
-  console.log(`processPerson: ${person.name} | company: ${person.company} | resolved domain: ${domain}`);
+  console.log(`processCandidate: ${person.name} | domain: ${domain} | mode: ${isVerificationMode ? "verification" : "pattern"}`);
 
-  // 1. Check cache first
+  // 1. Check Cache
   const cached = await store.getCachedEmails(resolvedPerson.name, domain);
-  const hasVerified = cached.some((c) => c.verified);
-  
-  // Calculate API calls from the database instead of in-memory to survive serverless restarts!
-  const allDomainEmails = await store.getCachedEmailsByDomain(domain);
-  const apiCalls = allDomainEmails.filter(c => c.source === "Hunter.io" || c.source === "Apollo.io").length;
-
-  // If we already have verified emails, or we maxed out API limits for this domain, return cache immediately
-  if (cached.length > 0 && (hasVerified || apiCalls >= 2)) {
+  if (cached.length > 0 && cached.some(c => c.verified)) {
     return formatOutput(
       resolvedPerson,
       cached.map((c) => ({
         email: c.email,
-        type: (c.verified
-          ? "verified"
-          : c.source === "Pattern Engine"
-            ? "predicted"
-            : "discovered") as "verified" | "discovered" | "predicted",
+        type: (c.verified ? "verified" : c.source === "Pattern Engine" ? "predicted" : "discovered") as "verified" | "discovered" | "predicted",
         confidence: c.confidence,
         source: c.source,
       }))
@@ -477,137 +447,83 @@ async function processPerson(
 
   const results: EmailResult[] = [];
 
-  // Find how many distinct people have verified emails for this domain
-  const verifiedCount = new Set(allDomainEmails.filter(c => c.verified).map(c => c.name)).size;
+  // 2. Verification Mode (Web Search -> Hunter -> Apollo)
+  if (isVerificationMode) {
+    // 2a. Public Web Search (Free)
+    const publicEmail = await searchPublicEmail(resolvedPerson.name, resolvedPerson.company, domain);
+    if (publicEmail) {
+      const pattern = extractPattern(first, last, publicEmail.split("@")[0]);
+      await store.saveEmail(publicEmail, resolvedPerson.name, domain, pattern, 0.90, "Public Web Search", true);
+      if (pattern !== "unknown") await store.recordPatternSuccess(pattern, domain);
 
-  // 1.5 Pattern Engine Fast-Path (0 Credits)
-  // ONLY use this shortcut if we have 2+ verified emails that came from REAL APIs (Hunter/Apollo)
-  // NOT just from JD extraction or LLM guesses — those don't verify the domain pattern reliably.
-  const topPatterns = await getTopPatterns(domain, 5);
-  let fastPathFound = false;
-  
-  const apiVerifiedCount = new Set(
-    allDomainEmails
-      .filter(c => c.verified && (c.source === "Hunter.io" || c.source === "Apollo.io" || c.source === "Public Web Search"))
-      .map(c => c.name)
-  ).size;
+      return formatOutput(resolvedPerson, [
+        { email: publicEmail, type: "verified", confidence: 0.90, source: "Public Web Search" },
+      ]);
+    }
 
-  if (topPatterns.length > 0 && apiVerifiedCount >= 2) {
-    const bestPattern = topPatterns[0];
-    if (bestPattern.usageCount > 0 && (bestPattern.successCount / bestPattern.usageCount) >= 0.90) {
-      const allPerms = generatePermutations(first, last, domain);
-      const matchedPerm = allPerms.find(p => p.pattern === bestPattern.pattern);
-      
-      if (matchedPerm) {
-        console.log(`[email-finder] Fast-path for ${person.name}: ${matchedPerm.email} (pattern ${bestPattern.pattern}, ${apiVerifiedCount} API-verified emails on domain)`);
-        await store.saveEmail(matchedPerm.email, resolvedPerson.name, domain, matchedPerm.pattern, 0.99, "Pattern Engine", false);
-        await store.recordPatternSuccess(matchedPerm.pattern, domain);
+    // 2b. API Lookups (Paid Fallback)
+    const canCallApi = (localApiUsage.hunter + localApiUsage.apollo) < 2;
+
+    if (hunterKey && canCallApi) {
+      const prefetched = preFetchedResults?.get(`${resolvedPerson.name}-${domain}`);
+      if (prefetched) {
+        const pattern = extractPattern(first, last, prefetched.email.split("@")[0]);
+        await store.saveEmail(prefetched.email, resolvedPerson.name, domain, pattern, 0.95, prefetched.source, true);
+        if (pattern !== "unknown") await store.recordPatternSuccess(pattern, domain);
         
         return formatOutput(resolvedPerson, [
-          { email: matchedPerm.email, type: "predicted", confidence: 0.99, source: "Pattern Engine" }
+          { email: prefetched.email, type: "verified", confidence: 0.95, source: prefetched.source },
+        ]);
+      }
+
+      localApiUsage.hunter++;
+      const hunterData = await hunterLookup(domain, first, last, hunterKey);
+      if (hunterData) {
+        const pattern = extractPattern(first, last, hunterData.email.split("@")[0]);
+        await store.saveEmail(hunterData.email, resolvedPerson.name, domain, pattern, 0.95, hunterData.source, true);
+        if (pattern !== "unknown") await store.recordPatternSuccess(pattern, domain);
+
+        return formatOutput(resolvedPerson, [
+          { email: hunterData.email, type: "verified", confidence: 0.95, source: hunterData.source },
+        ]);
+      }
+    }
+
+    if (apolloKey && (localApiUsage.hunter + localApiUsage.apollo) < 2) {
+      localApiUsage.apollo++;
+      const apolloResult = await apolloLookup(resolvedPerson.name, resolvedPerson.company, domain, apolloKey);
+      if (apolloResult) {
+        const pattern = extractPattern(first, last, apolloResult.email.split("@")[0]);
+        await store.saveEmail(apolloResult.email, resolvedPerson.name, domain, pattern, 0.85, apolloResult.source, false);
+        if (pattern !== "unknown") await store.recordPatternSuccess(pattern, domain);
+
+        return formatOutput(resolvedPerson, [
+          { email: apolloResult.email, type: "discovered", confidence: 0.85, source: apolloResult.source },
         ]);
       }
     }
   }
 
-  // Reserve API quota synchronously to prevent race conditions in Promise.all
-  let canCallApi = false;
-  if (localApiTrack) {
-    const current = localApiTrack.get(domain) || 0;
-    if (apiCalls + current < 2) {
-      canCallApi = true;
-      localApiTrack.set(domain, current + 1);
-    }
-  } else {
-    canCallApi = apiCalls < 2;
-  }
-
-  // 2. API Lookups (max 2 per domain)
-  if (domain && hunterKey && canCallApi) {
-    // Check prefetched
-    const prefetched = preFetchedResults?.get(`${resolvedPerson.name}-${domain}`);
-    if (prefetched) {
-      const pattern = extractPattern(first, last, prefetched.email.split("@")[0]);
-      await store.saveEmail(prefetched.email, resolvedPerson.name, domain, pattern, 0.95, prefetched.source, true);
-      await store.recordPatternSuccess(pattern, domain);
-      
-      return formatOutput(resolvedPerson, [
-        { email: prefetched.email, type: "verified", confidence: 0.95, source: prefetched.source },
-      ]);
-    }
-
-    localApiUsage.hunter++;
-    const hunterData = await hunterLookup(domain, first, last, hunterKey);
-
-    if (hunterData) {
-      const pattern = extractPattern(first, last, hunterData.email.split("@")[0]);
-      await store.saveEmail(hunterData.email, resolvedPerson.name, domain, pattern, 0.95, hunterData.source, true);
-      await store.recordPatternSuccess(pattern, domain);
-
-      return formatOutput(resolvedPerson, [
-        { email: hunterData.email, type: "verified", confidence: 0.95, source: hunterData.source },
-      ]);
-    }
-  }
-
-  if (canCallApi && apolloKey) {
-    // Try Apollo
-    localApiUsage.apollo++;
-    const apolloResult = await apolloLookup(resolvedPerson.name, resolvedPerson.company, domain, apolloKey);
-    if (apolloResult) {
-      const pattern = extractPattern(first, last, apolloResult.email.split("@")[0]);
-      await store.saveEmail(apolloResult.email, resolvedPerson.name, domain, pattern, 0.85, apolloResult.source, false);
-      await store.recordPatternSuccess(pattern, domain);
-
-      return formatOutput(resolvedPerson, [
-        { email: apolloResult.email, type: "discovered", confidence: 0.85, source: apolloResult.source },
-      ]);
-    }
-  }
-
-  // 3. Public Web Search (Free, Slow fallback)
-  const publicEmail = await searchPublicEmail(resolvedPerson.name, resolvedPerson.company, domain);
-  if (publicEmail) {
-    const pattern = extractPattern(first, last, publicEmail.split("@")[0]);
-    await store.saveEmail(publicEmail, resolvedPerson.name, domain, pattern, 0.90, "Public Web Search", true);
-    await store.recordPatternSuccess(pattern, domain);
-
-    return formatOutput(resolvedPerson, [
-      { email: publicEmail, type: "verified", confidence: 0.90, source: "Public Web Search" },
-    ]);
-  }
-
-  // Deep LLM Knowledge Search removed to prevent hallucinations.
-  // We fall through directly to the Pattern Engine.
-
-
-  // If API lookups failed but we had cached predictions, return them now to avoid regenerating
+  // If we had cached predictions but no verified emails, return them
   if (cached.length > 0) {
     return formatOutput(
       resolvedPerson,
       cached.map((c) => ({
         email: c.email,
-        type: (c.verified
-          ? "verified"
-          : c.source === "Pattern Engine"
-            ? "predicted"
-            : "discovered") as "verified" | "discovered" | "predicted",
+        type: (c.verified ? "verified" : c.source === "Pattern Engine" ? "predicted" : "discovered") as "verified" | "discovered" | "predicted",
         confidence: c.confidence,
         source: c.source,
       }))
     );
   }
 
-  // 4. Self-Training Permutation Engine
-  // If no API results are found, we generate all permutations and score them based on past successes.
+  // 3. Pattern Engine (Fast, Free Fallback)
   if (results.length === 0) {
     const allPerms = generatePermutations(first, last, domain);
     const topPatterns = await getTopPatterns(domain, 30);
     
-    // Create a scoring map from the top patterns
     const patternScores = new Map<string, number>();
     for (const p of topPatterns) {
-      // Base rate maxed at 0.95 for perfect historical match, default to 0.3 for unknown
       const baseRate = Math.max(p.successCount / Math.max(p.usageCount, 1), 0.3);
       const score = Math.min(0.95, Math.round(baseRate * 100) / 100);
       patternScores.set(p.pattern, score);
@@ -615,32 +531,24 @@ async function processPerson(
 
     const scoredPerms = allPerms.map(perm => ({
       ...perm,
-      score: patternScores.get(perm.pattern) || 0.2 // 0.2 for completely unknown permutations
+      score: patternScores.get(perm.pattern) || 0.2
     }));
 
-    // Sort by historical score descending
     scoredPerms.sort((a, b) => b.score - a.score);
-
-    // Skip strict DNS validation to prevent 504 timeouts!
-    // Just return the top 4 most likely permutations based on historical/global patterns.
     const topGuesses = scoredPerms.slice(0, 4);
     
     for (const guess of topGuesses) {
-      if (results.some((r) => r.email === guess.email)) continue;
-      
       results.push({ 
         email: guess.email, 
         type: "predicted", 
         confidence: guess.score, 
         source: "Pattern Engine" 
       });
-      
-      // Save them as predicted, not verified
       await store.saveEmail(guess.email, resolvedPerson.name, domain, guess.pattern, guess.score, "Pattern Engine", false);
     }
   }
 
-  return formatOutput(person, results);
+  return formatOutput(resolvedPerson, results);
 }
 
 /** Format output with recommended email */
@@ -692,7 +600,6 @@ export async function enrichAll(
 
   // 2. Resolve domain for each company ONCE
   for (const [comp, group] of companyGroups.entries()) {
-    // Check if any person in this group already has a domain provided or an email
     let sharedDomain = "";
     for (const p of group) {
       let extracted = extractDomain(p.domain ?? "");
@@ -705,13 +612,9 @@ export async function enrichAll(
       }
     }
 
-    // If no one has a domain, guess it ONCE for the entire company
     if (!sharedDomain && group.length > 0 && group[0].company) {
       const guesses = await llmGuessDomains(group[0].company, "");
-      
       let verifiedDomain = "";
-      
-      // To avoid Vercel's 10s timeout, test all guesses concurrently on just ONE candidate
       const testCandidate = group.find(p => !p.email);
       
       if (testCandidate && guesses.length > 0) {
@@ -719,10 +622,10 @@ export async function enrichAll(
         const lName = testCandidate.name.split(" ").slice(1).join(" ") || "";
         
         if (fName && lName) {
-          // Limit to max 3 guesses to avoid Hunter rate limits
-          const topGuesses = guesses.slice(0, 3);
-          
+          const topGuesses = guesses.slice(0, 2);
           for (const guess of topGuesses) {
+            if (localApiUsage.hunter + localApiUsage.apollo >= 2) break;
+
             localApiUsage.hunter++;
             const result = await hunterLookup(guess, fName, lName, hunterKey);
             if (result) {
@@ -737,7 +640,6 @@ export async function enrichAll(
       if (verifiedDomain) {
         sharedDomain = verifiedDomain;
       } else if (guesses.length > 0) {
-        // If Hunter failed, don't blindly pick guesses[0]. Verify MX records!
         let validFallback = "";
         for (const guess of guesses) {
           const mx = await resolveMxSafe(guess);
@@ -750,7 +652,6 @@ export async function enrichAll(
       }
     }
 
-    // Assign the shared domain to all people in the group who don't have one
     if (sharedDomain) {
       for (const p of group) {
         if (!extractDomain(p.domain ?? "")) {
@@ -758,49 +659,57 @@ export async function enrichAll(
         }
         
         // --- JD Extraction Pattern Feedback Loop ---
-        // If they already have an email (from JD), feed it into the Pattern Engine!
         if (p.email) {
           const { first, last } = parseName(p.name);
           const localPart = p.email.split("@")[0].toLowerCase();
           const pattern = extractPattern(first, last, localPart);
           
-          // Save it to the database so the Pattern Engine can use it for others
-          await store.saveEmail(
-            p.email,
-            p.name,
-            sharedDomain,
-            pattern,
-            100, // max confidence
-            "JD Extraction",
-            true // verified
-          );
+          await store.saveEmail(p.email, p.name, sharedDomain, pattern, 100, "JD Extraction", true);
           if (pattern !== "unknown") {
             await store.recordPatternSuccess(pattern, sharedDomain);
           }
         }
       }
     }
-  }
 
-  // 3. Process each person
-  // We process CONCURRENTLY to avoid Vercel 60s timeouts. 
-  // `localApiTrack` is used to enforce the 2 API calls/domain limit across concurrent promises.
-  const localApiTrack = new Map<string, number>();
-
-  const processPromises = people.map(async (person) => {
-    if (person.email) {
-      return {
-        name: person.name,
-        company: person.company,
-        domain: person.domain || "",
-        emails: [{ email: person.email, source: "JD Extraction", confidence: 100, type: "verified" } as EmailResult],
-        recommended: person.email,
-      };
+    // 3. Process candidates (Verification Group -> Pattern Group)
+    const jdVerified = group.filter(p => p.email);
+    const unverified = group.filter(p => !p.email);
+    
+    for (const p of jdVerified) {
+      results.push({
+        name: p.name,
+        company: p.company,
+        domain: p.domain || sharedDomain,
+        emails: [{ email: p.email, source: "JD Extraction", confidence: 100, type: "verified" } as EmailResult],
+        recommended: p.email || null,
+      });
     }
-    return await processPerson(person, hunterKey, apolloKey, preFetchedResults, localApiUsage, localApiTrack);
-  });
 
-  results.push(...(await Promise.all(processPromises)));
+    // Count how many verified emails we already have for this domain
+    const allDomainEmails = await store.getCachedEmailsByDomain(sharedDomain);
+    let totalVerified = new Set(allDomainEmails.filter(c => c.verified).map(c => c.name)).size + jdVerified.length;
+
+    for (const person of unverified) {
+      // If we have less than 2 verified emails total, this person is in the Verification Group
+      const isVerificationMode = totalVerified < 2;
+      
+      const res = await processCandidateOptimized(
+        person, 
+        hunterKey, 
+        apolloKey, 
+        isVerificationMode, 
+        preFetchedResults, 
+        localApiUsage
+      );
+      
+      results.push(res);
+      
+      if (res.emails.some(e => e.type === "verified")) {
+        totalVerified++;
+      }
+    }
+  }
 
   return { results, localApiUsage };
 }
