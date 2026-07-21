@@ -1,0 +1,8 @@
+Rank these candidates for likelihood of being the hiring manager for the specified role.
+Output as a JSON array of objects, each containing:
+- name: Candidate Name
+- title: Candidate Title
+- department: Candidate Department
+- source: Search Source
+- confidence: Score from 0.0 to 1.0
+Sort the array in descending order of confidence.

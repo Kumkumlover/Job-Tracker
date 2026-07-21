@@ -33,6 +33,7 @@ export interface SearchStrategy {
   deptKeywords: string;
   deptQuery: string;
   hrQuery: string;
+  companyContext: string;
 }
 
 /** Extended SearchResult that tracks which engines found this profile */
@@ -160,6 +161,34 @@ export function scoreResult(
 // LLM Strategy Builder (called ONCE per search)
 // ---------------------------------------------------------------------------
 
+async function fetchCompanyContext(company: string): Promise<string> {
+  const apiKey = process.env.TAVILY_API_KEY;
+  if (!apiKey) return "";
+  
+  try {
+    const res = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query: `${company} company overview employee count size`,
+        search_depth: "basic",
+        max_results: 3,
+      }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) return "";
+    const data = await res.json();
+    return (data.results || [])
+      .map((r: any) => r.content)
+      .join("\n")
+      .substring(0, 1500);
+  } catch (e) {
+    return "";
+  }
+}
+
 /**
  * Bug 1 Fix: This function is called exactly ONCE per request in searchCandidatesAuto
  * and the result is passed down — eliminating the duplicate LLM call.
@@ -179,9 +208,11 @@ export async function buildSearchStrategyWithLLM(
     const { SearchStrategySchema } = await import("../evalArtifacts");
     const { askJSONValidated } = await import("../automation/llm");
     
+    const companyContext = await fetchCompanyContext(company);
     const prompt = loadPrompt("searchStrategy_v1", {
       jobTitle,
       company,
+      companyContext,
       jd: jd.substring(0, 1500)
     });
 
@@ -219,7 +250,7 @@ export async function buildSearchStrategyWithLLM(
 
     // Bug 2 Fix: No department name in HR query — HR people don't list dept names in their titles
     const hrRawVariants =
-      strategy.hrTitles?.length > 0
+      (strategy.hrTitles && strategy.hrTitles.length > 0)
         ? strategy.hrTitles.map((r: string) => `"${r}"`)
         : ['"Recruiter"', '"Talent Acquisition"', '"HR Business Partner"'];
     const hrUnique = Array.from(new Set(hrRawVariants)).slice(0, 4);
@@ -237,6 +268,7 @@ export async function buildSearchStrategyWithLLM(
       deptKeywords: strategy.deptKeywords || strategy.department,
       deptQuery,
       hrQuery,
+      companyContext,
     };
   } catch (err) {
     console.warn("[search] LLM strategy failed, using heuristic fallback:", err);
@@ -284,7 +316,7 @@ function buildQueriesFallback(
   // Bug 2 Fix applied here too
   const hrQuery = `site:linkedin.com/in "${company}" (Recruiter OR "Talent Acquisition" OR "HR Business Partner" OR "People Partner")${exclusions ? ` ${exclusions}` : ""}`;
 
-  return { department: deptKeywords, roleVariants, deptKeywords, deptQuery, hrQuery };
+  return { department: deptKeywords, roleVariants, deptKeywords, deptQuery, hrQuery, companyContext: "" };
 }
 
 // ---------------------------------------------------------------------------
@@ -343,7 +375,7 @@ function buildCacheKey(company: string, jobTitle: string): string {
 
 async function getCachedResults(
   cacheKey: string
-): Promise<{ results: SearchResult[]; deptKeywords: string } | null> {
+): Promise<{ results: SearchResult[]; deptKeywords: string; companyContext: string } | null> {
   try {
     const cached = await prisma.searchCache.findFirst({
       where: { cacheKey, expiresAt: { gt: new Date() } },
@@ -353,6 +385,7 @@ async function getCachedResults(
     return {
       results: cached.results as unknown as SearchResult[],
       deptKeywords: cached.deptKeywords,
+      companyContext: cached.companyContext,
     };
   } catch {
     return null; // DB errors must never crash the search
@@ -364,14 +397,15 @@ async function setCachedResults(
   company: string,
   jobTitle: string,
   results: SearchResult[],
-  deptKeywords: string
+  deptKeywords: string,
+  companyContext: string
 ): Promise<void> {
   try {
     const expiresAt = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000); // 21 days
     await prisma.searchCache.upsert({
       where: { cacheKey },
-      update: { results: results as any, deptKeywords, expiresAt },
-      create: { cacheKey, company, jobTitle, results: results as any, deptKeywords, expiresAt },
+      update: { results: results as any, deptKeywords, companyContext, expiresAt },
+      create: { cacheKey, company, jobTitle, results: results as any, deptKeywords, companyContext, expiresAt },
     });
   } catch (err) {
     console.warn("[search] Failed to write search cache:", err);
@@ -558,6 +592,7 @@ export async function searchCandidatesAuto(
   jdContacts: any[];
   localApiUsage: { search: number };
   deptKeywords: string;
+  companyContext: string;
 }> {
   let jdContacts: any[] = [];
   if (jd && jd.trim().length > 10) {
@@ -581,6 +616,7 @@ export async function searchCandidatesAuto(
       jdContacts,
       localApiUsage: { search: 0 }, // 0 because we served from cache
       deptKeywords: cached.deptKeywords,
+      companyContext: "", // Cached searches already used the context
     };
   }
 
@@ -620,7 +656,7 @@ export async function searchCandidatesAuto(
 
   // Persist to cache for future searches
   if (searchResults.length > 0) {
-    await setCachedResults(cacheKey, company, jobTitle, searchResults, strategy.deptKeywords);
+    await setCachedResults(cacheKey, company, jobTitle, searchResults, strategy.deptKeywords, strategy.companyContext);
   }
 
   return {
@@ -628,5 +664,6 @@ export async function searchCandidatesAuto(
     jdContacts,
     localApiUsage: { search: enginesUsed },
     deptKeywords: strategy.deptKeywords,
+    companyContext: strategy.companyContext,
   };
 }

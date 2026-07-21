@@ -1,14 +1,11 @@
+
 /**
  * Phase 2b: LLM ranks the top search results into candidates.
- *
- * Bug 4 Fix: Removed dead imports (extractDeptKeywords, deptRelevanceScore, detectWrongDept).
- * Bug 5 Fix: Replaced hardcoded "Fixed Invest" / "Fixerra" with ${company} template variable.
  *
  * Corroboration metadata (which search engines found each profile) is now passed
  * to the LLM so it can factor multi-source confirmation into its confidence scoring.
  */
 
-import { askJSON } from "../automation/llm";
 import type { SearchResult, RankedCandidate } from "../types";
 import type { CorroboratedResult } from "./search";
 
@@ -18,7 +15,8 @@ export async function rankCandidates(
   jobTitle: string,
   jd?: string,
   excludeNames: string[] = [],
-  llmDeptKeywords?: string
+  llmDeptKeywords?: string,
+  webCompanyContext: string = ""
 ): Promise<RankedCandidate[]> {
   if (!results.length) return [];
 
@@ -29,7 +27,7 @@ export async function rankCandidates(
     (v, i, a) => a.findIndex((v2) => v2.url === v.url) === i
   );
 
-  // Build corroboration labels for the LLM — tell it which engines confirmed each profile
+  // Build corroboration labels for the LLM
   const getCorroborationLabel = (r: SearchResult): string => {
     const sources = (r as CorroboratedResult).sources;
     if (!sources || sources.length === 0) return "";
@@ -38,19 +36,21 @@ export async function rankCandidates(
     return ` [Found by 1 engine only: ${sources[0]} — lower trust]`;
   };
 
-  // Bug 5 Fix: All references to specific companies replaced with ${company}
   const { loadPrompt } = await import("../automation/prompts/index");
   const { TopCandidatesResponseSchema } = await import("../evalArtifacts");
   const { askJSONValidated } = await import("../automation/llm");
 
-  const companyContext = jd ? `\nCOMPANY CONTEXT (from Job Description):\n${jd.substring(0, 1000)}\n\nCRITICAL: Use the above context (especially location, industry, or product details) to differentiate between companies that share the exact same name. If the snippet shows a person working at an "${company}" that does not match this context (e.g., wrong industry or wrong location), EXCLUDE THEM.\n` : "";
+  const jdContext = jd ? `\nCOMPANY CONTEXT (from Job Description):\n${jd.substring(0, 1000)}\n` : "";
+  const webContext = webCompanyContext ? `\nCOMPANY CONTEXT (from Web Search):\n${webCompanyContext}\n` : "";
+  
+  const finalContext = `${jdContext}${webContext}\nCRITICAL: Use the above context (especially location, industry, or product details) to differentiate between companies that share the exact same name. If the snippet shows a person working at an "${company}" that does not match this context (e.g., wrong industry or wrong location), EXCLUDE THEM.\n`;
 
   const searchResults = uniqueResults.map((r, i) => `[${i}] Name: ${r.title.split(/[-—|]/)[0].trim()}${getCorroborationLabel(r)}\nSnippet: ${r.snippet}`).join("\n\n");
 
   const prompt = loadPrompt("candidateRank_v1", {
     company,
     jobTitle,
-    companyContext,
+    companyContext: finalContext,
     llmDeptKeywords: llmDeptKeywords || jobTitle,
     searchResults
   });

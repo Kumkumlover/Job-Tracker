@@ -294,14 +294,15 @@ model DomainApiLimit {
 /// Caches people search results for a (company, jobTitle) pair to avoid burning API credits on repeat searches.
 /// TTL: 21 days — after which a fresh search is performed.
 model SearchCache {
-  id          String   @id @default(cuid())
-  cacheKey    String   @unique // SHA256 of normalized "company::jobTitle"
-  company     String
-  jobTitle    String
-  results     Json     // Serialized SearchResult[]
-  deptKeywords String
-  createdAt   DateTime @default(now())
-  expiresAt   DateTime // createdAt + 21 days
+  id             String   @id @default(cuid())
+  cacheKey       String   @unique // SHA256 of normalized "company::jobTitle"
+  company        String
+  jobTitle       String
+  results        Json     // Serialized SearchResult[]
+  deptKeywords   String
+  companyContext String   @default("")
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime // createdAt + 21 days
 
   @@index([cacheKey])
   @@index([expiresAt])

@@ -1,0 +1,3 @@
+From the candidate's resume, select the 3 achievements most relevant to the job description provided. 
+List each with a brief rationale and a 0.0 to 1.0 relevance score. 
+Return as a JSON array of objects with keys: project, relevance_score, rationale.

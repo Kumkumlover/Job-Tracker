@@ -1,0 +1,4 @@
+Based on the company and role, generate:
+2 LinkedIn search queries, 2 Google queries, 2 Serper API queries, and 1 Exa query.
+Each query should include the company name and relevant title keywords for hiring managers.
+Return as JSON with keys: linkedin_queries, google_queries, serper_queries, exa_query.

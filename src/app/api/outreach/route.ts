@@ -81,7 +81,7 @@ async function handleFindContacts(body: {
 
   // Step 1: Search for candidates (Google CSE or LLM fallback)
   // This also extracts any contacts mentioned in the JD
-  const { results: searchResults, jdContacts, localApiUsage, deptKeywords } = await searchCandidatesAuto(
+  const { results: searchResults, jdContacts, localApiUsage, deptKeywords, companyContext } = await searchCandidatesAuto(
     company,
     jobTitle,
     jd,
@@ -97,7 +97,7 @@ async function handleFindContacts(body: {
 
   // Step 2: Rank LLM-discovered contacts
   const ranked = searchResults.length
-    ? await rankCandidates(searchResults, company, jobTitle, jd, excludeNames, deptKeywords)
+    ? await rankCandidates(searchResults, company, jobTitle, jd, excludeNames, deptKeywords, companyContext)
     : [];
 
   // Filter JD contacts to avoid duplication across cycles

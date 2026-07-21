@@ -1,0 +1,3 @@
+Write a concise recruitment email. Include a subject, greeting, mention of 3 key achievements (from evidence), why the candidate is a fit, and a clear CTA. 
+Tone: professional and enthusiastic.
+Return as JSON with keys: subject, body, bullets, cta.
