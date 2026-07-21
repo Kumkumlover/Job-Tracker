@@ -383,52 +383,49 @@ export default function OutreachPage() {
  setEmailResults([]);
  setSelectedEmails(new Map());
 
- try {
- const contacts = selected.map((c) => ({
- name: c.name,
- company: company.trim(),
- domain: companyWebsite.trim() || "",
- email: c.email,
- }));
+  try {
+    const contacts = selected.map((c) => ({
+      name: c.name,
+      company: company.trim(),
+      domain: companyWebsite.trim() || "",
+      email: c.email,
+    }));
 
- const allResults: PersonResult[] = [];
- const autoSelect = new Map<string, string>();
+    const allResults: PersonResult[] = [];
+    const autoSelect = new Map<string, string>();
 
- // Process sequentially on frontend to avoid Vercel 10s timeout
- for (const contact of contacts) {
- const res = await fetch("/api/outreach", {
- method: "POST",
- headers: {
- "Content-Type": "application/json",
- "X-Hunter-Key": apiKeys.hunter,
- "X-Apollo-Key": apiKeys.apollo,
- },
- body: JSON.stringify({
- action: "find-emails",
- contacts: [contact],
- hunterKey: apiKeys.hunter,
- apolloKey: apiKeys.apollo,
- }),
- });
+    // Send all contacts in one batch so the backend can correctly group Verification vs Pattern Engine
+    const res = await fetch("/api/outreach", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hunter-Key": apiKeys.hunter,
+        "X-Apollo-Key": apiKeys.apollo,
+      },
+      body: JSON.stringify({
+        action: "find-emails",
+        contacts: contacts,
+        hunterKey: apiKeys.hunter,
+        apolloKey: apiKeys.apollo,
+      }),
+    });
 
- if (!res.ok) {
- console.error(`Failed to find email for ${contact.name}`);
- continue;
- }
+    if (!res.ok) {
+      throw new Error(`Failed to find emails for ${company}`);
+    }
 
- const data = await res.json();
- 
- if (data.localApiUsage) {
- setLocalUsage((prev) => ({
- ...prev,
- apollo: prev.apollo + (data.localApiUsage.apollo || 0),
- hunter: prev.hunter + (data.localApiUsage.hunter || 0),
- }));
- }
+    const data = await res.json();
+    
+    if (data.localApiUsage) {
+      setLocalUsage((prev) => ({
+        ...prev,
+        apollo: prev.apollo + (data.localApiUsage.apollo || 0),
+        hunter: prev.hunter + (data.localApiUsage.hunter || 0),
+      }));
+    }
 
- const results: PersonResult[] = data.emailResults || [];
- allResults.push(...results);
- }
+    const results: PersonResult[] = data.emailResults || [];
+    allResults.push(...results);
 
  // Count total emails found across all people (any type — verified, predicted, discovered)
  const totalEmailsFound = allResults.reduce((sum, r) => sum + r.emails.length, 0);
