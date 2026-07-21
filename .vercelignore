@@ -1,0 +1,23 @@
+/*.ts
+!/next.config.ts
+!/next-env.d.ts
+!/tsconfig.tsbuildinfo
+!/instrumentation.ts
+!/middleware.ts
+/scratch/
+/braintrust/
+/*.js
+!/postcss.config.js
+!/tailwind.config.js
+!/next.config.js
+
+# Ignore test and eval scripts that rely on braintrust (which is ignored)
+/run_all_traces.ts
+/run_eval.ts
+/test_single_prompt.ts
+/run_eval_trace.ts
+/run_validation_traces.ts
+/debug_raw_search.ts
+/test_*.ts
+/scratch_analyze.ts
+/scratch_analysis_output.json
