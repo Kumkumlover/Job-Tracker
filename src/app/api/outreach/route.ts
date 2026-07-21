@@ -100,9 +100,14 @@ async function handleFindContacts(body: {
     ? await rankCandidates(searchResults, company, jobTitle, jd, excludeNames, deptKeywords)
     : [];
 
+  // Filter JD contacts to avoid duplication across cycles
+  const filteredJdContacts = jdContacts.filter(
+    (c) => !excludeNames.map(n => n.toLowerCase().trim()).includes(c.name.toLowerCase().trim())
+  );
+
 
   // Step 3: Prepend JD-extracted contacts at top (they're confirmed)
-  const jdRanked = await Promise.all(jdContacts.map(async (c) => {
+  const jdRanked = await Promise.all(filteredJdContacts.map(async (c) => {
     let profile_url = "";
     try {
       const q = `site:linkedin.com/in intitle:"${company}" "${c.name}"`;
