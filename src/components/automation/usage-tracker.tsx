@@ -46,10 +46,7 @@ export function UsageTracker({ localUsage }: UsageTrackerProps) {
     if (isOpen) fetchGlobalUsage();
   }, [isOpen]);
 
-  // Hide if 0 usage
-  if (localUsage.search === 0 && localUsage.apollo === 0 && localUsage.hunter === 0) {
-    return null;
-  }
+  // Always show the tracker now since it also tracks global usage
 
   const renderLimit = (name: string, data: any) => {
     return (
