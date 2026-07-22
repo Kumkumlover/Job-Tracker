@@ -19,6 +19,7 @@ import KanbanBoard from "@/components/dashboard/KanbanBoard";
 import ApplicationForm from "@/components/dashboard/ApplicationForm";
 import FollowUpSummary from "@/components/dashboard/FollowUpSummary";
 import GmailSyncButton from "@/components/gmail/GmailSyncButton";
+import NavigationHeader from "@/components/NavigationHeader";
 import type { ApplicationWithRelations } from "@/types";
 
 export default function DashboardPage() {
@@ -107,40 +108,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      {/* Header */}
-      <header className="border-b border-[var(--border)] bg-[var(--card)]">
-        <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <h1 className="text-lg font-bold">Job Tracker</h1>
-            <nav className="flex items-center gap-4 text-sm font-medium">
-              <a href="/dashboard" className="text-[var(--primary)]">Dashboard</a>
-              <a href="/outreach" className="text-[var(--muted-foreground)] hover:text-white transition-colors">JobSuite (Outreach)</a>
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <GmailSyncButton />
-            <button
-              onClick={() => router.push("/settings")}
-              className="p-2 rounded-lg hover:bg-[var(--secondary)] transition-colors"
-              title="Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-            <div className="flex items-center gap-2 pl-3 border-l border-[var(--border)]">
-              <span className="text-sm text-[var(--muted-foreground)]">
-                {session?.user?.name || session?.user?.email}
-              </span>
-              <button
-                onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                className="p-2 rounded-lg hover:bg-[var(--secondary)] transition-colors"
-                title="Sign out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <NavigationHeader />
 
       {/* Main */}
       <main className="max-w-[1600px] mx-auto px-6 py-6 space-y-4">

@@ -27,6 +27,7 @@ import {
  FileText,
 } from "lucide-react";
 import { UsageTracker, type LocalUsage } from "@/components/automation/usage-tracker";
+import NavigationHeader from "@/components/NavigationHeader";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -672,9 +673,9 @@ export default function OutreachPage() {
  // ── Render ──
 
  return (
- <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans">
- 
- <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-10 space-y-8">
+ <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans">
+  <NavigationHeader />
+  <main className="relative z-10 w-full max-w-6xl mx-auto px-6 py-10 space-y-8">
  {/* Header */}
  <header className="space-y-2">
  <h1 className="text-3xl font-bold text-[var(--foreground)] flex items-center gap-3">
@@ -1396,9 +1397,9 @@ export default function OutreachPage() {
  <footer className="text-center text-xs text-slate-600 pt-6">
  Outreach Automation · Part of Job Outreach Suite
  </footer>
- </div>
+ </main>
 
  {isMounted && <UsageTracker localUsage={localUsage} hunterKey={apiKeys.hunter} apolloKey={apiKeys.apollo} />}
- </main>
+ </div>
  );
 }

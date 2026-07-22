@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2, GripVertical, Key, Copy, Mail, CheckCircle, AlertCircle, RotateCcw } from "lucide-react";
+import NavigationHeader from "@/components/NavigationHeader";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCustomProperties,
@@ -116,18 +117,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <header className="border-b border-[var(--border)] bg-[var(--card)]">
-        <div className="max-w-3xl mx-auto px-6 py-4">
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] mb-3"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-          <h1 className="text-2xl font-bold">Settings</h1>
-        </div>
-      </header>
+      <NavigationHeader />
 
       <main className="max-w-3xl mx-auto px-6 py-6 space-y-8">
         {/* Gmail Accounts */}

@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { Save, Loader2, Link2, User, AlignLeft, BrainCircuit } from "lucide-react";
+import NavigationHeader from "@/components/NavigationHeader";
 
-export default function SettingsPage() {
+export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -73,9 +74,10 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans flex flex-col">
+      <NavigationHeader />
       <main className="flex-grow w-full max-w-4xl mx-auto px-6 py-10 space-y-10">
         <header className="space-y-2 border-b border-[var(--border)] pb-6">
-          <h1 className="text-3xl font-bold text-[var(--foreground)]">Settings & Profile</h1>
+          <h1 className="text-3xl font-bold text-[var(--foreground)]">Profile</h1>
           <p className="text-[var(--muted-foreground)]">
             Configure your personal information, CV links, and custom outreach templates.
           </p>

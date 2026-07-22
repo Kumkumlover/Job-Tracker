@@ -614,32 +614,7 @@ export async function enrichAll(
 
     if (!sharedDomain && group.length > 0 && group[0].company) {
       const guesses = await llmGuessDomains(group[0].company, "");
-      let verifiedDomain = "";
-      const testCandidate = group.find(p => !p.email);
-      
-      if (testCandidate && guesses.length > 0) {
-        const fName = testCandidate.name.split(" ")[0] || "";
-        const lName = testCandidate.name.split(" ").slice(1).join(" ") || "";
-        
-        if (fName && lName) {
-          const topGuesses = guesses.slice(0, 2);
-          for (const guess of topGuesses) {
-            if (localApiUsage.hunter + localApiUsage.apollo >= 2) break;
-
-            localApiUsage.hunter++;
-            const result = await hunterLookup(guess, fName, lName, hunterKey);
-            if (result) {
-              verifiedDomain = guess;
-              preFetchedResults.set(`${testCandidate.name}-${verifiedDomain}`, result);
-              break;
-            }
-          }
-        }
-      }
-
-      if (verifiedDomain) {
-        sharedDomain = verifiedDomain;
-      } else if (guesses.length > 0) {
+      if (guesses.length > 0) {
         let validFallback = "";
         for (const guess of guesses) {
           const mx = await resolveMxSafe(guess);
