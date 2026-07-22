@@ -1,0 +1,331 @@
+[
+  {
+    "opening": {
+      "company": "IDFC First Bank",
+      "role": "Assistant Product Manager",
+      "department": "Product"
+    },
+    "rawCount": 20,
+    "validated": [
+      {
+        "index": 0,
+        "name": "Mehak Dahiya",
+        "current_title": "Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/mehak-dahiya",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Current Product Manager"
+      },
+      {
+        "index": 2,
+        "name": "Aakash Verma",
+        "current_title": "Senior Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/aakashvermaa",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Current Senior Product Manager"
+      },
+      {
+        "index": 3,
+        "name": "Siddharth Chouhan",
+        "current_title": "Digital product manager",
+        "linkedin_url": "https://in.linkedin.com/in/siddharth-chouhan-94a8ba16b",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Current Product Manager"
+      },
+      {
+        "index": 4,
+        "name": "Srishti Shrivastava",
+        "current_title": "Senior Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/srishti-shrivastava-819b14a2",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Current Senior Product Manager"
+      },
+      {
+        "index": 5,
+        "name": "Priya Sharma",
+        "current_title": "Senior Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/priya-sharma-84193813a",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Current Senior Product Manager"
+      },
+      {
+        "index": 7,
+        "name": "Abhilash Tripathi",
+        "current_title": "Senior Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/abhilash-tripathi-b1892165",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Current Senior Product Manager"
+      },
+      {
+        "index": 8,
+        "name": "Prasenjit Biswas",
+        "current_title": "AVP - Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/prasenjit-biswas",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Current Product Manager"
+      },
+      {
+        "index": 9,
+        "name": "Amruta Khairnar",
+        "current_title": "Head of Product & Program",
+        "linkedin_url": "https://in.linkedin.com/in/amruta-khairnar",
+        "confidence": 0.9,
+        "role_type": "hiring_manager",
+        "reasoning": "Head of Product"
+      }
+    ]
+  },
+  {
+    "opening": {
+      "company": "PocketFM",
+      "role": "AI Product Intern",
+      "department": "Product"
+    },
+    "rawCount": 20,
+    "validated": [
+      {
+        "index": 0,
+        "name": "Akansha Kumari",
+        "current_title": "Head of Product",
+        "linkedin_url": "https://in.linkedin.com/in/akansha-kumari-32771543",
+        "confidence": 0.9,
+        "role_type": "team_lead",
+        "reasoning": "Explicit current title"
+      },
+      {
+        "index": 2,
+        "name": "shubham jain",
+        "current_title": "Lead PM",
+        "linkedin_url": "https://in.linkedin.com/in/shubham-j",
+        "confidence": 0.9,
+        "role_type": "team_lead",
+        "reasoning": "Explicit current title"
+      },
+      {
+        "index": 4,
+        "name": "Chinmay Sahoo",
+        "current_title": "Senior Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/chinmay-sahoo-2033712b",
+        "confidence": 0.5,
+        "role_type": "other",
+        "reasoning": "Vague current role"
+      },
+      {
+        "index": 5,
+        "name": "Saloni Mehta",
+        "current_title": "No explicit title",
+        "linkedin_url": "https://www.linkedin.com/in/saloni-mehta25",
+        "confidence": 0.5,
+        "role_type": "other",
+        "reasoning": "No explicit title"
+      },
+      {
+        "index": 6,
+        "name": "Anubhav Goyal",
+        "current_title": "No explicit title",
+        "linkedin_url": "https://in.linkedin.com/in/anubhavgo",
+        "confidence": 0.5,
+        "role_type": "other",
+        "reasoning": "No explicit title"
+      },
+      {
+        "index": 7,
+        "name": "Priya Rawat",
+        "current_title": "AVP Product",
+        "linkedin_url": "https://in.linkedin.com/in/priya-rawat-28844a59",
+        "confidence": 0.9,
+        "role_type": "team_lead",
+        "reasoning": "Explicit current title"
+      },
+      {
+        "index": 9,
+        "name": "Alok Kumar",
+        "current_title": "Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/alok-kumar-9b8629216",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Explicit current title"
+      }
+    ]
+  },
+  {
+    "opening": {
+      "company": "Cashify",
+      "role": "Product Intern",
+      "department": "Product"
+    },
+    "rawCount": 20,
+    "validated": [
+      {
+        "index": 5,
+        "name": "Sushant Gandhi",
+        "current_title": "Product@Cashify",
+        "linkedin_url": "https://in.linkedin.com/in/sushant-gandhi-392849167",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Product role at Cashify"
+      },
+      {
+        "index": 6,
+        "name": "Ashish Hooda",
+        "current_title": "Product @ Cashify",
+        "linkedin_url": "https://in.linkedin.com/in/ashishhooda",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Product role at Cashify"
+      },
+      {
+        "index": 7,
+        "name": "Shashwat Tyagi",
+        "current_title": "Product Manager @ Cashify",
+        "linkedin_url": "https://in.linkedin.com/in/shashwat-tyagi",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Product role at Cashify"
+      },
+      {
+        "index": 9,
+        "name": "Divey Asiza",
+        "current_title": "Product Manager @ Cashify",
+        "linkedin_url": "https://in.linkedin.com/in/divey-asiza-a1b4bb112",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Product role at Cashify"
+      },
+      {
+        "index": 0,
+        "name": "Mandeep Manocha",
+        "current_title": "Co-founder & CEO",
+        "linkedin_url": "https://in.linkedin.com/in/mandeep-manocha-baaaa86",
+        "confidence": 0.5,
+        "role_type": "hiring_manager",
+        "reasoning": "Co-founder at Cashify"
+      },
+      {
+        "index": 1,
+        "name": "Siddhant Dhingra",
+        "current_title": "Co-founder & CBO",
+        "linkedin_url": "https://in.linkedin.com/in/siddhant-dhingra-a299b14",
+        "confidence": 0.5,
+        "role_type": "hiring_manager",
+        "reasoning": "Co-founder at Cashify"
+      },
+      {
+        "index": 2,
+        "name": "Amit Sethi",
+        "current_title": "Co-Founder",
+        "linkedin_url": "https://in.linkedin.com/in/amit-sethi-2478293",
+        "confidence": 0.5,
+        "role_type": "hiring_manager",
+        "reasoning": "Co-founder at Cashify"
+      }
+    ]
+  },
+  {
+    "opening": {
+      "company": "Loop Health",
+      "role": "Associate Product Manager",
+      "department": "Product"
+    },
+    "rawCount": 20,
+    "validated": [
+      {
+        "index": 3,
+        "name": "Pranaav Marathe",
+        "current_title": "Founder's Office at Loop Health",
+        "linkedin_url": "https://in.linkedin.com/in/pranaav-marathe-b5b79b145",
+        "confidence": 0.8,
+        "role_type": "other",
+        "reasoning": "Current role at Loop"
+      },
+      {
+        "index": 6,
+        "name": "Navneet Ringania",
+        "current_title": "Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/navneet-ringania",
+        "confidence": 0.9,
+        "role_type": "other",
+        "reasoning": "Product Manager at Loop"
+      },
+      {
+        "index": 7,
+        "name": "Rukshita Singh",
+        "current_title": "Founder's Office at Loop Health",
+        "linkedin_url": "https://in.linkedin.com/in/rukshita-singh",
+        "confidence": 0.8,
+        "role_type": "other",
+        "reasoning": "Current role at Loop"
+      }
+    ]
+  },
+  {
+    "opening": {
+      "company": "Shiprocket",
+      "role": "Product Manager",
+      "department": "Product"
+    },
+    "rawCount": 20,
+    "validated": [
+      {
+        "index": 0,
+        "name": "Saahil Goel",
+        "current_title": "CEO",
+        "linkedin_url": "https://in.linkedin.com/in/saahilgoel",
+        "confidence": 0.8,
+        "role_type": "other",
+        "reasoning": "Involved in product development"
+      },
+      {
+        "index": 1,
+        "name": "Swati Chopra",
+        "current_title": "Director - Product Management",
+        "linkedin_url": "https://in.linkedin.com/in/swati-chopra-54483819",
+        "confidence": 0.9,
+        "role_type": "team_lead",
+        "reasoning": "Product management experience"
+      },
+      {
+        "index": 3,
+        "name": "Praful Poddar",
+        "current_title": "Chief Product Officer",
+        "linkedin_url": "https://in.linkedin.com/in/prafulpoddar",
+        "confidence": 0.95,
+        "role_type": "hiring_manager",
+        "reasoning": "Product management leadership"
+      },
+      {
+        "index": 4,
+        "name": "Vivek Thota",
+        "current_title": "Senior Director",
+        "linkedin_url": "https://in.linkedin.com/in/vivek-thota-96a10167",
+        "confidence": 0.8,
+        "role_type": "team_lead",
+        "reasoning": "Product management experience"
+      },
+      {
+        "index": 5,
+        "name": "Shashank Mittal",
+        "current_title": "Senior Director",
+        "linkedin_url": "https://in.linkedin.com/in/shashank-mittal-48082725",
+        "confidence": 0.7,
+        "role_type": "team_lead",
+        "reasoning": "Product management experience"
+      },
+      {
+        "index": 8,
+        "name": "Megha Kaur",
+        "current_title": "Product Manager",
+        "linkedin_url": "https://in.linkedin.com/in/megha-kaur-18970573",
+        "confidence": 0.5,
+        "role_type": "other",
+        "reasoning": "Past product manager"
+      }
+    ]
+  }
+]

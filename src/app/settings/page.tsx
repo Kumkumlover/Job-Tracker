@@ -35,6 +35,17 @@ export default function SettingsPage() {
   const [newStageColor, setNewStageColor] = useState("#6b7280");
   const [apiKey, setApiKey] = useState("");
   const [copied, setCopied] = useState(false);
+  const [apiKeysForm, setApiKeysForm] = useState({
+    hunterKey: "",
+    apolloKey: "",
+    serperKey: "",
+    geminiKey: "",
+    tavilyKey: "",
+    exaKey: ""
+  });
+  const [savingKeys, setSavingKeys] = useState(false);
+  const [keysMessage, setKeysMessage] = useState<{type: "success"|"error", text: string}|null>(null);
+
   const [linkedAccounts, setLinkedAccounts] = useState<{ id: string; email: string; lastSyncedAt: string | null }[]>([]);
   const [gmailMessage, setGmailMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [resetting, setResetting] = useState(false);
@@ -48,6 +59,22 @@ export default function SettingsPage() {
     fetch("/api/extension/token")
       .then((r) => r.json())
       .then((d) => setApiKey(d.apiKey || ""))
+      .catch(() => {});
+      
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.apiKeys) {
+          setApiKeysForm({
+            hunterKey: d.apiKeys.hunterKey || "",
+            apolloKey: d.apiKeys.apolloKey || "",
+            serperKey: d.apiKeys.serperKey || "",
+            geminiKey: d.apiKeys.geminiKey || "",
+            tavilyKey: d.apiKeys.tavilyKey || "",
+            exaKey: d.apiKeys.exaKey || ""
+          });
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -105,6 +132,29 @@ export default function SettingsPage() {
     navigator.clipboard.writeText(apiKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSaveApiKeys = async () => {
+    setSavingKeys(true);
+    setKeysMessage(null);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiKeysForm),
+      });
+      if (res.ok) {
+        setKeysMessage({ type: "success", text: "API keys saved successfully!" });
+        setTimeout(() => setKeysMessage(null), 3000);
+      } else {
+        const d = await res.json();
+        setKeysMessage({ type: "error", text: d.error || "Failed to save keys" });
+      }
+    } catch (e) {
+      setKeysMessage({ type: "error", text: "Failed to save API keys" });
+    } finally {
+      setSavingKeys(false);
+    }
   };
 
   if (status === "loading") {
@@ -191,6 +241,56 @@ export default function SettingsPage() {
             >
               <Copy className="w-4 h-4" />
               {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+        </section>
+
+        {/* External API Keys */}
+        <section className="p-5 rounded-lg border border-[var(--border)] bg-[var(--card)]">
+          <h2 className="text-lg font-semibold flex items-center gap-2 mb-3">
+            <Key className="w-5 h-5" />
+            External API Integrations
+          </h2>
+          <p className="text-sm text-[var(--muted-foreground)] mb-4">
+            Provide your API keys to enable automated research, email finding, and LLM drafting.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {[
+              { id: "hunterKey", label: "Hunter.io API Key", placeholder: "sk_..." },
+              { id: "apolloKey", label: "Apollo.io API Key", placeholder: "sk_..." },
+              { id: "serperKey", label: "Serper API Key", placeholder: "sk_..." },
+              { id: "geminiKey", label: "Gemini API Key", placeholder: "AIza..." },
+              { id: "tavilyKey", label: "Tavily API Key", placeholder: "tvly-..." },
+              { id: "exaKey", label: "Exa API Key", placeholder: "exa_..." },
+            ].map((field) => (
+              <div key={field.id}>
+                <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-1">{field.label}</label>
+                <input
+                  type="password"
+                  value={apiKeysForm[field.id as keyof typeof apiKeysForm]}
+                  onChange={(e) => setApiKeysForm(prev => ({ ...prev, [field.id]: e.target.value }))}
+                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--primary)]"
+                  placeholder={field.placeholder}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-[var(--border)] mt-4">
+            <div className="mt-4">
+              {keysMessage && (
+                <span className={`text-sm ${keysMessage.type === "success" ? "text-[#00d992]" : "text-red-400"}`}>
+                  {keysMessage.text}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleSaveApiKeys}
+              disabled={savingKeys}
+              className="px-4 py-2 mt-4 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+            >
+              {savingKeys ? "Saving..." : "Save API Keys"}
             </button>
           </div>
         </section>

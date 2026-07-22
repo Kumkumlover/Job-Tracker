@@ -1,0 +1,318 @@
+[
+  {
+    "company": "IDFC First bank",
+    "role": "Assistant Product Manager",
+    "golden_expected_stage": "Early Stage",
+    "golden_expected_titles": [
+      "The ideal candidate has 0-2 years of experience in a related field or has relevant internship experience.",
+      "The ideal candidate is a curious and structured thinker with an interest in product, data, or UX."
+    ],
+    "step1_output": {
+      "industry": "Financial Services",
+      "core_products": "Provides a range of banking and financial services, including credit cards, loans, and deposits.",
+      "stage": "Public",
+      "mission_statement": "Empowering a billion Indians to achieve their financial goals through innovative banking solutions."
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Product Manager",
+        "Head of Product",
+        "Product Lead",
+        "Assistant Product Manager",
+        "Product Owner",
+        "Product Development Manager"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition Manager"
+      ],
+      "deptKeywords": "Credit Card Product",
+      "companyModifier": "Banking"
+    }
+  },
+  {
+    "company": "PocketFM",
+    "role": "Product Intern",
+    "golden_expected_stage": "Startup",
+    "golden_expected_titles": [
+      "The ideal candidate is a recent graduate or young professional with a strong passion for AI and consumer tech, who is eager to learn and take ownership of product development."
+    ],
+    "step1_output": {
+      "industry": "Consumer Technology and AI",
+      "core_products": "AI-powered consumer experiences and recommerce platforms",
+      "stage": "Startup",
+      "mission_statement": "Unfortunately, the mission statement is not provided in the job description, but based on the context, it can be inferred that PocketFM and Cashify aim to provide innovative and user-friendly AI-powered consumer experiences and recommerce platforms."
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Product Manager",
+        "Head of AI Product",
+        "Lead Product Manager",
+        "Product Lead",
+        "Senior Product Manager",
+        "Product Director"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition Manager"
+      ],
+      "deptKeywords": "AI Product Consumer Tech",
+      "companyModifier": "Bangalore"
+    }
+  },
+  {
+    "company": "Loop health",
+    "role": "Associate Product Manager",
+    "golden_expected_stage": "Growth",
+    "golden_expected_titles": [
+      "The candidate has a track record of shipping products that actually work",
+      "The candidate can measure outcomes and drive decision-making with user proximity"
+    ],
+    "step1_output": {
+      "industry": "Healthcare Technology",
+      "core_products": "Loop Health provides a platform for healthcare providers to manage patient engagement, care coordination, and population health management.",
+      "stage": "Private (Series A or B)",
+      "mission_statement": "Loop Health's mission is to empower healthcare providers to deliver high-quality, patient-centered care through innovative technology solutions."
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Product Manager",
+        "Head of Product",
+        "Product Lead",
+        "Founder",
+        "Co-Founder",
+        "Head of AI Product"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition Manager"
+      ],
+      "deptKeywords": "Healthcare Product Management",
+      "companyModifier": "Bangalore"
+    }
+  },
+  {
+    "company": "Osurity",
+    "role": "Product Intern (AI)",
+    "golden_expected_stage": "Startup",
+    "golden_expected_titles": [
+      "The ideal candidate has experience in product development and is familiar with AI technologies."
+    ],
+    "step1_output": {
+      "industry": "Artificial Intelligence",
+      "core_products": "AI-powered products",
+      "stage": "Private/Startup",
+      "mission_statement": "Not available in the provided job description context"
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Head of AI Product",
+        "Product Manager",
+        "Lead Product Manager",
+        "Senior Product Manager",
+        "Product Lead",
+        "AI Product Manager"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition Manager"
+      ],
+      "deptKeywords": "AI Product Development",
+      "companyModifier": "Bangalore"
+    }
+  },
+  {
+    "company": "Shiprocket",
+    "role": "Assistant Product Manager",
+    "golden_expected_stage": "Growth",
+    "golden_expected_titles": [
+      "The ideal candidate has 1-3 years of experience in product management or a related field",
+      "The candidate has a strong analytical mindset and can leverage data to inform business decisions",
+      "The candidate is able to build effective relationships with cross-functional teams and stakeholders"
+    ],
+    "step1_output": {
+      "industry": "E-commerce and Logistics",
+      "core_products": "Shipping and logistics solutions for e-commerce businesses",
+      "stage": "Growth Stage",
+      "mission_statement": "Empowering e-commerce businesses to deliver exceptional customer experiences through innovative logistics solutions"
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Product Manager",
+        "Head of Product",
+        "Product Lead",
+        "Senior Product Manager",
+        "Lead Product Manager",
+        "Product Director"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition Manager",
+        "HR Generalist"
+      ],
+      "deptKeywords": "Ecommerce Enablement",
+      "companyModifier": "Gurgaon"
+    }
+  },
+  {
+    "company": "Prosperr.io",
+    "role": "Product Manager Intern",
+    "golden_expected_stage": "Startup",
+    "golden_expected_titles": [
+      "The ideal candidate has prior experience in product management, preferably through an internship."
+    ],
+    "step1_output": {
+      "industry": "Software as a Service (SaaS)",
+      "core_products": "Product development and management platform",
+      "stage": "Startup",
+      "mission_statement": "Not available in the provided job description context"
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Product Manager",
+        "Head of Product",
+        "Founder",
+        "Co-Founder",
+        "Product Lead",
+        "Product Director"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition"
+      ],
+      "deptKeywords": "Product Development",
+      "companyModifier": "Startup"
+    }
+  },
+  {
+    "company": "Housing.com",
+    "role": "Associate Product Manager",
+    "golden_expected_stage": "Growth",
+    "golden_expected_titles": [
+      "The ideal candidate has 2-4 years of experience in B2C product roles and is comfortable working independently."
+    ],
+    "step1_output": {
+      "industry": "Real Estate Technology",
+      "core_products": "Online real estate marketplace and property search platform",
+      "stage": "Series B",
+      "mission_statement": "Empowering Indians to make informed property decisions through technology"
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Head of Product",
+        "Product Manager",
+        "Head of AI Product",
+        "Director of Product",
+        "VP Product",
+        "Head of Product Management"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition Manager"
+      ],
+      "deptKeywords": "AI Product Management",
+      "companyModifier": "Gurgaon"
+    }
+  },
+  {
+    "company": "Paytm",
+    "role": "Product Intern",
+    "golden_expected_stage": "Product Internship",
+    "golden_expected_titles": [
+      "The ideal candidate is a recent graduate or final-year student from Engineering, Business, or related fields with strong analytical and problem-solving skills."
+    ],
+    "step1_output": {
+      "industry": "Fintech and Digital Payments",
+      "core_products": "Digital payments, financial services, and e-commerce platform",
+      "stage": "Public",
+      "mission_statement": "Empowering a cashless economy by providing innovative financial services and digital payments solutions"
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Product Manager",
+        "Head of Product",
+        "Telco Product Manager",
+        "Product Lead",
+        "Senior Product Manager",
+        "Product Director"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition Manager"
+      ],
+      "deptKeywords": "Product Management Fintech",
+      "companyModifier": "Fintech"
+    }
+  },
+  {
+    "company": "Paramount",
+    "role": "Associate Product Manager",
+    "golden_expected_stage": "Early-stage",
+    "golden_expected_titles": [
+      "The ideal candidate has a strong understanding of user behavior and engagement trends, and has experience working on side projects or internships in product management."
+    ],
+    "step1_output": {
+      "industry": "Entertainment and Media",
+      "core_products": "Streaming services, including Paramount+ and Pluto TV",
+      "stage": "Public",
+      "mission_statement": "Paramount's mission is to be the most innovative and beloved media company in the world, delivering entertainment that inspires and delights audiences everywhere."
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Product Manager",
+        "Head of Product",
+        "Product Lead",
+        "Senior Product Manager",
+        "Director of Product",
+        "VP Product"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition Specialist"
+      ],
+      "deptKeywords": "Content Streaming",
+      "companyModifier": "Entertainment"
+    }
+  },
+  {
+    "company": "Multibagg.ai",
+    "role": "Product Intern",
+    "golden_expected_stage": "Startup",
+    "golden_expected_titles": [
+      "Ability to work in a fast-paced environment",
+      "Strong problem-solving skills"
+    ],
+    "step1_output": {
+      "industry": "Artificial Intelligence",
+      "core_products": "AI-powered products and services",
+      "stage": "Private/Startup",
+      "mission_statement": "Not available"
+    },
+    "step2_output": {
+      "department": "Product Management",
+      "hiringManagerTitles": [
+        "Product Manager",
+        "Head of AI Product",
+        "Product Lead",
+        "Senior Product Manager",
+        "Lead Product Manager",
+        "Product Development Manager"
+      ],
+      "hrTitles": [
+        "Recruiter",
+        "Talent Acquisition Manager"
+      ],
+      "deptKeywords": "AI Product Development",
+      "companyModifier": "Bangalore"
+    }
+  }
+]

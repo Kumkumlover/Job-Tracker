@@ -10,38 +10,27 @@ export type LocalUsage = {
 };
 
 export type GlobalUsage = {
-  hunter: {
-    requestsUsed: number;
-    requestsAvailable: number;
-  } | null;
-  apollo: {
-    dailyConsumed: number;
-    dailyLimit: number | string;
-  } | null;
+  hunter: { requestsUsed: number; requestsAvailable: number } | { status: string } | null;
+  apollo: { dailyConsumed: number; dailyLimit: number | string } | { status: string } | null;
+  serper: { creditsLeft: number; usage: number; total: number } | { status: string } | null;
+  gemini: { status: string } | null;
+  tavily: { status: string } | null;
+  exa: { status: string } | null;
 };
 
 interface UsageTrackerProps {
   localUsage: LocalUsage;
-  hunterKey: string;
-  apolloKey: string;
 }
 
-export function UsageTracker({ localUsage, hunterKey, apolloKey }: UsageTrackerProps) {
+export function UsageTracker({ localUsage }: UsageTrackerProps) {
   const [globalUsage, setGlobalUsage] = useState<GlobalUsage | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const fetchGlobalUsage = async () => {
-    if (!hunterKey && !apolloKey) return;
-    
     setIsRefreshing(true);
     try {
-      const res = await fetch("/api/usage", {
-        headers: {
-          "x-hunter-key": hunterKey,
-          "x-apollo-key": apolloKey,
-        },
-      });
+      const res = await fetch("/api/usage");
       if (res.ok) {
         const data = await res.json();
         setGlobalUsage(data);
@@ -54,13 +43,36 @@ export function UsageTracker({ localUsage, hunterKey, apolloKey }: UsageTrackerP
   };
 
   useEffect(() => {
-    fetchGlobalUsage();
-  }, [hunterKey, apolloKey]);
+    if (isOpen) fetchGlobalUsage();
+  }, [isOpen]);
 
-  // Hide if no keys and 0 usage
-  if (!hunterKey && !apolloKey && localUsage.search === 0 && localUsage.apollo === 0 && localUsage.hunter === 0) {
+  // Hide if 0 usage
+  if (localUsage.search === 0 && localUsage.apollo === 0 && localUsage.hunter === 0) {
     return null;
   }
+
+  const renderLimit = (name: string, data: any) => {
+    return (
+      <div className="flex justify-between items-center text-xs py-1">
+        <span className="text-[var(--muted-foreground)] flex items-center gap-1.5">
+          <Database className="w-3 h-3 text-[var(--primary)]" /> {name}
+        </span>
+        {!data ? (
+          <span className="text-[var(--primary)]/70 text-[10px] uppercase font-bold">Key Required</span>
+        ) : data.status ? (
+          <span className="font-medium text-[var(--foreground)]">{data.status}</span>
+        ) : data.requestsAvailable !== undefined ? (
+          <span className="font-medium text-[var(--foreground)]">{data.requestsUsed} / {data.requestsAvailable}</span>
+        ) : data.dailyLimit !== undefined ? (
+          <span className="font-medium text-[var(--foreground)]">{data.dailyConsumed} / {data.dailyLimit}</span>
+        ) : data.creditsLeft !== undefined ? (
+          <span className="font-medium text-[var(--foreground)]">{data.creditsLeft} left</span>
+        ) : (
+          <span className="text-[var(--muted-foreground)]">Unknown</span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 font-sans">
@@ -106,27 +118,13 @@ export function UsageTracker({ localUsage, hunterKey, apolloKey }: UsageTrackerP
             <div className="bg-[var(--card)] rounded-xl p-3 border border-[var(--border)]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-2">Global Account Limits</div>
               
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-[var(--muted-foreground)] flex items-center gap-1.5"><Database className="w-3 h-3 text-[var(--primary)]"/> Hunter</span>
-                  {!hunterKey ? (
-                    <span className="text-[var(--primary)]/70 text-[10px] uppercase font-bold">Key Required</span>
-                  ) : globalUsage?.hunter ? (
-                    <span className="font-medium text-[var(--foreground)]">{globalUsage.hunter.requestsUsed} / {globalUsage.hunter.requestsAvailable}</span>
-                  ) : (
-                    <span className="text-[var(--muted-foreground)]">Loading...</span>
-                  )}
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-[var(--muted-foreground)] flex items-center gap-1.5"><Database className="w-3 h-3 text-[var(--primary)]"/> Apollo (Daily)</span>
-                  {!apolloKey ? (
-                    <span className="text-[var(--primary)]/70 text-[10px] uppercase font-bold">Key Required</span>
-                  ) : globalUsage?.apollo ? (
-                    <span className="font-medium text-[var(--foreground)]">{globalUsage.apollo.dailyConsumed} / {globalUsage.apollo.dailyLimit}</span>
-                  ) : (
-                    <span className="text-[var(--muted-foreground)]">Loading...</span>
-                  )}
-                </div>
+              <div className="space-y-1">
+                {renderLimit("Hunter", globalUsage?.hunter)}
+                {renderLimit("Apollo", globalUsage?.apollo)}
+                {renderLimit("Serper", globalUsage?.serper)}
+                {renderLimit("Gemini", globalUsage?.gemini)}
+                {renderLimit("Tavily", globalUsage?.tavily)}
+                {renderLimit("Exa", globalUsage?.exa)}
               </div>
             </div>
           </div>
@@ -136,7 +134,7 @@ export function UsageTracker({ localUsage, hunterKey, apolloKey }: UsageTrackerP
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-3 bg-[var(--background)]/80 backdrop-blur-md border border-[var(--border)] hover:border-[var(--primary)]/50 hover:bg-[var(--card)] transition-colors rounded-full group"
+        className="flex items-center gap-2 px-4 py-3 bg-[var(--background)]/80 backdrop-blur-md border border-[var(--border)] hover:border-[var(--primary)]/50 hover:bg-[var(--card)] transition-colors rounded-full group shadow-lg"
       >
         <Zap className={`w-4 h-4 ${isOpen ? "text-[var(--primary)]" : "text-[var(--primary)] group-hover:text-[var(--primary)] transition-colors"}`} />
         <span className="text-xs font-bold text-[var(--foreground)]">API Tracker</span>
@@ -145,3 +143,4 @@ export function UsageTracker({ localUsage, hunterKey, apolloKey }: UsageTrackerP
     </div>
   );
 }
+

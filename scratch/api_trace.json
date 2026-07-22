@@ -1,0 +1,643 @@
+{
+  "Tavily": {
+    "input": {
+      "url": "https://api.tavily.com/search",
+      "body": {
+        "api_key": "HIDDEN",
+        "query": "Product Manager currently working at Paramount LinkedIn profile",
+        "search_depth": "basic",
+        "include_domains": [
+          "linkedin.com"
+        ],
+        "max_results": 3
+      }
+    },
+    "output": {
+      "query": "Product Manager currently working at Paramount LinkedIn profile",
+      "follow_up_questions": null,
+      "answer": null,
+      "images": [],
+      "results": [
+        {
+          "url": "https://www.linkedin.com/in/g-massaro",
+          "title": "Greg Massaro - Product Manager at Paramount",
+          "content": "Dedicated and data-driven Product Manager with a proven track record of success in guiding product development and managing complex projects.",
+          "score": 0.8430832,
+          "raw_content": null
+        },
+        {
+          "url": "https://www.linkedin.com/in/mariahberry42",
+          "title": "Mariah Berry - Product Manager at Paramount",
+          "content": "Product Manager at Paramount · Experience: Paramount · Education: Concordia College-New York · Location: United States · 500+ connections on LinkedIn.",
+          "score": 0.8302782,
+          "raw_content": null
+        }
+      ],
+      "response_time": 1.04,
+      "request_id": "753268f3-b7ce-4d54-b0f8-c225e2fecdc1"
+    }
+  },
+  "Exa": {
+    "input": {
+      "url": "https://api.exa.ai/search",
+      "body": {
+        "query": "Here is a LinkedIn profile of a Product Manager currently working at Paramount:",
+        "type": "neural",
+        "useAutoprompt": false,
+        "numResults": 3,
+        "includeDomains": [
+          "linkedin.com"
+        ],
+        "contents": {
+          "text": {
+            "maxCharacters": 400
+          }
+        }
+      }
+    },
+    "output": {
+      "requestId": "8e96059c58242ca4f5a9b646a002b41b",
+      "resolvedSearchType": "",
+      "results": [
+        {
+          "id": "https://exa.ai/library/person/kns6b8y19d6",
+          "title": "Mohamed AlMannai",
+          "url": "https://www.linkedin.com/in/mmannai",
+          "publishedDate": "2026-06-22T16:01:55.000Z",
+          "score": 1,
+          "text": "# Mohamed AlMannai\n\nLead Product Manager, Streaming Innovation at Paramount\n\nNew York, New York, United States (US)\n\n500 connections • 781 followers\n\n## About\n\nHello! 👋 I’m a Lead Product Manager with 7 years of experience focused on building delightful platforms and products that scale content experiences. I’m currently working on scaling product innovation at Paramount Streaming and was previou",
+          "image": "https://media.licdn.com/dms/image/v2/C4E03AQFwNcqpFk4yRg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1603336740755?e=2147483647&v=beta&t=aMju_wojfMFB1JaLGE4VjFhvxu5IHowmy3scGW4rO4M",
+          "entities": [
+            {
+              "id": "https://exa.ai/library/person/kns6b8y19d6",
+              "type": "person",
+              "version": 1,
+              "properties": {
+                "name": "Mohamed AlMannai",
+                "firstName": "Mohamed",
+                "lastName": "AlMannai",
+                "location": "New York, New York, United States",
+                "workHistory": [
+                  {
+                    "title": "Lead Product Manager",
+                    "location": "New York, New York, United States",
+                    "dates": {
+                      "from": "2026-01-01",
+                      "to": null
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/wd49bsc9xyd",
+                      "name": "Paramount"
+                    }
+                  },
+                  {
+                    "title": "Sr Product Manager",
+                    "location": "New York, New York, United States",
+                    "dates": {
+                      "from": "2024-01-01",
+                      "to": "2026-01-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/wd49bsc9xyd",
+                      "name": "Paramount"
+                    }
+                  },
+                  {
+                    "title": "Product Manager",
+                    "location": "New York, New York, United States",
+                    "dates": {
+                      "from": "2021-11-01",
+                      "to": "2024-01-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/wd49bsc9xyd",
+                      "name": "Paramount"
+                    }
+                  },
+                  {
+                    "title": "Product Manager",
+                    "location": "New York, New York",
+                    "dates": {
+                      "from": "2019-07-01",
+                      "to": "2021-11-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/9vyr29flw4t",
+                      "name": "Blink"
+                    }
+                  },
+                  {
+                    "title": "Lead Technical Producer",
+                    "location": "New York, New York",
+                    "dates": {
+                      "from": "2017-06-01",
+                      "to": "2019-07-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/9vyr29flw4t",
+                      "name": "Blink"
+                    }
+                  },
+                  {
+                    "title": "Partnership Coordinator & Photo Editor",
+                    "location": "New York, New York",
+                    "dates": {
+                      "from": "2017-01-01",
+                      "to": "2017-08-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/9vyr29flw4t",
+                      "name": "Blink"
+                    }
+                  },
+                  {
+                    "title": "Internship",
+                    "location": "New York City, New York",
+                    "dates": {
+                      "from": "2016-09-01",
+                      "to": "2016-12-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/b6zmj3qmnp3",
+                      "name": "Magnum Foundation"
+                    }
+                  }
+                ],
+                "educationHistory": [
+                  {
+                    "degree": "Graphic Design (Short Courses) Beginner & Intermediate Levels",
+                    "dates": {
+                      "from": "2014",
+                      "to": "2014"
+                    },
+                    "institution": {
+                      "id": "https://exa.ai/library/organization/h579qg06p2g",
+                      "name": "University of the Arts London"
+                    }
+                  },
+                  {
+                    "degree": "Entrepreneurship for Creatives (Short Courses) Entrepreneurship/Entrepreneurial Studies",
+                    "dates": {
+                      "from": "2014",
+                      "to": "2014"
+                    },
+                    "institution": {
+                      "id": "https://exa.ai/library/organization/h579qg06p2g",
+                      "name": "University of the Arts London"
+                    }
+                  },
+                  {
+                    "degree": "Product Management (10 Week - Part Time)",
+                    "dates": {
+                      "from": "2019",
+                      "to": "2019"
+                    },
+                    "institution": {
+                      "id": "https://exa.ai/library/organization/3g524tr4mjf",
+                      "name": "General Assembly"
+                    }
+                  },
+                  {
+                    "degree": "Foundations Degree Foundations in Science & Engineering",
+                    "dates": {
+                      "from": "2011",
+                      "to": "2012"
+                    },
+                    "institution": {
+                      "id": null,
+                      "name": "Sheffield International College"
+                    }
+                  },
+                  {
+                    "degree": "International Baccalaureate High School",
+                    "dates": {
+                      "from": "1997",
+                      "to": "2011"
+                    },
+                    "institution": {
+                      "id": null,
+                      "name": "Bahrain Bayan School"
+                    }
+                  },
+                  {
+                    "degree": "Bachelor's degree Electrical and Electronics Engineering",
+                    "dates": {
+                      "from": "2012",
+                      "to": "2015"
+                    },
+                    "institution": {
+                      "id": "https://exa.ai/library/organization/s9l1pb04m0n",
+                      "name": "The University of Sheffield"
+                    }
+                  },
+                  {
+                    "degree": "One Year Certificate Visual Journalism and Documentary Practice",
+                    "dates": {
+                      "from": "2015",
+                      "to": "2016"
+                    },
+                    "institution": {
+                      "id": "https://exa.ai/library/organization/3gfnyl850sp",
+                      "name": "International Center of Photography School"
+                    }
+                  }
+                ],
+                "research": null
+              }
+            }
+          ]
+        },
+        {
+          "id": "https://exa.ai/library/person/lh8v4gmbvch",
+          "title": "Michelle Cauchi",
+          "url": "https://www.linkedin.com/in/michellecauchi",
+          "publishedDate": "2026-07-11T06:59:42.000Z",
+          "score": 0.5,
+          "text": "# Michelle Cauchi\n\nLead Product Manager at Paramount+\n\nNew York, New York, United States (US)\n\n500 connections • 940 followers\n\n## About\n\nI am a Lead Product Manager with 12+ years of experience building and delivering quality digital products, most recently in the streaming space. My role on the Paramount+ monetization team involves creating products to improve the purchase funnel and offer exper",
+          "image": "https://media.licdn.com/dms/image/v2/C4D03AQFZH6o5-sQtzg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1516783055909?e=2147483647&v=beta&t=6zX25cr1JX3_nE0cvf-ZZN-5SHH0YI4SRHv4qHUOiME",
+          "entities": [
+            {
+              "id": "https://exa.ai/library/person/lh8v4gmbvch",
+              "type": "person",
+              "version": 1,
+              "properties": {
+                "name": "Michelle Cauchi",
+                "firstName": "Michelle",
+                "lastName": "Cauchi",
+                "location": "New York, New York, United States",
+                "workHistory": [
+                  {
+                    "title": "Lead Product Manager, Monetization",
+                    "location": null,
+                    "dates": {
+                      "from": "2025-01-01",
+                      "to": null
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/4dynwdyrg9l",
+                      "name": "Paramount+"
+                    }
+                  },
+                  {
+                    "title": "Senior Product Manager, Monetization",
+                    "location": null,
+                    "dates": {
+                      "from": "2022-10-01",
+                      "to": "2025-01-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/4dynwdyrg9l",
+                      "name": "Paramount+"
+                    }
+                  },
+                  {
+                    "title": "Senior Director, Brand & Digital Platforms",
+                    "location": null,
+                    "dates": {
+                      "from": "2021-02-01",
+                      "to": "2022-09-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/2bm739m8978",
+                      "name": "Nickelodeon"
+                    }
+                  },
+                  {
+                    "title": "Senior Director, Interactive Production",
+                    "location": null,
+                    "dates": {
+                      "from": "2018-06-01",
+                      "to": "2021-02-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/2bm739m8978",
+                      "name": "Nickelodeon"
+                    }
+                  },
+                  {
+                    "title": "Director, Digital Production & Events",
+                    "location": "Greater New York City Area",
+                    "dates": {
+                      "from": "2016-10-01",
+                      "to": "2018-06-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/2bm739m8978",
+                      "name": "Nickelodeon"
+                    }
+                  },
+                  {
+                    "title": "Senior Producer, Digital Events & Production at Nickeldeon",
+                    "location": "Greater New York City Area",
+                    "dates": {
+                      "from": "2015-05-01",
+                      "to": "2016-09-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/2bm739m8978",
+                      "name": "Nickelodeon"
+                    }
+                  },
+                  {
+                    "title": "Producer, Digital Product & Production at Nickelodeon",
+                    "location": "Greater New York City Area",
+                    "dates": {
+                      "from": "2013-10-01",
+                      "to": "2015-05-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/2bm739m8978",
+                      "name": "Nickelodeon"
+                    }
+                  },
+                  {
+                    "title": "Associate Producer, Digital Product & Production at Nickelodeon",
+                    "location": "Greater New York City Area",
+                    "dates": {
+                      "from": "2012-05-01",
+                      "to": "2013-10-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/2bm739m8978",
+                      "name": "Nickelodeon"
+                    }
+                  },
+                  {
+                    "title": "Executive Assistant, Digital at Nickelodeon",
+                    "location": null,
+                    "dates": {
+                      "from": "2010-11-01",
+                      "to": "2012-05-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/2bm739m8978",
+                      "name": "Nickelodeon"
+                    }
+                  },
+                  {
+                    "title": "Department Assistant, Digital at Nickelodeon",
+                    "location": null,
+                    "dates": {
+                      "from": "2010-09-01",
+                      "to": "2010-11-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/2bm739m8978",
+                      "name": "Nickelodeon"
+                    }
+                  },
+                  {
+                    "title": "Volunteer on Microfinance Service-Immersion Trip",
+                    "location": null,
+                    "dates": {
+                      "from": "2010-02-01",
+                      "to": "2010-03-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/dk6pm6st7g7",
+                      "name": "Boston College"
+                    }
+                  },
+                  {
+                    "title": "Summer Intern Corporate Actions",
+                    "location": null,
+                    "dates": {
+                      "from": "2008-06-01",
+                      "to": "2008-08-01"
+                    },
+                    "company": {
+                      "id": null,
+                      "name": "Natixis Bleichroeder, Inc"
+                    }
+                  },
+                  {
+                    "title": "Summer Intern Assets under Management and Compliance",
+                    "location": null,
+                    "dates": {
+                      "from": "2007-06-01",
+                      "to": "2007-08-01"
+                    },
+                    "company": {
+                      "id": null,
+                      "name": "Arnhold and S. Bleichroeder, LLC"
+                    }
+                  }
+                ],
+                "educationHistory": [
+                  {
+                    "degree": null,
+                    "dates": null,
+                    "institution": {
+                      "id": null,
+                      "name": "Loyola School"
+                    }
+                  },
+                  {
+                    "degree": "Bachelor of Science Finance Marketing",
+                    "dates": null,
+                    "institution": {
+                      "id": "https://exa.ai/library/organization/dk6pm6st7g7",
+                      "name": "Boston College"
+                    }
+                  }
+                ],
+                "research": null
+              }
+            }
+          ]
+        },
+        {
+          "id": "https://exa.ai/library/person/blf9x7vydh8",
+          "title": "Justin Houghton",
+          "url": "https://www.linkedin.com/in/houghtonjustin",
+          "publishedDate": "2026-06-22T17:02:18.000Z",
+          "score": 0,
+          "text": "# Justin Houghton\n\nProduct @ Paramount | Applied ML\n\nLos Angeles Metropolitan Area (US)\n\n500 connections • 794 followers\n\n## About\n\nML product manager with 10+ years of experience across startups and large-scale platforms. Led product as sole PM at ML startups before leading product within a 30-person Applied ML team at Paramount. Currently pursuing an MS in Machine Learning.\n\nTotal Experience: 13",
+          "image": "https://media.licdn.com/dms/image/v2/D5603AQECRrok1NTRkQ/profile-displayphoto-scale_200_200/B56Zug8cCBKwAY-/0/1767931757324?e=2147483647&v=beta&t=SJ2WuX8WwKdEj6H4bzPrkavn0PLcR_E1Cc05VU1-Eqc",
+          "entities": [
+            {
+              "id": "https://exa.ai/library/person/blf9x7vydh8",
+              "type": "person",
+              "version": 1,
+              "properties": {
+                "name": "Justin Houghton",
+                "firstName": "Justin",
+                "lastName": "Houghton",
+                "location": "Los Angeles Metropolitan Area",
+                "workHistory": [
+                  {
+                    "title": "Director of Product Management, Applied Machine Learning",
+                    "location": "Los Angeles, California, United States",
+                    "dates": {
+                      "from": "2026-06-01",
+                      "to": null
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/wd49bsc9xyd",
+                      "name": "Paramount"
+                    }
+                  },
+                  {
+                    "title": "Lead Product Manager, Applied Machine Learning",
+                    "location": null,
+                    "dates": {
+                      "from": "2023-03-01",
+                      "to": "2026-06-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/wd49bsc9xyd",
+                      "name": "Paramount"
+                    }
+                  },
+                  {
+                    "title": "Senior Product Manager, Search and Personalization",
+                    "location": null,
+                    "dates": {
+                      "from": "2022-10-01",
+                      "to": "2023-03-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/wd49bsc9xyd",
+                      "name": "Paramount"
+                    }
+                  },
+                  {
+                    "title": "Product Manager, Personalization",
+                    "location": null,
+                    "dates": {
+                      "from": "2021-08-01",
+                      "to": "2022-10-01"
+                    },
+                    "company": {
+                      "id": "https://exa.ai/library/organization/wd49bsc9xyd",
+                      "name": "Paramount"
+                    }
+                  },
+                  {
+                    "title": "Product Manager, Data and ML",
+                    "location": "Los Angeles Metropolitan Area",
+                    "dates": {
+                      "from": "2021-03-01",
+                      "to": "2021-08-01"
+                    },
+                    "company": {
+                      "id": null,
+                      "name": "Brainbase"
+                    }
+                  },
+                  {
+                    "title": "Technical Product Manager, ML",
+                    "location": "Los Angeles Metropolitan Area",
+                    "dates": {
+                      "from": "2018-03-01",
+                      "to": "2021-02-01"
+                    },
+                    "company": {
+                      "id": null,
+                      "name": "Vody"
+                    }
+                  },
+                  {
+                    "title": "Lead Product Designer",
+                    "location": null,
+                    "dates": {
+                      "from": "2017-03-01",
+                      "to": "2019-03-01"
+                    },
+                    "company": {
+                      "id": null,
+                      "name": "Vody"
+                    }
+                  },
+                  {
+                    "title": "Product Design",
+                    "location": "Los Angeles Metropolitan Area",
+                    "dates": {
+                      "from": "2013-03-01",
+                      "to": "2017-03-01"
+                    },
+                    "company": {
+                      "id": null,
+                      "name": "Various Companies"
+                    }
+                  }
+                ],
+                "educationHistory": [
+                  {
+                    "degree": "Master of Science - MS, Machine Learning",
+                    "dates": {
+                      "from": "2025",
+                      "to": "2027"
+                    },
+                    "institution": {
+                      "id": "https://exa.ai/library/organization/xn5vjbtmthl",
+                      "name": "Liverpool John Moores University"
+                    }
+                  },
+                  {
+                    "degree": "Nanodegree, Machine learning with Pytorch",
+                    "dates": {
+                      "from": "2020",
+                      "to": "2021"
+                    },
+                    "institution": {
+                      "id": "https://exa.ai/library/organization/jk3yfppvq7b",
+                      "name": "Udacity"
+                    }
+                  }
+                ],
+                "research": null
+              }
+            }
+          ]
+        }
+      ],
+      "searchTime": 232.5,
+      "costDollars": {
+        "total": 0.007,
+        "search": {
+          "neural": 0.007
+        }
+      }
+    }
+  },
+  "Serper": {
+    "input": {
+      "url": "https://google.serper.dev/search",
+      "body": {
+        "q": "site:linkedin.com/in/ \"Paramount\" (\"Product Manager\" OR \"Head of Product\")",
+        "num": 3
+      }
+    },
+    "output": {
+      "searchParameters": {
+        "q": "site:linkedin.com/in/ \"Paramount\" (\"Product Manager\" OR \"Head of Product\")",
+        "type": "search",
+        "num": 3,
+        "engine": "google"
+      },
+      "organic": [
+        {
+          "title": "Robert Plaut - Technical Product Manager",
+          "link": "https://www.linkedin.com/in/robertplaut",
+          "snippet": "Technical Product Manager · Experience: Paramount · Location: New York City Metropolitan Area · 431 connections on LinkedIn. View Robert Plaut's profile on ...",
+          "position": 1
+        },
+        {
+          "title": "Sam Goldstein - Product Manager",
+          "link": "https://www.linkedin.com/in/samgoldsteinnyu",
+          "snippet": "Experience · Paramount Graphic. Product Manager. Paramount. Mar 2023 - Nov 2025 2 years 9 months Owned quarterly roadmap and long-term product vision, driving ...",
+          "position": 2
+        },
+        {
+          "title": "Callie Wachman - Senior Director of Product, Paramount",
+          "subtitle": "Atlanta Metropolitan Area · Senior Director of Product, AI Enablement & Automation · Paramount",
+          "link": "https://www.linkedin.com/in/callie-p-wachman",
+          "snippet": "... Paramount (unified CMS → $1M+ savings, 290+ properties). I see strategic ... Senior Product Manager: Bleacher Report Live Mobile & Connected. Bleacher ...",
+          "position": 3
+        }
+      ],
+      "credits": 1
+    }
+  }
+}

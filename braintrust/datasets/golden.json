@@ -1,0 +1,533 @@
+[
+  {
+    "industry": "Fintech",
+    "stage": "Growth",
+    "product_summary": "IDFC First bank provides banking services, including credit cards.",
+    "role_title": "Assistant Product Manager",
+    "department": "Product",
+    "seniority": "Junior",
+    "key_responsibilities": [
+      "Analyze user journeys",
+      "Identify drop-offs",
+      "Help improve flows"
+    ],
+    "required_skills": [
+      "Analytics",
+      "Product thinking",
+      "UX"
+    ],
+    "preferred_skills": [],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Head of Product",
+        "confidence": 0.9
+      },
+      {
+        "title": "Senior Product Manager",
+        "confidence": 0.8
+      }
+    ],
+    "company": "IDFC First bank",
+    "company_url": "https://www.idfcfirst.bank.in/",
+    "JD_text": "IDFC First bank, Assistant Product Manager, https://www.idfcfirst.bank.in/\r\nWe are hiring Assistant Product Manager for Credit Cards\r\nLooking for someone early in their career (internship experience works) who can analyze user journeys, identify drop-offs, and help improve flows.\r\n\r\nThis is a mix of analytics + product thinking + UX — you’ll work on figuring out what’s broken and how to fix it.\r\n\r\nWho should apply:\r\n\r\n* 0–2 years experience / relevant internships\r\n* Curious, structured thinker\r\n* Interest in product, data, or UX\r\n\r\n📩 DM me if interested or share with someone who fits!"
+  },
+  {
+    "industry": "Fintech",
+    "stage": "Seed",
+    "product_summary": "PocketFM is an AI product company.",
+    "role_title": "AI Product Intern",
+    "department": "Product",
+    "seniority": "Intern",
+    "key_responsibilities": [
+      "Work closely with product, growth, and AI teams",
+      "Help build and improve AI-powered consumer experiences",
+      "Assist in product strategy, feature ideation, and execution"
+    ],
+    "required_skills": [
+      "Strong problem-solving, communication, and ownership mindset",
+      "Understanding of product thinking, user experience, experimentation, and AI workflows"
+    ],
+    "preferred_skills": [
+      "Familiarity with LLMs, prompt engineering, AI tools, Python, or no-code AI stacks"
+    ],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Founder",
+        "confidence": 0.9
+      },
+      {
+        "title": "Head of Product",
+        "confidence": 0.8
+      },
+      {
+        "title": "Engineering Manager",
+        "confidence": 0.7
+      }
+    ],
+    "company": "PocketFM",
+    "company_url": "https://www.pocketfm.com",
+    "JD_text": "PocketFM, AI Product Intern, https://www.pocketfm.com\r\nWe’re looking for high-potential AI Product Interns, with a potential full-time opportunity after 3 months based on performance.\r\n\r\nWhat we’re looking for: • Strong interest in AI products, GenAI, and consumer tech • Hands-on experience through internships, projects • Understanding of product thinking, user experience, experimentation, and AI workflows • Familiarity with LLMs, prompt engineering, AI tools, Python, or no-code AI stacks is a plus • Strong problem-solving, communication, and ownership mindset\r\n\r\nWhat you’ll do: • Work closely with product, growth, and AI teams • Help build and improve AI-powered consumer experiences • Assist in product strategy, feature ideation, and execution • Experiment with AI tools, workflows, and user-facing product features\r\n\r\nLocation - Bangalore\r\n\r\nStipend - Upto 50k per month\r\n\r\nAssignment + 2 rounds"
+  },
+  {
+    "industry": "E-commerce",
+    "stage": "Growth",
+    "product_summary": "Cashify builds products for one of India's largest recommerce platforms.",
+    "role_title": "Product Intern",
+    "department": "Product",
+    "seniority": "Intern",
+    "key_responsibilities": [],
+    "required_skills": [],
+    "preferred_skills": [],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Head of Product",
+        "confidence": 0.9
+      },
+      {
+        "title": "Founder",
+        "confidence": 0.8
+      },
+      {
+        "title": "Product Manager",
+        "confidence": 0.7
+      }
+    ],
+    "company": "Cashify",
+    "company_url": "https://www.cashify.in/",
+    "JD_text": "Cashify, Product Intern, https://www.cashify.in/\r\n🚀 We’re Hiring! 🚀\r\nJoin the Product Team at Cashify!\r\nApply - https://lnkd.in/gkeE3p2t\r\n\r\nWe build products for one of India's largest recommerce platforms and are\r\nlooking for people who are analytical, AI-native, and love getting their hands dirty."
+  },
+  {
+    "industry": "Healthcare",
+    "stage": "Seed",
+    "product_summary": "Loop is a healthcare company that focuses on real user interactions to solve problems.",
+    "role_title": "Associate Product Manager",
+    "department": "Product",
+    "seniority": "Mid",
+    "key_responsibilities": [
+      "Sitting with real users to understand their problems",
+      "Shipping products in weeks, not quarters",
+      "Measuring outcomes and letting user proximity drive decisions"
+    ],
+    "required_skills": [
+      "Product management",
+      "User research",
+      "Cross-functional collaboration"
+    ],
+    "preferred_skills": [
+      "AI",
+      "Analytics",
+      "Design thinking"
+    ],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Founder",
+        "confidence": 0.9
+      },
+      {
+        "title": "Head of Product",
+        "confidence": 0.8
+      },
+      {
+        "title": "Product Manager",
+        "confidence": 0.7
+      }
+    ],
+    "company": "Loop health",
+    "company_url": "https://www.loophealth.com/",
+    "JD_text": "Loop health, Associate Product Manager, https://www.loophealth.com/\r\n[Hiring a PM at Loop]\r\n\r\nMost PMs can't tell you why their last product worked or didn't work. \r\n\r\nThey can tell you it shipped. They can show you the roadmap. They can't show you the before/after.\r\n\r\nWe're hiring a Product Manager at Loop.\r\n\r\nYou won't start with a roadmap. You'll start by sitting with real users, in person, not on Zoom, watching what's broken in their day. Then you'll ship. In weeks, not quarters.\r\n\r\nEvery launch gets a verdict. Did the problem actually get solved? If yes, go deeper. If not, figure out why and make it work. No pivoting to the next feature because it's shinier.\r\n\r\nYou'll work with AI when the problem demands it. What to build matters infinitely more than sprinkling AI on top.\r\n\r\nCross-functional squad. Engg, design, analytics, ops. No layers.\r\n\r\n\r\n\r\nPMs who would be a good fit - \r\n→ Have taken a product from shipped to actually working. Multiple times. \r\n→ Measure outcomes (\"escalation rate dropped 30%\"), not activity (\"wrote 150 user stories\"). \r\n→ Let user proximity drive decisions, not frameworks. \r\n→ Can tell you WHY something worked or didn't. Not just that it shipped.\r\n\r\nPMs who won't - \r\n→ Lead with roadmaps, stakeholder alignment, and planning rituals. \r\n→ Haven't worked on a problem long enough, have a trail of v1's that don't work\r\n\r\nBangalore. In-office. High-ownership.\r\n\r\nIf this is you - send your resume and one thing you shipped that actually worked, and how you know it worked, to yash.sachdev@loophealth.com"
+  },
+  {
+    "industry": "AI",
+    "stage": "Seed",
+    "product_summary": "Osurity builds AI-powered products.",
+    "role_title": "Product Intern (AI)",
+    "department": "Product",
+    "seniority": "Intern",
+    "key_responsibilities": [
+      "Building, testing, and scaling AI-powered products",
+      "Collaborating closely with engineering teams"
+    ],
+    "required_skills": [
+      "Product thinking",
+      "User empathy",
+      "Analytical problem-solving"
+    ],
+    "preferred_skills": [],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Founder",
+        "confidence": 0.9
+      },
+      {
+        "title": "CTO",
+        "confidence": 0.7
+      },
+      {
+        "title": "Engineering Manager",
+        "confidence": 0.5
+      }
+    ],
+    "company": "Osurity",
+    "company_url": "https://www.onsurity.com/",
+    "JD_text": "Osurity, AI Product Intern, https://www.onsurity.com/\r\nExcited to open up an opportunity for a Product Intern (AI) to join our team and work on building, testing, and scaling AI-powered products.\r\nWhat we’re looking for:\r\n\r\n• Strong product thinking and user empathy\r\n• Ability to collaborate closely with engineering teams\r\n• Analytical and structured problem-solving mindset\r\n\r\n📍 Location: Bangalore\r\n\r\nApply here 👉 https://lnkd.in/gQJge-9f\r\nKnow someone who’d be a great fit? Tag them or share this post 🙌"
+  },
+  {
+    "industry": "E-commerce",
+    "stage": "Growth",
+    "product_summary": "Shiprocket is an eCommerce enablement platform.",
+    "role_title": "Assistant Product Manager",
+    "department": "Product",
+    "seniority": "Junior",
+    "key_responsibilities": [
+      "Develop, oversee, and regularly update plans for product launches",
+      "Collaborate closely with cross-functional teams to implement necessary product features",
+      "Create and standardize new best practices for different facets of the project",
+      "Monitor product uptake and resolve operational challenges"
+    ],
+    "required_skills": [
+      "Analytical and quantitative capabilities",
+      "Effective communication skills",
+      "Ability to build and maintain relationships"
+    ],
+    "preferred_skills": [
+      "Technology affinity",
+      "Data-driven decision making"
+    ],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Head of Product",
+        "confidence": 0.9
+      },
+      {
+        "title": "Product Manager",
+        "confidence": 0.7
+      }
+    ],
+    "company": "Shiprocket",
+    "company_url": "https://www.shiprocket.in/",
+    "JD_text": "Shiprocket, Assistant Product Manager, https://www.shiprocket.in/\r\nAre you passionate about building impactful products and working at the intersection of tech, business, and user experience? \r\n\r\nJoin us at Shiprocket as an Assistant Product Manager and be part of a fast-growing team shaping the future of eCommerce enablement.\r\n\r\n📍 Location: hashtag#Gurgaon (5 Days WFO)\r\n 💼 Experience: 1–3 years\r\n✨ Key Responsibilities:\r\nRole Title: Associate Product Manager\r\n5 Days (WFO)\r\nPreferred Candidates to batch pass out 22/23/24\r\n\r\nKey Responsibilities:\r\nWhat would you be doing?\r\nDevelop, oversee, and regularly update plans for product launches, while coordinating with cross-functional teams to ensure that key deliverables, milestones, risks, and dependencies are addressed.\r\nCollaborate closely with the departments to implement necessary product features or changes to facilitate project scalability.\r\nCreate and standardize new best practices for different facets of the project, ensuring team-wide alignment.\r\nMonitor product uptake, oversee maintenance tasks, and resolve any operational challenges hindering the business team from successfully adopting the product.\r\nExhibit strong analytical and quantitative capabilities, leveraging empirical data and metrics to validate assumptions and formulate business strategies.\r\nProactively identify potential bottlenecks, evaluate alternative solutions, and manage escalations throughout the product launch process.\r\n\r\nBasic qualifications required\r\nAbility to build and maintain effective internal and external relationships and networks\r\nAbility to work independently in an ambiguous environment and take data backed decisions.\r\nTechnology affinity and a track record of employing systems to drive simplification, efficiency and change\r\nStrong and effective communication skills which include the ability to write compelling, concise documents\r\nLess than 3 years of experience\r\n\r\n📩 Interested or know someone who’d be a great fit?\r\n\r\nApply Here: https://lnkd.in/dX_PxN7s"
+  },
+  {
+    "industry": "Fintech",
+    "stage": "Seed",
+    "product_summary": "Prosperr.io is a fintech company that builds real products in a fast-paced startup environment.",
+    "role_title": "Product Manager Intern",
+    "department": "Product",
+    "seniority": "Intern",
+    "key_responsibilities": [
+      "Work on live problems",
+      "Ship features",
+      "Learn how product decisions are made"
+    ],
+    "required_skills": [
+      "Strong Resume",
+      "PM Exposure Preferred",
+      "Builder Mindset"
+    ],
+    "preferred_skills": [],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Founder",
+        "confidence": 0.9
+      },
+      {
+        "title": "Co-Founder",
+        "confidence": 0.8
+      },
+      {
+        "title": "Product Manager",
+        "confidence": 0.7
+      }
+    ],
+    "company": "Prosperr.io",
+    "company_url": "https://www.prosperr.io/",
+    "JD_text": "Prosperr.io, Product Manager intern, https://www.prosperr.io/\r\nHiring Alert: Product Manager Intern 🚀\r\n\r\nWe’re hiring a Product Manager Intern and looking for sharp, driven candidates who want to build real products in a fast-paced startup environment.\r\n\r\nYou’ll work on live problems, ship features, and learn how product decisions are made from day one.\r\n\r\nWhat we’re looking for:\r\n- Strong Resume – Solid academics, projects, or startup experience\r\n- PM Exposure Preferred – Prior internship in product is a big plus\r\n- Builder Mindset – Curious, structured, user-obsessed & execution led\r\n\r\nWhat you’ll get:\r\n- 4-month high-impact internship\r\n- Work closely with founders / leadership\r\n- Real ownership on product problems\r\n- PPO / full-time conversion opportunity for top performers\r\n\r\nIf you want to learn product by building, not by watching — this is for you.\r\nApply here: https://lnkd.in/gC8zKHAT\r\n\r\nManas Gond Dev Kumar"
+  },
+  {
+    "industry": "Real Estate",
+    "stage": "Growth",
+    "product_summary": "Housing.com is a real estate platform that provides property listings, home buying, and selling services.",
+    "role_title": "Associate Product Manager",
+    "department": "Product",
+    "seniority": "Mid",
+    "key_responsibilities": [
+      "Own features end-to-end: 0 → 1 → scale",
+      "Frame problems from scratch (not just execute PRDs)",
+      "Run experiments, write SQL, and ship AI-led features",
+      "Build for a large, real user base"
+    ],
+    "required_skills": [
+      "Strong product instincts",
+      "Clear communication",
+      "Comfortable working without hand-holding",
+      "Uses AI as a tool, not a buzzword"
+    ],
+    "preferred_skills": [],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Head of Product",
+        "confidence": 0.9
+      },
+      {
+        "title": "Senior Product Manager",
+        "confidence": 0.8
+      }
+    ],
+    "company": "Housing.com",
+    "company_url": "https://www.housing.com",
+    "JD_text": "Housing.com, Associate Product Manager, https://www.housing.com\r\n🚀 Hiring alert: Associate Product Manager at Housing.com \r\n\r\nWhat you’ll do\r\n• Own features end-to-end: 0 → 1 → scale\r\n• Frame problems from scratch (not just execute PRDs)\r\n• Run experiments, write SQL, and ship AI-led features\r\n• Build for a large, real user base\r\n\r\nWho this fits\r\n• 2–4 years in B2C product roles\r\n• Strong product instincts + clear communication\r\n• Comfortable working without hand-holding\r\n• Uses AI as a tool, not a buzzword\r\n\r\n📍 Gurgaon\r\n\r\n👉 Apply: https://lnkd.in/dfFzWNHn\r\n\r\nTag someone who should see this 👇"
+  },
+  {
+    "industry": "Fintech",
+    "stage": "Growth",
+    "product_summary": "Paytm is a leading fintech company that provides digital payments and financial services.",
+    "role_title": "Product Intern",
+    "department": "Product",
+    "seniority": "Intern",
+    "key_responsibilities": [
+      "Product feature development",
+      "User journey & funnel analysis",
+      "Growth campaigns & engagement initiatives",
+      "Market & competitor research",
+      "Cross-functional collaboration with Product, Tech, Marketing & Analytics teams"
+    ],
+    "required_skills": [
+      "Analytical skills",
+      "Problem-solving skills",
+      "Basic understanding of Product Management / Analytics",
+      "Excel",
+      "SQL",
+      "Data tools"
+    ],
+    "preferred_skills": [],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Head of Product",
+        "confidence": 0.9
+      },
+      {
+        "title": "Senior Product Manager",
+        "confidence": 0.8
+      }
+    ],
+    "company": "Paytm",
+    "company_url": "https://paytm.com/",
+    "JD_text": "Paytm, Product intern, https://paytm.com/\r\nWe’re Hiring: Product Intern – Telco department at Paytm\r\n\r\nAre you passionate about Product Management, Analytics, Growth, and Fintech?\r\nJoin our Telco team and work on products used by millions across India.\r\n\r\nAs a Product Intern, you’ll get hands-on exposure to:\r\n✨ Product feature development\r\n✨ User journey & funnel analysis\r\n✨ Growth campaigns & engagement initiatives\r\n✨ Market & competitor research\r\n✨ Cross-functional collaboration with Product, Tech, Marketing & Analytics teams\r\n\r\n👩‍💻 Who can apply?\r\n• 2025 graduates or final-year students (Batch of 2026)\r\n• Students/recent grads from Engineering, Business, or related fields\r\n• Candidates with strong analytical & problem-solving skills\r\n• Basic understanding of Product Management / Analytics\r\n• Familiarity with Excel, SQL, or data tools is a plus\r\n\r\n🌟 What you’ll gain:\r\n• Real-world product experience in a leading fintech company\r\n• Exposure to telecom & digital payments ecosystem\r\n• Opportunity to work closely with experienced Product Managers\r\n• Fast-paced, high-impact learning environment\r\n\r\nIf you’re excited to build products that impact millions, we’d love to connect!\r\n\r\n📩 Interested candidates can apply - https://lnkd.in/gQ6pE4N3\r\n\r\nAlso drop your email in the comment section and do like this post."
+  },
+  {
+    "industry": "Media",
+    "stage": "Growth",
+    "product_summary": "Paramount offers streaming services through Paramount+ and Pluto TV.",
+    "role_title": "Associate Product Manager",
+    "department": "Product",
+    "seniority": "Junior",
+    "key_responsibilities": [
+      "Analyzing user behavior and engagement trends to inform product decisions",
+      "Writing product requirements and user stories",
+      "Partnering with engineering, design, data, and content teams to ship features at scale",
+      "Contributing to the roadmap for one of the largest streaming portfolios in the world"
+    ],
+    "required_skills": [
+      "User behavior analysis",
+      "Product requirements writing",
+      "Cross-functional collaboration",
+      "Product roadmap development"
+    ],
+    "preferred_skills": [
+      "Data analysis",
+      "Product design",
+      "Engineering",
+      "Content creation"
+    ],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Head of Product",
+        "confidence": 0.9
+      },
+      {
+        "title": "Senior Product Manager",
+        "confidence": 0.8
+      }
+    ],
+    "company": "Paramount",
+    "company_url": "https://www.paramount.com/",
+    "JD_text": "Paramount, Associate Product manager, https://www.paramount.com/\r\n🚨Hiring Alert: Associate Product Manager Paramount🚨\r\n\r\nFor anyone looking to break into product, this is a strong entry point worth a serious look.\r\n\r\nThe role:\r\nAssociate Product Manager working across Paramount+ and Pluto TV, focused on content discovery, the experience that shapes how millions of users browse, search, and decide what to watch.\r\n\r\nWhat you'll be doing:\r\n• Analyzing user behavior and engagement trends to inform product decisions\r\n• Writing product requirements and user stories\r\n• Partnering with engineering, design, data, and content teams to ship features at scale\r\n• Contributing to the roadmap for one of the largest streaming portfolios in the world\r\n\r\nWhy this stands out:\r\n• Genuinely entry-level (0 to 1 years of experience, internships count)\r\n• Real consumer product ownership from day one\r\n• Deep cross-functional exposure, exactly what early-career PMs need to grow quickly\r\n\r\nIf you've built side projects, completed internships, or led product-adjacent work in school, you are competitive for this role.\r\n\r\nApply here: https://lnkd.in/gwDYsYYR\r\n\r\nGood roles get filled fast. If this fits you, don't wait."
+  },
+  {
+    "industry": "Fintech",
+    "stage": "Unknown",
+    "product_summary": "ET Markets is a platform that helps users make better investing decisions.",
+    "role_title": "Product Manager",
+    "department": "Product",
+    "seniority": "Mid",
+    "key_responsibilities": [
+      "Building products that help millions make better investing decisions",
+      "Solving complex problems"
+    ],
+    "required_skills": [
+      "Customer-centric",
+      "Data-driven",
+      "AI-powered products",
+      "Capital Markets",
+      "Investing",
+      "Trading",
+      "WealthTech",
+      "FinTech"
+    ],
+    "preferred_skills": [],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Head of Product",
+        "confidence": 0.9
+      },
+      {
+        "title": "Senior Product Manager",
+        "confidence": 0.8
+      }
+    ],
+    "company": "ET Markets",
+    "company_url": "https://economictimes.indiatimes.com/markets",
+    "JD_text": "ET Markets, Product Manager, https://economictimes.indiatimes.com/markets\n🚀 We're Hiring Product Managers at ET Markets!\n\nWe're growing the ET Markets product team and are looking for product builders across multiple levels:\n\n🔹 Associate Product Manager (1–2 years of experience)\n🔹 Product Manager (3–5 years of experience)\n🔹 Senior Product Manager (5+ years of experience)\n\nIf you're passionate about building products that help millions make better investing decisions, we'd love to hear from you.\n\nWe're looking for customer-centric, data-driven product managers who enjoy solving complex problems. \n\nExperience in AI-powered products and/or Capital Markets, Investing, Trading, WealthTech, or FinTech will be a plus.\n\n📩 Interested? DM me your latest resume along with a brief note on why you'd be a great fit for the ET Markets product team.\n\nPlease note this is a work from office role (Noida location).\n\nIf you know someone who fits the bill, please share this post with them.\n\n\nUpdate: We've received an overwhelming response! If you're interested in applying, please submit your details here: https://lnkd.in/gcEY7VmF\nWe may not be able to respond to every comment or message individually. If your profile is shortlisted, we'll reach out.\n\n#Hiring #ProductManagement #APM #ProductManager #SeniorProductManager #AI #CapitalMarkets #FinTech #WealthTech #ETMarkets"
+  },
+  {
+    "industry": "E-commerce",
+    "stage": "Seed",
+    "product_summary": "ShipGlobal is a platform for shipping and logistics services.",
+    "role_title": "Associate Product Manager",
+    "department": "Product",
+    "seniority": "Junior",
+    "key_responsibilities": [
+      "Solving customer problems",
+      "Working on impactful products",
+      "Collaborating with cross-functional teams",
+      "Growing in a fast-paced environment"
+    ],
+    "required_skills": [],
+    "preferred_skills": [],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Head of Product",
+        "confidence": 0.9
+      },
+      {
+        "title": "Founder",
+        "confidence": 0.8
+      },
+      {
+        "title": "Product Manager",
+        "confidence": 0.7
+      }
+    ],
+    "company": "ShipGlobal",
+    "company_url": "https://shipglobal.in/",
+    "JD_text": "ShipGlobal, Associate Product Manager, https://shipglobal.in/\nTanya GuptaView Tanya Gupta’s profile \n• 2nd\nProduct Manager\n3w • 3w Visible to everyone\n\n\n🚀 We're Hiring at ShipGlobal! 🚀\nLooking to build your career in Product Management? We have exciting opportunities open for:\n 🔹 Associate Product Manager (APM)\nIf you're passionate about solving customer problems, working on impactful products, collaborating with cross-functional teams, and growing in a fast-paced environment, we'd love to hear from you.\nLocation: Delhi\n📝 Subject Line (Mandatory): Application for APM - [Your Name]\nFeel free to share this opportunity with your network!Hello everyone,"
+  },
+  {
+    "industry": "Fintech",
+    "stage": "Pre-Seed",
+    "product_summary": "Spotlyte is a consumer tech AI business.",
+    "role_title": "Product Management Intern",
+    "department": "Product",
+    "seniority": "Intern",
+    "key_responsibilities": [],
+    "required_skills": [],
+    "preferred_skills": [],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Founder",
+        "confidence": 0.9
+      },
+      {
+        "title": "Product Manager",
+        "confidence": 0.8
+      },
+      {
+        "title": "CTO",
+        "confidence": 0.7
+      }
+    ],
+    "company": "Spotlyte",
+    "company_url": "https://www.spotlyte.live/",
+    "JD_text": "Spotlyte, Product Management Intern, https://www.spotlyte.live/\nWe’re hiring for two internship roles at Spotlyte:\na) Product Management Intern\nb) Product Design Intern\nWe have several exciting products currently in development, making this a great opportunity for anyone looking to gain hands-on exposure to building a consumer tech * AI business from the ground up.\nInterested candidates can DM me or email their profile/portfolio at digvijay@spotlyte.live. (Apply for Product intern)\n\n#Hiring #ProductManagement #ProductIntern #APM #AssociateProductManager #ProductJobs #ShipGlobal #HiringNow #GurgaonJobs #CareerOpportunity"
+  },
+  {
+    "industry": "Fintech",
+    "stage": "Seed",
+    "product_summary": "Arrowhead is a voice AI company that provides human-like voice AI solutions to businesses.",
+    "role_title": "Product Manager",
+    "department": "Product",
+    "seniority": "Mid",
+    "key_responsibilities": [
+      "Own bot outcomes end to end",
+      "Become the deepest expert in lending, insurance and e-commerce",
+      "Design workflows from the ground up"
+    ],
+    "required_skills": [
+      "Product management",
+      "Voice AI",
+      "Lending",
+      "Insurance",
+      "E-commerce"
+    ],
+    "preferred_skills": [
+      "Marketing",
+      "Sales",
+      "Strategy"
+    ],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Founder",
+        "confidence": 0.9
+      },
+      {
+        "title": "Head of Product",
+        "confidence": 0.8
+      },
+      {
+        "title": "CTO",
+        "confidence": 0.7
+      }
+    ],
+    "company": "Arrowhead",
+    "company_url": "https://www.arrowhead.com/",
+    "JD_text": "Arrowhead, Product Manager, https://www.arrowhead.com/\nDevyani Gupta\nDevyani GuptaView Devyani Gupta’s profile \n• 2nd\nFounder of Arrowhead | Ex-BCG | Wharton\n6d • 6d Visible to everyone\n\n\nImage preview\nWe're hiring for 3 roles that will shape the next chapter of Arrowhead. 🚀\n\nA year ago, \"the most human-like voice AI\" was a bet. Today, the business heads at a large Indian BPO are asking their own human callers, \"Why aren't you as good as the Arrowhead bot?\" A Tata 1MG customer was so struck by a call from our bot that he posted about it on LinkedIn. That's how we became the fastest-growing voice AI company in India — working with Axis Bank, Aditya Birla, RBL Bank, BharatPe, Tata 1MG, Indiamart and more, in under a year, backed by a fresh $3M seed round.\n\nWe didn't get here by being comfortable. We got here because this team shows up completely, obsesses over the customer's outcome, and treats every POC like it's the only one that matters. Our culture isn't for everyone — it's intense, high-ownership, and the fastest learning curve of your life. But if that's the environment you've been looking for, keep reading.\n\nWe're looking for three people to work directly with me:\n\n🧠 Product Manager \nOwn bot outcomes end to end. You'll become the deepest expert in lending, insurance and e-commerce, design workflows from the ground up, and make sure every bot hits the number the customer is paying for.\n\n📣 Head of Marketing \nBuild the Arrowhead brand and category from scratch. Brand, demand gen, ABM into BFSI enterprises, content, events — you'll make the market know exactly why we win.\n\n⚡ Founder's Office (GTM) \nMy right-hand person across strategy, sales and execution. Turn GTM ideas into revenue, build repeatable growth engines, and help us win every deal.\n\nAll three are in-person in Indiranagar, Bangalore. All three are for people who want to do the best work of their lives.\n\nIf this is you — or you know someone who's built for this — apply below (links in the comments). 👇( Apply for PM)"
+  },
+  {
+    "industry": "Fintech",
+    "stage": "Pre-Seed",
+    "product_summary": "GoPaisa is a fintech company with a live product, Instant Money, that offers payments and credit card services.",
+    "role_title": "Product Intern",
+    "department": "Product",
+    "seniority": "Intern",
+    "key_responsibilities": [
+      "Work closely with tech, ops, and partner teams",
+      "Get hands-on with product analytics, feature rollouts, and documentation"
+    ],
+    "required_skills": [
+      "Product analytics",
+      "Feature rollouts",
+      "Documentation"
+    ],
+    "preferred_skills": [
+      "Structured approach",
+      "Curiosity to learn"
+    ],
+    "hiring_manager_hypothesis": [
+      {
+        "title": "Founder",
+        "confidence": 0.9
+      },
+      {
+        "title": "Head of Product",
+        "confidence": 0.8
+      },
+      {
+        "title": "Product Manager",
+        "confidence": 0.7
+      }
+    ],
+    "company": "GoPaisa",
+    "company_url": "https://www.gopaisa.com/",
+    "JD_text": "GoPaisa, Product Intern, https://www.gopaisa.com/\nWe're expanding the team at GoPaisa and looking for a Product Intern to join us on Instant Money - one of our core, live fintech product.\n\nYou'll work closely with tech, ops, and partner teams, getting hands-on with product analytics, feature rollouts, and documentation on a product that's actually shipping and scaling in real time.\n\nThis is a great opportunity to get real exposure to payments and credit card ecosystems, and to see how product decisions play out in a fast-moving startup. We're looking for someone sharp, structured, and genuinely curious to learn - candidates from Tier-1 institutes preferred.\n\n📍 Location: Noida, Sector 132\n ⏳ Duration: 3–6 months, with a PPO based on performance\n\nIf this sounds like you, drop me a DM or write in at anubhav@gopaisa.in"
+  }
+]

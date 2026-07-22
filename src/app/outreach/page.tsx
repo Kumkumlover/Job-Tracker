@@ -1399,7 +1399,7 @@ export default function OutreachPage() {
  </footer>
  </main>
 
- {isMounted && <UsageTracker localUsage={localUsage} hunterKey={apiKeys.hunter} apolloKey={apiKeys.apollo} />}
+ {isMounted && <UsageTracker localUsage={localUsage} />}
  </div>
  );
 }

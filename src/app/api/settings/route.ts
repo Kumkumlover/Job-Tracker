@@ -72,7 +72,9 @@ Best,
         hunterKey: user?.hunterKey || "",
         apolloKey: user?.apolloKey || "",
         serperKey: user?.serperKey || "",
-        geminiKey: user?.geminiKey || ""
+        geminiKey: user?.geminiKey || "",
+        tavilyKey: user?.tavilyKey || "",
+        exaKey: user?.exaKey || ""
       }
     });
   } catch (err) {
@@ -120,6 +122,8 @@ export async function POST(req: NextRequest) {
     if (body.apolloKey !== undefined) userUpdateData.apolloKey = body.apolloKey;
     if (body.serperKey !== undefined) userUpdateData.serperKey = body.serperKey;
     if (body.geminiKey !== undefined) userUpdateData.geminiKey = body.geminiKey;
+    if (body.tavilyKey !== undefined) userUpdateData.tavilyKey = body.tavilyKey;
+    if (body.exaKey !== undefined) userUpdateData.exaKey = body.exaKey;
 
     if (Object.keys(userUpdateData).length > 0) {
       await prisma.user.update({

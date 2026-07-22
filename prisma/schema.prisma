@@ -46,6 +46,8 @@ model User {
   geminiKey           String?
   hunterKey           String?
   serperKey           String?
+  tavilyKey           String?
+  exaKey              String?
   accounts            Account[]
   applications        Application[]
   cachedEmails        CachedEmail[]

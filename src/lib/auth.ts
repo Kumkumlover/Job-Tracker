@@ -75,7 +75,6 @@ export async function getAuthenticatedUser(request: Request) {
   if (apiKey) {
     const user = await prisma.user.findUnique({
       where: { apiKey },
-      select: { id: true, email: true, name: true },
     });
     return user;
   }
@@ -86,7 +85,6 @@ export async function getAuthenticatedUser(request: Request) {
   if (session?.user) {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email! },
-      select: { id: true, email: true, name: true },
     });
     return user;
   }
