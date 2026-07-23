@@ -57,22 +57,18 @@ Present these instructions one by one:
 - **Purpose:** Used to find and verify direct professional email addresses for target Hiring Managers.
 - **Instructions to User:** Go to [Hunter.io](https://hunter.io/api_keys). Create a free account, navigate to the API section, copy your API key, and paste it into the "Hunter.io API Key" field in the Settings page.
 
-### 3. Apollo.io (Lead Sourcing)
-- **Purpose:** Used to search target companies and find the names and LinkedIn URLs of key decision-makers (e.g., "VP of Product").
-- **Instructions to User:** Go to [Apollo.io](https://app.apollo.io/#/settings/api/keys). Create a free account, navigate to Settings > Integrations > API, generate a new key, and paste it into the "Apollo.io API Key" field in the Settings page.
-
-### 4. Serper.dev (Google Search Proxy)
+### 3. Serper.dev (Google Search Proxy)
 - **Purpose:** Used to execute Google Dorks to find LinkedIn profiles and search for real-time company news.
 - **Instructions to User:** Go to [Serper.dev](https://serper.dev/). Create an account to receive 2,500 free credits, copy the API key from the dashboard, and paste it into the "Serper API Key" field in the Settings page.
 
-### 5. Tavily AI (AI-Optimized Search)
+### 4. Tavily AI (AI-Optimized Search)
 - **Purpose:** Used as a fallback and consensus search engine to scrape complex company contexts and missions.
 - **Instructions to User:** Go to [Tavily](https://app.tavily.com/). Create a free account (1,000 free searches/month), copy your API key, and paste it into the "Tavily API Key" field in the Settings page.
 
-### 6. Exa.ai (Semantic Search)
+### 5. Exa.ai (Semantic Search)
 - **Purpose:** Used for deep semantic neural search when querying highly specific technical requirements from job descriptions.
 - **Instructions to User:** Go to [Exa Developer Console](https://console.exa.ai/). Create a free account (1,000 free searches/month), copy your API key, and paste it into the "Exa API Key" field in the Settings page.
 
 ---
 
-**Final Confirmation:** Once the user has entered all 6 keys and clicked "Save" in the Settings UI, inform them that the Job Tracker & Outreach Suite is fully configured and ready for production use!
+**Final Confirmation:** Once the user has entered all 5 keys and clicked "Save" in the Settings UI, inform them that the Job Tracker & Outreach Suite is fully configured and ready for production use!
