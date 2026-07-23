@@ -25,9 +25,10 @@ EDGE CASES & RULES:
    - If <=200 employees (e.g. "11-50 employees"), it is a Startup.
    - If employee count is unknown, assume Enterprise.
 2. If it is an Enterprise, you MUST NOT generate "Founder" or "Co-Founder". Use titles like "Head of Product", "VP of Product", "Director of Engineering".
-3. If it is a Startup, you MUST include "Founder" or "Co-Founder".
-4. If the role is "Intern" or "Junior", the hiring manager is usually a "Product Manager", "Senior Product Manager", or "Head of Product" (not an intern).
-5. LIMIT the hiringManagerTitles array to exactly 3-4 highly probable, concise titles. Do NOT hallucinate bloated variants like "Product Development Manager" or "Product Owner" unless explicitly supported by the JD.
+3. MICRO-DEPARTMENTS (Crucial for Enterprise): Large companies (5000+ employees) like ICICI Bank or Google hire for specific verticals (e.g., "Payments", "Credit Cards", "Trust & Safety", "Cloud"). You MUST extract this specific micro-department from the JD and include it in \`deptKeywords\`.
+4. If it is a Startup, you MUST include "Founder" or "Co-Founder".
+5. If the role is "Intern" or "Junior", the hiring manager is usually a "Product Manager", "Senior Product Manager", or "Head of Product" (not an intern).
+6. LIMIT the hiringManagerTitles array to exactly 3-4 highly probable, concise titles. Do NOT hallucinate bloated variants like "Product Development Manager" or "Product Owner" unless explicitly supported by the JD.
 
 Return a JSON object:
 {
@@ -56,8 +57,9 @@ REJECTION RULES (HARD RULES - only reject if CLEARLY true):
 5. When in doubt, INCLUDE the candidate with lower confidence (0.5). It is better to include a false positive than miss a real person.
 
 CLASSIFICATION RULES for "role_type":
-- "hiring_manager": Assign this to Founders, C-level executives, OR anyone in the target department who holds a senior title (e.g. "Senior Product Manager", "VP of Engineering", "Lead Designer"). These are the people with actual hiring power for the role.
-- "team_lead": Assign this to mid-level employees in the target department who might interview the candidate (e.g. "Product Manager", "Software Engineer").
+- "hiring_manager": Assign this to Founders, C-level executives, OR anyone in the target department who holds a senior title (e.g. "Senior Product Manager", "VP of Engineering", "Lead Designer"). 
+  - CRITICAL FOR ENTERPRISE: If "{{llmDeptKeywords}}" contains a specific micro-department (e.g. "Payments", "Credit Cards", "Trust & Safety"), prioritize candidates whose snippet specifically mentions that micro-domain. A "VP of Product - Loans" is NOT the hiring manager for a "Payments" role; they would be "team_lead" or "other".
+- "team_lead": Assign this to mid-level employees in the target department who might interview the candidate (e.g. "Product Manager", "Software Engineer"), or senior employees in the wrong micro-department.
 - "other": Assign this ONLY to HR, Recruiters, and Talent Acquisition. They are NOT the hiring manager.
 
 Candidates:
