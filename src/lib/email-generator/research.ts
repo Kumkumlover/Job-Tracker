@@ -184,7 +184,7 @@ function buildResearchPrompt(
 5. 'matchedStrengths': Analyze the [JOB DESCRIPTION]. Select 2 hard skills/metrics from my EVIDENCE LIBRARY that align perfectly with the JD. Write a short phrase completing "Given my background in...". DO NOT write a full sentence. DO NOT repeat "Given my background in". Example: "0-1 product delivery and scaling AI agents".
 6. 'linkedinHook': If a LEAD LINKEDIN URL is provided, formulate a personalized, warm 1-2 sentence opening hook using the [LEAD SCRAPED CONTEXT]. If context is missing, use Google Search. DO NOT return an empty string if a URL is provided. ONLY return "" if LEAD LINKEDIN URL is 'None provided'.
 7. 'speculativePitch': Analyze the [COMPANY WEBSITE CONTEXT]. Write a 1-2 sentence observation identifying their core product value proposition and 1-2 likely competitors/alternatives in their space. Frame this as an exciting challenge for a 0-1 Product Manager to tackle.
-8. 'aboutMeBullets': Write EXACTLY 3 bullet points summarizing my most impressive achievements from the EVIDENCE LIBRARY that perfectly match the [JOB DESCRIPTION]. Use short, punchy sentences. Prefix each with '• '. Do NOT use 'Highlight 1:'. Example: '• Replaced internal support tools with LLMs, saving $150k annually.'`
+8. 'aboutMeBullets': Write EXACTLY 3 bullet points summarizing my most impressive achievements from the EVIDENCE LIBRARY that perfectly match the [JOB DESCRIPTION]. Use short, punchy sentences. Prefix each with '• '. Do NOT use 'Highlight 1:'. Example: '• Led development of core features resulting in 20% efficiency gain.'`
   });
 }
 

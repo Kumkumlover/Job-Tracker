@@ -22,9 +22,9 @@ export function generateCopy(
   const linkedin = profile?.linkedinUrl || "[Your LinkedIn URL]";
   const cv = profile?.resume || "[Your CV URL]";
   
-  const defaultBullets = `• Highlight 1: Replaced internal tools saving 150k.
-• Highlight 2: Built an onboarding agent reducing costs by 60%.
-• Highlight 3: Experienced in full-stack development and automation.`;
+  const defaultBullets = `• Led development of core features resulting in 20% efficiency gain.
+• Experienced in driving cross-functional collaboration and delivering high-impact features.
+• Demonstrated ability to scale systems from 0-1.`;
   const bullets = problem.aboutMeBullets || profile?.aboutMeBullets || defaultBullets;
 
   // Custom Template Logic

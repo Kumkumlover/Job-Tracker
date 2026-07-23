@@ -103,7 +103,7 @@ export default function ProfilePage() {
                     value={formData.senderName}
                     onChange={handleChange}
                     className="w-full bg-[var(--card)] border border-[var(--border)] rounded-lg px-4 py-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
-                    placeholder="E.g. Shikhar Gupta"
+                    placeholder="E.g. John Doe"
                   />
                 </div>
                 <div>

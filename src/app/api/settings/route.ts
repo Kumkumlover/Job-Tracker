@@ -22,9 +22,9 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const defaultBullets = `• I am Shikhar Gupta, an AI Product Intern at SuperAGI (AI CRM), currently owning end-to-end discovery and execution for Analytics, Chat, and Project Management modules, built them from 0–1 and replaced tools like Slack and Jira for internal usage saving more than 150k in cost.
-• I have led the development of multiple AI-agents including an AI onboarding agent that reduced customer success costs by 60% and a chat-native PM agent that automated task tracking and reduced project management overhead by 40% in SuperAGI.
-• I am a Top PM fellow at Nextleap (Top 10%), Ex Product Analyst @Digital Harbor and have vibecoded automations such as Job email outreach using N8N and Job tracker as a browser extension.`;
+    const defaultBullets = `• Led development of core product features resulting in 20% efficiency gain.
+• Experienced in driving cross-functional collaboration and delivering high-impact features.
+• Demonstrated ability to scale systems from 0-1.`;
 
     const defaultSystemPrompt = `1. Identify 3 critical UX or product friction points for the target company.
 2. Cross-reference the EVIDENCE LIBRARY to solve the problem.
