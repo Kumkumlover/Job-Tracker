@@ -58,7 +58,7 @@ REJECTION RULES (HARD RULES - only reject if CLEARLY true):
 
 CLASSIFICATION RULES for "role_type":
 - "hiring_manager": Assign this to Founders, C-level executives, OR anyone in the target department who holds a senior title (e.g. "Senior Product Manager", "VP of Engineering", "Lead Designer"). 
-  - CRITICAL FOR ENTERPRISE: If "{{llmDeptKeywords}}" contains a specific micro-department (e.g. "Payments", "Credit Cards", "Trust & Safety"), prioritize candidates whose snippet specifically mentions that micro-domain. A "VP of Product - Loans" is NOT the hiring manager for a "Payments" role; they would be "team_lead" or "other".
+  - MICRO-DEPARTMENT PRIORITIZATION: If "{{llmDeptKeywords}}" contains a specific micro-department (e.g. "Payments"), prioritize candidates who specifically match that domain. However, if no perfect domain match is found (or if the company is small), generic senior roles (e.g. "VP of Product") are perfectly acceptable as hiring managers. Do NOT reject generic senior people just because they lack the specific micro-department keyword.
 - "team_lead": Assign this to mid-level employees in the target department who might interview the candidate (e.g. "Product Manager", "Software Engineer"), or senior employees in the wrong micro-department.
 - "other": Assign this ONLY to HR, Recruiters, and Talent Acquisition. They are NOT the hiring manager.
 
