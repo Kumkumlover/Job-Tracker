@@ -14,8 +14,12 @@ A full-stack job application tracker that connects to your Gmail and automatical
 - **Touchpoint Timeline** — Every email interaction is logged as a touchpoint with a direct link back to the exact email in Gmail
 - **Kanban + Table Views** — Switch between a drag-and-drop Kanban board and a sortable table view
 - **Follow-Up Reminders** — Tracks when you last reached out and flags overdue follow-ups
-- **Custom Stages & Properties** — Define your own pipeline stages with colors and add custom fields
-- **Chrome Extension** — Auto-detect company names on career pages and add applications with one click
+- **JobSuite (Outreach)** — An advanced AI email generator that crafts hyper-personalized cold emails, startup pitches, and follow-ups by synthesizing your CV, scraping target company sites, and analyzing job descriptions.
+- **Bring Your Own Keys (BYOK)** — Securely configure and manage your API keys (Gemini, Hunter, Apollo, Serper, Tavily, Exa) in the Settings page.
+- **Real-Time API Tracker** — A floating widget that polls and displays real-time global account limits and session usage across all connected APIs.
+- **Braintrust Evaluation Loop** — Built-in LLM testing and evaluation suite that uses heuristic scorers and LLM-as-a-judge to guarantee email quality and factuality.
+- **Custom Stages & Properties** — Define your own pipeline stages with colors and add custom fields.
+- **Chrome Extension** — Auto-detect company names on career pages and add applications with one click.
 
 ## Screenshots
 
@@ -36,6 +40,10 @@ A full-stack job application tracker that connects to your Gmail and automatical
 | Styling | [Tailwind CSS 4](https://tailwindcss.com/) |
 | State | [TanStack Query](https://tanstack.com/query) |
 | Drag & Drop | [@hello-pangea/dnd](https://github.com/hello-pangea/dnd) |
+| Search APIs | [Serper.dev](https://serper.dev/), [Tavily](https://tavily.com/), [Exa](https://exa.ai/) |
+| Data APIs | [Hunter.io](https://hunter.io/), [Apollo.io](https://apollo.io/) |
+| AI / LLMs | [Google Gemini](https://ai.google.dev/) |
+| AI Testing | [Braintrust](https://www.braintrustdata.com/) |
 | Hosting | [Vercel](https://vercel.com/) |
 
 ## Getting Started
