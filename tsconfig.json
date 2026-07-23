@@ -38,6 +38,7 @@
   "exclude": [
     "node_modules",
     "braintrust",
+    "scripts",
     "run_*.ts",
     "test_*.ts",
     "debug_*.ts",
