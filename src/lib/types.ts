@@ -25,7 +25,7 @@ export interface RankedCandidate {
   name: string;
   profile_url: string;
   current_title: string;
-  role_type: "hiring_manager" | "team_lead" | "recruiter_hr" | "other";
+  role_type: "hiring_manager" | "team_lead" | "recruiter_hr" | "founder" | "other";
   confidence: number;
   reason: string;
   email?: string;

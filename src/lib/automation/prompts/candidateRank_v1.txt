@@ -5,14 +5,20 @@ Below are LinkedIn search results. Each result indicates which search engines fo
 CATEGORIES:
 - hiring_manager: The person who would directly manage this candidate. Must be the head/director/VP of the TARGET department.
 - team_lead: A senior peer or lead within the TARGET department.
-- other: HR, recruiters, engineers, founders of large companies, and ANY executive of an UNRELATED department (e.g. CRO, VP of Growth, Creative Head).
+- founder: Founders and CEOs of the company.
+- other: EVERYONE else who is NOT in the target department and NOT a founder (e.g. HR, recruiters, software engineers, SDEs, VP of Growth, Creative Head).
+
+CONFIDENCE SCORING:
+Assign confidence based on their role type to ensure correct prioritization:
+- hiring_manager: 0.90 to 0.95
+- team_lead: 0.70 to 0.85
+- founder: 0.70 to 0.80
+- other: 0.40 to 0.60
 
 REJECTION RULES:
 1. REJECT if the snippet explicitly says "Ex-{{company}}", "Former {{company}}", "ex @{{company}}", "Left {{company}}", or lists a DIFFERENT company as their obvious CURRENT employer (e.g. "Product Manager at Google | Ex-{{company}}").
-2. REJECT if they are in an unrelated department (e.g. CRO, VP of Growth, Creative Head are NOT Product Management). HOWEVER, DO NOT reject HR, Recruiters, or Talent Acquisition — they are always valid contacts, but they MUST be categorized as "other".
-3. ONLY label Founders as "hiring_manager" if the company is extremely small (under 20 people). For large companies (like GIVA), Founders and C-Suite executives are "other".
-4. DO NOT reject just because the snippet is vague or doesn't explicitly say "current" — most LinkedIn snippets don't.
-5. When in doubt, INCLUDE the candidate with lower confidence (0.5). It is better to include a false positive than miss a real person.
+2. DO NOT reject just because the snippet is vague or doesn't explicitly say "current" — most LinkedIn snippets don't.
+3. When in doubt, INCLUDE the candidate with lower confidence (0.5). It is better to include a false positive than miss a real person.
 
 Candidates:
 {{searchResults}}

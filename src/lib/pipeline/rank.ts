@@ -71,8 +71,8 @@ export async function rankCandidates(
         
         let role = c.role_type || "other";
         // Override the LLM if it hallucinates an unrelated executive as the hiring manager
-        if (isCLevel && !hasDept && role === "hiring_manager") {
-          role = "other";
+        if (isCLevel && !hasDept && (role === "hiring_manager" || role === "team_lead")) {
+          role = "founder";
         }
 
         return {

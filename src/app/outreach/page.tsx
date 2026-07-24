@@ -72,21 +72,23 @@ type PhaseStatus = "idle" | "loading" | "success" | "error";
 // ─── Helpers ────────────────────────────────────────────────────
 
 function roleTypeLabel(rt: string) {
- switch (rt) {
- case "hiring_manager": return "Hiring Manager";
- case "team_lead": return "Team Lead";
- case "recruiter_hr": return "HR / Recruiter";
- default: return "Other";
- }
+  switch (rt) {
+    case "hiring_manager": return "Hiring Manager";
+    case "team_lead": return "Team Lead";
+    case "recruiter_hr": return "HR / Recruiter";
+    case "founder": return "Founder";
+    default: return "Other";
+  }
 }
 
 function roleTypeColor(rt: string) {
- switch (rt) {
- case "hiring_manager": return "bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20";
- case "team_lead": return "bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20";
- case "recruiter_hr": return "bg-[var(--secondary)] text-[var(--muted-foreground)] border-[var(--border)]";
- default: return "bg-[var(--secondary)] text-[var(--muted-foreground)] border-[var(--border)]";
- }
+  switch (rt) {
+    case "hiring_manager": return "bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20";
+    case "team_lead": return "bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20";
+    case "recruiter_hr": return "bg-[var(--secondary)] text-[var(--muted-foreground)] border-[var(--border)]";
+    case "founder": return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    default: return "bg-[var(--secondary)] text-[var(--muted-foreground)] border-[var(--border)]";
+  }
 }
 
 function buildGmailDraftUrl(draft: EmailDraft): string {
