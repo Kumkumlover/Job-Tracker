@@ -378,7 +378,6 @@ function buildCacheKey(company: string, jobTitle: string): string {
 async function getCachedResults(
   cacheKey: string
 ): Promise<{ results: SearchResult[]; deptKeywords: string; companyContext: string } | null> {
-  return null; // TEMPORARILY BYPASS CACHE
   try {
     const cached = await prisma.searchCache.findFirst({
       where: { cacheKey, expiresAt: { gt: new Date() } },
