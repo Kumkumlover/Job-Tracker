@@ -92,6 +92,7 @@ export async function ask(prompt: string, model?: string, retries = 5, delayMs =
       model: m,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.0,
+      max_tokens: 4096,
     }, { timeout: 30000 });
 
     return response.choices[0]?.message?.content ?? "";

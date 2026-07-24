@@ -74,11 +74,11 @@ Return JSON:
       "current_title": "<their title>", 
       "confidence": <0.4-0.95>, 
       "role_type": "hiring_manager" | "team_lead" | "other", 
-      "reason": "<10 words>" 
+      "reason": "<max 3 words>" 
     } 
   ] 
 }
-Include everyone who passes the rules above. Return ONLY valid JSON. Do NOT use Python's 'None' or 'null', use empty strings ("").`
+CRITICAL: You MUST return an entry for EVERY SINGLE candidate provided in the input list. Do not skip anyone. If you are given 20 candidates, you must return exactly 20 items in the array. Return ONLY valid JSON.`
 };
 
 export function loadPrompt(name: string, variables: Record<string, string>): string {

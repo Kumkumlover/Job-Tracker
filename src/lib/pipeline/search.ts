@@ -328,11 +328,11 @@ async function callSerper(
   hrQuery: string,
   apiKey: string
 ): Promise<SearchResult[]> {
-  async function runQuery(q: string) {
+  async function runQuery(q: string, page: number = 1) {
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ q, num: 10 }),
+      body: JSON.stringify({ q, num: 10, page }),
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) throw new Error(`Serper HTTP ${res.status}`);
@@ -340,15 +340,17 @@ async function callSerper(
     return (data.organic || []) as any[];
   }
 
-  const [deptPage1, deptPage2, hrItems] = await Promise.allSettled([
-    runQuery(deptQuery),
-    runQuery(deptQuery.replace("page=1", "page=2")),
-    runQuery(hrQuery),
+  const [deptPage1, deptPage2, deptPage3, hrItems] = await Promise.allSettled([
+    runQuery(deptQuery, 1),
+    runQuery(deptQuery, 2),
+    runQuery(deptQuery, 3),
+    runQuery(hrQuery, 1),
   ]);
 
   const items = [
     ...((deptPage1.status === "fulfilled" ? deptPage1.value : []) as any[]).map((i: any) => ({ ...i, _boost: 5 })),
     ...((deptPage2.status === "fulfilled" ? deptPage2.value : []) as any[]).map((i: any) => ({ ...i, _boost: 5 })),
+    ...((deptPage3.status === "fulfilled" ? deptPage3.value : []) as any[]).map((i: any) => ({ ...i, _boost: 5 })),
     ...((hrItems.status === "fulfilled" ? hrItems.value : []) as any[]),
   ];
 
@@ -376,6 +378,7 @@ function buildCacheKey(company: string, jobTitle: string): string {
 async function getCachedResults(
   cacheKey: string
 ): Promise<{ results: SearchResult[]; deptKeywords: string; companyContext: string } | null> {
+  return null; // TEMPORARILY BYPASS CACHE
   try {
     const cached = await prisma.searchCache.findFirst({
       where: { cacheKey, expiresAt: { gt: new Date() } },
