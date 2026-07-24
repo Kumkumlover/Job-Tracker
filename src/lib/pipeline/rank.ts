@@ -67,7 +67,7 @@ export async function rankCandidates(
         const s = (r.snippet || "").toLowerCase();
         const combinedText = t + " " + s;
         const isCLevel = /\b(founder|co-founder|ceo|chief|cro|cmo|cfo|coo|vp|president)\b/.test(combinedText);
-        const hasDept = llmDeptKeywords.toLowerCase().split(" ").some(w => w.length > 2 && combinedText.includes(w));
+        const hasDept = llmDeptKeywords ? llmDeptKeywords.toLowerCase().split(" ").some(w => w.length > 2 && combinedText.includes(w)) : false;
         
         let role = c.role_type || "other";
         // Override the LLM if it hallucinates an unrelated executive as the hiring manager

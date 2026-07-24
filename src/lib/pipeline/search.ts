@@ -387,6 +387,7 @@ async function getCachedResults(
   cacheKey: string
 ): Promise<{ results: SearchResult[]; deptKeywords: string; companyContext: string } | null> {
   return null;
+  /*
   try {
     const cached = await prisma.searchCache.findFirst({
       where: { cacheKey, expiresAt: { gt: new Date() } },
@@ -395,12 +396,13 @@ async function getCachedResults(
     console.log(`[search] Cache HIT for key ${cacheKey.slice(0, 8)}…`);
     return {
       results: cached.results as unknown as SearchResult[],
-      deptKeywords: cached.deptKeywords,
-      companyContext: cached.companyContext,
+      deptKeywords: cached.deptKeywords || "",
+      companyContext: cached.companyContext || "",
     };
   } catch {
     return null; // DB errors must never crash the search
   }
+  */
 }
 
 async function setCachedResults(
