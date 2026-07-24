@@ -55,7 +55,7 @@ export const TopCandidatesResponseSchema = z.object({
   topCandidates: z.array(z.object({
     index: z.number(),
     name: z.string().optional(),
-    current_title: z.string().optional(),
+    current_title: z.string().nullable().optional(),
     linkedin_url: z.string().optional(),
     confidence: z.number(),
     role_type: z.string().optional(),

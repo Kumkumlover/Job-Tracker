@@ -62,11 +62,24 @@ export async function rankCandidates(
       .map((c) => {
         const r = uniqueResults[c.index];
         if (!r) return null;
+        
+        const t = (r.title || "").toLowerCase();
+        const s = (r.snippet || "").toLowerCase();
+        const combinedText = t + " " + s;
+        const isCLevel = /\b(founder|co-founder|ceo|chief|cro|cmo|cfo|coo|vp|president)\b/.test(combinedText);
+        const hasDept = llmDeptKeywords.toLowerCase().split(" ").some(w => w.length > 2 && combinedText.includes(w));
+        
+        let role = c.role_type || "other";
+        // Override the LLM if it hallucinates an unrelated executive as the hiring manager
+        if (isCLevel && !hasDept && role === "hiring_manager") {
+          role = "other";
+        }
+
         return {
           name: r.title.split(/[-—|]/)[0].trim(),
           profile_url: (r as any).url || (r as any).link || "",
           current_title: r.snippet.substring(0, 60).trim(),
-          role_type: c.role_type || "other",
+          role_type: role,
           confidence: c.confidence || 0.5,
           reason: `Verified: ${c.reason || "Matches criteria"}`,
         } as RankedCandidate;

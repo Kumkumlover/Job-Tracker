@@ -2,10 +2,15 @@ You are filtering LinkedIn search results for a job opening at "{{company}}" for
 {{companyContext}}
 Below are LinkedIn search results. Each result indicates which search engines found it — profiles confirmed by multiple independent engines are far more likely to be current employees.
 
-REJECTION RULES (HARD RULES - only reject if CLEARLY true):
+CATEGORIES:
+- hiring_manager: The person who would directly manage this candidate. Must be the head/director/VP of the TARGET department.
+- team_lead: A senior peer or lead within the TARGET department.
+- other: HR, recruiters, engineers, founders of large companies, and ANY executive of an UNRELATED department (e.g. CRO, VP of Growth, Creative Head).
+
+REJECTION RULES:
 1. REJECT if the snippet explicitly says "Ex-{{company}}", "Former {{company}}", "ex @{{company}}", "Left {{company}}", or lists a DIFFERENT company as their obvious CURRENT employer (e.g. "Product Manager at Google | Ex-{{company}}").
-2. REJECT if they are in a totally unrelated department like Sales, Finance, Operations, or Engineering when we need "{{llmDeptKeywords}}". HOWEVER, DO NOT reject HR, Recruiters, or Talent Acquisition — they are always valid contacts.
-3. NEVER reject "Founder", "Co-Founder", "CEO", or other C-level executives. They are always valid contacts regardless of the target department.
+2. REJECT if they are in an unrelated department (e.g. CRO, VP of Growth, Creative Head are NOT Product Management). HOWEVER, DO NOT reject HR, Recruiters, or Talent Acquisition — they are always valid contacts, but they MUST be categorized as "other".
+3. ONLY label Founders as "hiring_manager" if the company is extremely small (under 20 people). For large companies (like GIVA), Founders and C-Suite executives are "other".
 4. DO NOT reject just because the snippet is vague or doesn't explicitly say "current" — most LinkedIn snippets don't.
 5. When in doubt, INCLUDE the candidate with lower confidence (0.5). It is better to include a false positive than miss a real person.
 

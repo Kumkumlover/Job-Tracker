@@ -109,10 +109,12 @@ export async function ask(prompt: string, model?: string, retries = 5, delayMs =
 /** Call the LLM and parse the response as JSON */
 export async function askJSON<T>(prompt: string, model?: string): Promise<T> {
   const raw = await ask(prompt, model);
-  const cleaned = raw
+  let cleaned = raw
     .replace(/```json\s*/gi, "")
     .replace(/```\s*/g, "")
     .trim();
+  // Quick fix for open source models outputting python dict syntax
+  cleaned = cleaned.replace(/:\s*None/g, ": null");
   return JSON.parse(cleaned) as T;
 }
 

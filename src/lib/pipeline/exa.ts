@@ -55,7 +55,7 @@ export async function searchExa(
       .filter((r: any) => (r.url || "").includes("linkedin.com/in/"))
       .map((r: any) => ({
         url: r.url || "",
-        title: (r.title || "").split("-")[0].trim().split("|")[0].trim(),
+        title: r.title || "",
         snippet: r.text || "",
         domain: "linkedin.com",
         score: 0,

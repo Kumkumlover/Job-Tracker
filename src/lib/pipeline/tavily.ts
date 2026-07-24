@@ -45,7 +45,7 @@ export async function searchTavily(
       .filter((r: any) => (r.url || "").includes("linkedin.com/in/"))
       .map((r: any) => ({
         url: r.url || "",
-        title: (r.title || "").split("-")[0].trim().split("|")[0].trim(),
+        title: r.title || "",
         snippet: r.content || "",
         domain: "linkedin.com",
         score: 0,

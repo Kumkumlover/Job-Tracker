@@ -146,14 +146,18 @@ export function scoreResult(
   }
 
   const isFounder = /\b(founder|co-founder|ceo|chief executive)\b/.test(t);
+  const isCLevel = /\b(cro|cmo|cfo|coo|chief revenue|chief marketing|vp of growth|creative head|vp of)\b/.test(t);
   const isHR =
     /\b(human resources|talent acquisition|recruiter|hrbp|hr business partner|people partner|people ops|people operations)\b/.test(
       t + " " + s
     );
   const hasDeptSignal =
     dept && dept.split(" ").some((w) => w.length > 2 && t.includes(w));
+  
   if (isHR && !hasDeptSignal && !isFounder) score -= 5;
-
+  // If they are a C-level executive or VP of an unrelated department, penalize them unless they have the department signal
+  if (isCLevel && !hasDeptSignal) score -= 10;
+  
   return score;
 }
 
@@ -225,20 +229,24 @@ export async function buildSearchStrategyWithLLM(
     const fallbackVariants = fallbackMatch ? fallbackMatch[1].split(" OR ") : [];
 
     const isIntern = cleanJobTitle.toLowerCase().includes("intern");
-    const rawVariants = [
-      ...(isIntern ? [] : [`"${cleanJobTitle}"`]),
-      ...strategy.hiringManagerTitles.map((r: string) => `"${r}"`),
-      ...fallbackVariants,
-    ];
     
+    // Bug Fix: Google fails if exact match quotes contain parentheses (e.g. "(APM)"). Strip them.
+    const rawVariants = [
+      ...(isIntern ? [] : [cleanJobTitle]),
+      ...strategy.hiringManagerTitles,
+      ...fallbackVariants.map(v => v.replace(/"/g, "")),
+    ].map(v => (v || "").replace(/\s*\([^)]*\)/g, '').trim());
+
     // Safety net: if it's a product role, force "Product Manager"
     if (jobTitle.toLowerCase().includes("product")) {
-      rawVariants.push('"Product Manager"');
+      rawVariants.push("Product Manager");
     }
 
     const uniqueVariants = Array.from(new Set(rawVariants))
       .filter(Boolean)
-      .slice(0, 6);
+      .slice(0, 6)
+      .map(v => `"${v}"`);
+
     const exclusions =
       excludeNames.length > 0 ? excludeNames.map((n) => `-"${n}"`).join(" ") : "";
 
@@ -358,7 +366,7 @@ async function callSerper(
     .filter((item: any) => (item.link || "").includes("linkedin.com/in/"))
     .map((item: any) => ({
       url: (item.link || "").split("?")[0].replace(/\/$/, ""),
-      title: (item.title || "").split("-")[0].trim().split("|")[0].trim(),
+      title: item.title || "",
       snippet: item.snippet || "",
       domain: "linkedin.com",
       score: item._boost || 0,
@@ -378,6 +386,7 @@ function buildCacheKey(company: string, jobTitle: string): string {
 async function getCachedResults(
   cacheKey: string
 ): Promise<{ results: SearchResult[]; deptKeywords: string; companyContext: string } | null> {
+  return null;
   try {
     const cached = await prisma.searchCache.findFirst({
       where: { cacheKey, expiresAt: { gt: new Date() } },
@@ -498,8 +507,8 @@ export async function searchCandidates(
   const corroborated: CorroboratedResult[] = [];
   for (const [normUrl, sources] of urlToSources.entries()) {
     const r = urlToResult.get(normUrl)!;
-    const cleanTitle = (r.title || "").split("-")[0].trim().split("|")[0].trim();
-    let baseScore = scoreResult(cleanTitle, r.snippet, r.url, strategy.deptKeywords, company);
+    // Pass the FULL title to scoreResult so heuristics can read job titles
+    let baseScore = scoreResult(r.title || "", r.snippet, r.url, strategy.deptKeywords, company);
     const sourcesArr = Array.from(sources);
 
     // Apply corroboration bonus
@@ -508,7 +517,8 @@ export async function searchCandidates(
 
     corroborated.push({
       url: r.url.split("?")[0].replace(/\/$/, ""),
-      title: cleanTitle,
+      // Pass the FULL title to the LLM so it can actually see their job role
+      title: r.title || "",
       snippet: r.snippet,
       domain: "linkedin.com",
       score: baseScore,
