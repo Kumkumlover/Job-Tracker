@@ -37,8 +37,12 @@ test.describe('Profile and Settings Pages with Mocks', () => {
                 linkedinUrl: 'https://linkedin.com/in/johndoe',
                 resumeUrl: 'https://resume.com',
                 aboutMeBullets: 'I am a software engineer.',
-                emailTemplateStructure: 'Hi [Name],\\n\\nI am interested in the [Role] role.\\n\\nThanks,\\n[My Name]',
+                emailTemplateStructure: 'Hi [Name],\n\nI am interested in the [Role] role.\n\nThanks,\n[My Name]',
                 systemPrompt: 'You are an expert AI recruiter.',
+              },
+              apiKeys: {
+                geminiKey: 'mock-gemini-key',
+                serperKey: 'mock-serper-key',
               },
             }),
           });

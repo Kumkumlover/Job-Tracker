@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, GripVertical, Key, Copy, Mail, CheckCircle, AlertCircle, RotateCcw } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Key, Copy, Mail, CheckCircle, AlertCircle, RotateCcw, Loader2, Check } from "lucide-react";
 import NavigationHeader from "@/components/NavigationHeader";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -44,6 +44,8 @@ export default function SettingsPage() {
     exaKey: ""
   });
   const [savingKeys, setSavingKeys] = useState(false);
+  const [verifyingKeys, setVerifyingKeys] = useState(false);
+  const [keyStatus, setKeyStatus] = useState<Record<string, { status: "idle" | "checking" | "valid" | "invalid"; message?: string }>>({});
   const [keysMessage, setKeysMessage] = useState<{type: "success"|"error", text: string}|null>(null);
 
   const [linkedAccounts, setLinkedAccounts] = useState<{ id: string; email: string; lastSyncedAt: string | null }[]>([]);
@@ -132,6 +134,64 @@ export default function SettingsPage() {
     navigator.clipboard.writeText(apiKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleVerifyKeys = async () => {
+    setVerifyingKeys(true);
+    setKeysMessage(null);
+    const checkingState: Record<string, { status: "idle" | "checking" | "valid" | "invalid"; message?: string }> = {};
+    Object.keys(apiKeysForm).forEach((k) => {
+      if (apiKeysForm[k as keyof typeof apiKeysForm]?.trim()) {
+        checkingState[k] = { status: "checking" };
+      } else {
+        checkingState[k] = { status: "idle" };
+      }
+    });
+    setKeyStatus(checkingState);
+
+    try {
+      const res = await fetch("/api/verify-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiKeysForm),
+      });
+      const data = await res.json();
+
+      const updatedStatus: Record<string, any> = { ...keyStatus };
+      const map: Record<string, string> = {
+        geminiKey: "gemini",
+        serperKey: "serper",
+        hunterKey: "hunter",
+        apolloKey: "apollo",
+        tavilyKey: "tavily",
+        exaKey: "exa",
+      };
+
+      Object.entries(map).forEach(([formKey, apiProp]) => {
+        const val = apiKeysForm[formKey as keyof typeof apiKeysForm]?.trim();
+        if (!val) {
+          updatedStatus[formKey] = { status: "idle" };
+          return;
+        }
+        const resObj = data[apiProp];
+        if (resObj) {
+          updatedStatus[formKey] = {
+            status: resObj.valid ? "valid" : "invalid",
+            message: resObj.message,
+          };
+        } else {
+          updatedStatus[formKey] = { status: "invalid", message: "Verification failed" };
+        }
+      });
+      setKeyStatus(updatedStatus);
+      setKeysMessage({ type: "success", text: "Verification check completed!" });
+      setTimeout(() => setKeysMessage(null), 3000);
+    } catch (err) {
+      console.error("Verification error:", err);
+      setKeysMessage({ type: "error", text: "Failed to verify API keys" });
+    } finally {
+      setVerifyingKeys(false);
+    }
   };
 
   const handleSaveApiKeys = async () => {
@@ -263,18 +323,41 @@ export default function SettingsPage() {
               { id: "geminiKey", label: "Gemini API Key", placeholder: "AIza..." },
               { id: "tavilyKey", label: "Tavily API Key", placeholder: "tvly-..." },
               { id: "exaKey", label: "Exa API Key", placeholder: "exa_..." },
-            ].map((field) => (
-              <div key={field.id}>
-                <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-1">{field.label}</label>
-                <input
-                  type="password"
-                  value={apiKeysForm[field.id as keyof typeof apiKeysForm]}
-                  onChange={(e) => setApiKeysForm(prev => ({ ...prev, [field.id]: e.target.value }))}
-                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--primary)]"
-                  placeholder={field.placeholder}
-                />
-              </div>
-            ))}
+            ].map((field) => {
+              const statusObj = keyStatus[field.id];
+              return (
+                <div key={field.id}>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-[var(--muted-foreground)]">{field.label}</label>
+                    {statusObj?.status === "checking" && (
+                      <span className="flex items-center gap-1 text-xs text-[var(--muted-foreground)]">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Verifying
+                      </span>
+                    )}
+                    {statusObj?.status === "valid" && (
+                      <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium" title={statusObj.message}>
+                        <CheckCircle className="w-3 h-3" /> Valid
+                      </span>
+                    )}
+                    {statusObj?.status === "invalid" && (
+                      <span className="flex items-center gap-1 text-xs text-rose-400 font-medium max-w-[150px] truncate" title={statusObj.message}>
+                        <AlertCircle className="w-3 h-3 shrink-0" /> {statusObj.message || "Invalid"}
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="password"
+                    value={apiKeysForm[field.id as keyof typeof apiKeysForm]}
+                    onChange={(e) => {
+                      setApiKeysForm(prev => ({ ...prev, [field.id]: e.target.value }));
+                      setKeyStatus(prev => ({ ...prev, [field.id]: { status: "idle" } }));
+                    }}
+                    className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--primary)]"
+                    placeholder={field.placeholder}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-[var(--border)] mt-4">
@@ -285,13 +368,30 @@ export default function SettingsPage() {
                 </span>
               )}
             </div>
-            <button
-              onClick={handleSaveApiKeys}
-              disabled={savingKeys}
-              className="px-4 py-2 mt-4 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
-            >
-              {savingKeys ? "Saving..." : "Save API Keys"}
-            </button>
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                onClick={handleVerifyKeys}
+                disabled={verifyingKeys}
+                className="px-4 py-2 border border-[var(--border)] text-[var(--foreground)] rounded-lg text-sm font-medium hover:bg-[var(--secondary)] disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+              >
+                {verifyingKeys ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Verifying...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5" /> Verify Keys
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleSaveApiKeys}
+                disabled={savingKeys}
+                className="px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+              >
+                {savingKeys ? "Saving..." : "Save API Keys"}
+              </button>
+            </div>
           </div>
         </section>
 
