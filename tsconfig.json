@@ -39,6 +39,7 @@
     "node_modules",
     "braintrust",
     "scripts",
+    "scratch",
     "run_*.ts",
     "test_*.ts",
     "debug_*.ts",
