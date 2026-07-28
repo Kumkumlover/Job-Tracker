@@ -237,22 +237,30 @@ export async function buildSearchStrategyWithLLM(
       ...fallbackVariants.map(v => v.replace(/"/g, "")),
     ].map(v => (v || "").replace(/\s*\([^)]*\)/g, '').trim());
 
-    // Safety net: if it's a product role, force "Product Manager"
+    // Safety net: if it's a product role, force C-level and broader product terms
     if (jobTitle.toLowerCase().includes("product")) {
-      rawVariants.push("Product Manager");
+      rawVariants.push("Product Manager", "Chief Product Officer", "CPO", "VP of Product", "Head of Product", "Director of Product", "Product");
     }
 
+    // Expand cap to 10 variants and format without quotes for single-word / broad keywords
     const uniqueVariants = Array.from(new Set(rawVariants))
       .filter(Boolean)
-      .slice(0, 6)
-      .map(v => `"${v}"`);
+      .slice(0, 10);
+
+    const formattedVariants = uniqueVariants.map(v => {
+      const clean = v.replace(/"/g, "").trim();
+      if (!clean.includes(" ") || clean === "CPO" || clean === "CEO" || clean === "CTO" || clean === "Product" || clean === "Founder") {
+        return clean;
+      }
+      return `"${clean}"`;
+    });
 
     const exclusions =
       excludeNames.length > 0 ? excludeNames.map((n) => `-"${n}"`).join(" ") : "";
 
     const modifier = strategy.companyModifier ? ` "${strategy.companyModifier}"` : "";
 
-    const deptQuery = `site:linkedin.com/in "${company}"${modifier} (${uniqueVariants.join(
+    const deptQuery = `site:linkedin.com/in "${company}"${modifier} (${formattedVariants.join(
       " OR "
     )})${exclusions ? ` ${exclusions}` : ""}`;
 
@@ -308,7 +316,7 @@ function buildQueriesFallback(
   const roleVariants: string[] = isInternOrJunior ? [] : [`"${cleanJobTitle}"`];
 
   if (titleLower.includes("product") || titleLower.includes(" pm") || titleLower.includes("apm")) {
-    roleVariants.push('"Product Manager"', '"Senior Product Manager"', '"Head of Product"', '"VP Product"', '"Director of Product"', '"Founder"');
+    roleVariants.push('"Product Manager"', '"Senior Product Manager"', '"Chief Product Officer"', 'CPO', '"Head of Product"', '"VP Product"', '"Director of Product"', 'Product', '"Founder"');
   } else if (titleLower.includes("engineer") || titleLower.includes("developer")) {
     roleVariants.push('"Engineer"', '"Tech Lead"', '"Engineering Manager"', '"CTO"', '"Founder"');
   } else if (titleLower.includes("data") || titleLower.includes("analyst")) {

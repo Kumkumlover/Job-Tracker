@@ -45,7 +45,7 @@ export async function rankCandidates(
   
   const finalContext = `${jdContext}${webContext}\nCRITICAL: Use the above context (especially location, industry, or product details) to differentiate between companies that share the exact same name. If the snippet shows a person working at an "${company}" that does not match this context (e.g., wrong industry or wrong location), EXCLUDE THEM.\n`;
 
-  const searchResults = uniqueResults.map((r, i) => `[${i}] Name: ${r.title.split(/[-—|]/)[0].trim()}${getCorroborationLabel(r)}\nSnippet: ${r.snippet}`).join("\n\n");
+  const searchResults = uniqueResults.map((r, i) => `[${i}] Name: ${r.title.split(/[-—|]/)[0].trim()}${getCorroborationLabel(r)}\nSnippet: ${(r.snippet || "").substring(0, 150).replace(/\s+/g, " ")}`).join("\n\n");
 
   const prompt = loadPrompt("candidateRank_v1", {
     company,
@@ -97,7 +97,34 @@ export async function rankCandidates(
 
     return verified.slice(0, 15);
   } catch (err) {
-    console.error("[rank] LLM ranking failed:", err);
-    return [];
+    console.error("[rank] LLM ranking failed (rate limit / timeout), falling back to heuristic ranking of raw search results:", err);
+    
+    let fallback = uniqueResults.slice(0, 15).map((r) => {
+      const t = (r.title || "").toLowerCase();
+      const s = (r.snippet || "").toLowerCase();
+      const combinedText = t + " " + s;
+      const isCLevel = /\b(founder|co-founder|ceo|chief|cro|cmo|cfo|coo|vp|president)\b/.test(combinedText);
+      let role: "hiring_manager" | "team_lead" | "recruiter_hr" | "founder" | "other" = "other";
+      if (isCLevel) role = "founder";
+      else if (/\b(manager|lead|head|director)\b/.test(combinedText)) role = "team_lead";
+      else if (/\b(recruiter|talent|hr|human resources)\b/.test(combinedText)) role = "recruiter_hr";
+      
+      return {
+        name: r.title.split(/[-—|]/)[0].trim(),
+        profile_url: (r as any).url || (r as any).link || "",
+        current_title: (r.snippet || "").substring(0, 80).trim() || r.title,
+        role_type: role,
+        confidence: 0.5,
+        reason: "Heuristic Fallback (AI Verification Rate Limited)",
+      } as RankedCandidate;
+    });
+
+    if (excludeSet.size > 0) {
+      fallback = fallback.filter(
+        (c) => !excludeSet.has(c.name.trim().toLowerCase())
+      );
+    }
+
+    return fallback;
   }
 }

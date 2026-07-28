@@ -86,8 +86,6 @@ export async function ask(prompt: string, model?: string, retries = 5, delayMs =
   const m = model ?? getDefaultModel(provider);
 
   try {
-
-
     const response = await client.chat.completions.create({
       model: m,
       messages: [{ role: "user", content: prompt }],
@@ -98,9 +96,11 @@ export async function ask(prompt: string, model?: string, retries = 5, delayMs =
     return response.choices[0]?.message?.content ?? "";
   } catch (error: any) {
     if (retries > 0 && (error?.status === 429 || error?.code === 'rate_limit_exceeded')) {
-      console.log(`\n    [LLM] Rate limit hit. Retrying in ${delayMs / 1000}s... (${retries} retries left)`);
+      console.log(`\n    [LLM] Rate limit hit on ${m}. Retrying in ${delayMs / 1000}s... (${retries} retries left)`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
-      return ask(prompt, model, retries - 1, delayMs * 1.5);
+      // Switch to lighter model on retry to bypass TPM ceilings
+      const nextModel = (provider === "groq" && m.includes("70b")) ? "llama-3.1-8b-instant" : m;
+      return ask(prompt, nextModel, retries - 1, delayMs * 1.5);
     }
     throw error;
   }
