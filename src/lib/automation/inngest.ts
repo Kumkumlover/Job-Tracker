@@ -76,7 +76,7 @@ export const applyPipeline = inngest.createFunction(
           html_body: html,
           company: payload.company,
           job_title: payload.job_title,
-        });
+        }, userId);
       });
 
       return { status: "sent", email, messageId: result.messageId };
@@ -156,7 +156,7 @@ export const applyPipeline = inngest.createFunction(
         company: payload.company,
         job_title: payload.job_title,
         profile_url: validResult.candidate.profile_url ?? undefined,
-      });
+      }, userId);
     });
 
     return {

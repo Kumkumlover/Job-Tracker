@@ -1,26 +1,11 @@
 /**
- * Phase 4b: Compose and send the outreach email via SMTP
+ * Phase 4b: Compose and send the outreach email via Gmail API
  *
  * Replaces: "Send email" node
  */
 
-import nodemailer from "nodemailer";
-import { ImapFlow } from "imapflow";
-import MailComposer from "nodemailer/lib/mail-composer/index.js";
 import type { OutboundEmail } from "../types";
-
-function getImapClient() {
-  return new ImapFlow({
-    host: process.env.SMTP_HOST?.replace("smtp", "imap") ?? "imap.gmail.com",
-    port: 993,
-    secure: true,
-    auth: {
-      user: process.env.SMTP_USER!,
-      pass: process.env.SMTP_PASS!,
-    },
-    logger: false,
-  });
-}
+import { getGmailClient } from "../gmail";
 
 export function composeEmail(
   recipientName: string,
@@ -51,31 +36,38 @@ export function composeEmail(
 </body>`;
 }
 
-/** Create a Draft in Gmail via IMAP */
+/** Create and send an email via Gmail API */
 export async function sendOutboundEmail(
-  email: OutboundEmail
+  email: OutboundEmail,
+  userId: string
 ): Promise<{ messageId: string }> {
-  const client = getImapClient();
-  await client.connect();
+  const gmail = await getGmailClient(userId);
 
-  try {
-    const mailOptions = {
-      from: `"${email.senderName || '[Your Name]'}" <${process.env.SMTP_USER}>`,
-      to: email.to_email,
-      subject: email.subject,
-      html: email.html_body,
-    };
+  // Construct raw RFC822 email
+  const messageParts = [
+    `To: ${email.to_name ? `"${email.to_name}" <${email.to_email}>` : email.to_email}`,
+    `Subject: ${email.subject}`,
+    "Content-Type: text/html; charset=utf-8",
+    "MIME-Version: 1.0",
+    "",
+    email.html_body,
+  ];
+  
+  const rawMessage = messageParts.join("\r\n");
 
-    const mail = new MailComposer(mailOptions);
-    const rawEml = await mail.compile().build();
+  // Encode in base64url format
+  const encodedMessage = Buffer.from(rawMessage)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 
-    const appendRes = await client.append("[Gmail]/Drafts", rawEml, ["\\Draft"]);
-    const messageId = appendRes && typeof appendRes !== "boolean" && "uid" in appendRes 
-      ? appendRes.uid?.toString() 
-      : "draft-created";
-    
-    return { messageId: messageId || "draft-created" };
-  } finally {
-    await client.logout();
-  }
+  const res = await gmail.users.messages.send({
+    userId: "me",
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+
+  return { messageId: res.data.id || "unknown" };
 }

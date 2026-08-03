@@ -391,6 +391,7 @@ async function handleSendEmail(body: {
 
   // Send the email
   try {
+    const userId = await getDefaultUserId();
     const result = await sendOutboundEmail({
       to_email: toEmail,
       to_name: toName || "",
@@ -398,13 +399,11 @@ async function handleSendEmail(body: {
       html_body: htmlBody,
       company,
       job_title: jobTitle,
-    });
+    }, userId);
     console.log(`[API] sendOutboundEmail successful! MessageId: ${result.messageId}`);
-
 
     // Save to OutreachCampaign
     try {
-      const userId = await getDefaultUserId();
       await prisma.outreachCampaign.create({
         data: {
           userId,
