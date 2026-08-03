@@ -665,30 +665,23 @@ export async function enrichAll(
     const allDomainEmails = await store.getCachedEmailsByDomain(sharedDomain);
     let totalVerified = new Set(allDomainEmails.filter(c => c.verified).map(c => c.name)).size + jdVerified.length;
 
-    // Process in batches of 5 to speed up execution and avoid Vercel 10s timeouts
-    const batchSize = 5;
-    for (let i = 0; i < unverified.length; i += batchSize) {
-      const batch = unverified.slice(i, i + batchSize);
+    for (const person of unverified) {
+      // If we have less than 2 verified emails total, this person is in the Verification Group
+      const isVerificationMode = totalVerified < 2;
       
-      const batchPromises = batch.map(person => {
-        const isVerificationMode = totalVerified < 2;
-        return processCandidateOptimized(
-          person, 
-          hunterKey, 
-          apolloKey, 
-          isVerificationMode, 
-          preFetchedResults, 
-          localApiUsage
-        );
-      });
+      const res = await processCandidateOptimized(
+        person, 
+        hunterKey, 
+        apolloKey, 
+        isVerificationMode, 
+        preFetchedResults, 
+        localApiUsage
+      );
       
-      const batchResults = await Promise.all(batchPromises);
+      results.push(res);
       
-      for (const res of batchResults) {
-        results.push(res);
-        if (res.emails.some(e => e.type === "verified")) {
-          totalVerified++;
-        }
+      if (res.emails.some(e => e.type === "verified")) {
+        totalVerified++;
       }
     }
   }
