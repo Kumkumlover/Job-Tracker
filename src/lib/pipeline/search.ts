@@ -165,8 +165,8 @@ export function scoreResult(
 // LLM Strategy Builder (called ONCE per search)
 // ---------------------------------------------------------------------------
 
-async function fetchCompanyContext(company: string): Promise<string> {
-  const apiKey = process.env.TAVILY_API_KEY;
+async function fetchCompanyContext(company: string, userKeys?: any): Promise<string> {
+  const apiKey = userKeys?.tavilyKey || process.env.TAVILY_API_KEY;
   if (!apiKey) return "";
   
   try {
@@ -201,7 +201,8 @@ export async function buildSearchStrategyWithLLM(
   company: string,
   jobTitle: string,
   jd: string,
-  excludeNames: string[] = []
+  excludeNames: string[] = [],
+  userKeys?: any
 ): Promise<SearchStrategy> {
   if (!jd?.trim()) {
     return buildQueriesFallback(company, jobTitle, excludeNames);
@@ -212,7 +213,7 @@ export async function buildSearchStrategyWithLLM(
     const { SearchStrategySchema } = await import("../evalArtifacts");
     const { askJSONValidated } = await import("../automation/llm");
     
-    const companyContext = await fetchCompanyContext(company);
+    const companyContext = await fetchCompanyContext(company, userKeys);
     const prompt = loadPrompt("searchStrategy_v1", {
       jobTitle,
       company,
@@ -220,7 +221,7 @@ export async function buildSearchStrategyWithLLM(
       jd: jd.substring(0, 1500)
     });
 
-    const strategy = await askJSONValidated(prompt, SearchStrategySchema);
+    const strategy = await askJSONValidated(prompt, SearchStrategySchema, userKeys?.groqKey);
     if (!strategy?.hiringManagerTitles?.length) throw new Error("Empty strategy");
 
     const cleanJobTitle = jobTitle.replace(/"/g, "");
@@ -447,15 +448,16 @@ export async function searchCandidates(
   jobTitle: string,
   excludeNames: string[] = [],
   jd: string = "",
-  precomputedStrategy?: SearchStrategy
+  precomputedStrategy?: SearchStrategy,
+  userKeys?: any
 ): Promise<CorroboratedResult[]> {
   const strategy =
     precomputedStrategy ||
-    (await buildSearchStrategyWithLLM(company, jobTitle, jd, excludeNames));
+    (await buildSearchStrategyWithLLM(company, jobTitle, jd, excludeNames, userKeys));
 
-  const serperKey = process.env.SERPER_API_KEY;
-  const tavilyKey = process.env.TAVILY_API_KEY;
-  const exaKey = process.env.EXA_API_KEY;
+  const serperKey = userKeys?.serperKey || process.env.SERPER_API_KEY;
+  const tavilyKey = userKeys?.tavilyKey || process.env.TAVILY_API_KEY;
+  const exaKey = userKeys?.exaKey || process.env.EXA_API_KEY;
 
   console.log(`[consensus] Firing all available engines for "${company}"…`);
 
@@ -608,11 +610,12 @@ export async function searchCandidatesAuto(
   company: string,
   jobTitle: string,
   jd?: string,
-  excludeNames: string[] = []
+  excludeNames: string[] = [],
+  userKeys?: any
 ): Promise<{
   results: CorroboratedResult[];
   jdContacts: any[];
-  localApiUsage: { search: number };
+  localApiUsage: { search: number; serper: number; tavily: number; exa: number };
   deptKeywords: string;
   companyContext: string;
 }> {
@@ -636,23 +639,23 @@ export async function searchCandidatesAuto(
     return {
       results: cachedResults,
       jdContacts,
-      localApiUsage: { search: 0 }, // 0 because we served from cache
+      localApiUsage: { search: 0, serper: 0, tavily: 0, exa: 0 }, // 0 because we served from cache
       deptKeywords: cached.deptKeywords,
       companyContext: "", // Cached searches already used the context
     };
   }
 
   // Bug 1 Fix: Build strategy ONCE, pass it down — no second LLM call
-  const strategy = await buildSearchStrategyWithLLM(company, jobTitle, jd ?? "", combinedExcludes);
+  const strategy = await buildSearchStrategyWithLLM(company, jobTitle, jd ?? "", combinedExcludes, userKeys);
 
-  const enginesUsed =
-    (process.env.SERPER_API_KEY ? 2 : 0) + // dept + hr query
-    (process.env.TAVILY_API_KEY ? 1 : 0) +
-    (process.env.EXA_API_KEY ? 1 : 0);
+  const serperUsage = userKeys?.serperKey || process.env.SERPER_API_KEY ? 2 : 0;
+  const tavilyUsage = userKeys?.tavilyKey || process.env.TAVILY_API_KEY ? 1 : 0;
+  const exaUsage = userKeys?.exaKey || process.env.EXA_API_KEY ? 1 : 0;
+  const searchUsage = serperUsage + tavilyUsage + exaUsage;
 
   let searchResults: CorroboratedResult[] = [];
   try {
-    searchResults = await searchCandidates(company, jobTitle, combinedExcludes, jd ?? "", strategy);
+    searchResults = await searchCandidates(company, jobTitle, combinedExcludes, jd ?? "", strategy, userKeys);
   } catch (err) {
     console.error("[search] Consensus engine failed:", err);
   }
@@ -684,7 +687,7 @@ export async function searchCandidatesAuto(
   return {
     results: searchResults,
     jdContacts,
-    localApiUsage: { search: enginesUsed },
+    localApiUsage: { search: searchUsage, serper: serperUsage, tavily: tavilyUsage, exa: exaUsage },
     deptKeywords: strategy.deptKeywords,
     companyContext: strategy.companyContext,
   };

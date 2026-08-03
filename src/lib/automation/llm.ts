@@ -37,13 +37,14 @@ function getDefaultModel(provider: Provider): string {
 
 import { wrapOpenAI } from "braintrust";
 
-function buildClient(provider: Provider): OpenAI {
+function buildClient(provider: Provider, userKey?: string): OpenAI {
   let client: OpenAI;
   switch (provider) {
     case "groq":
-      if (!process.env.GROQ_API_KEY) throw new Error("GROQ_API_KEY is not set");
+      const gKey = userKey || process.env.GROQ_API_KEY;
+      if (!gKey) throw new Error("GROQ_API_KEY is not set");
       client = new OpenAI({
-        apiKey: process.env.GROQ_API_KEY,
+        apiKey: gKey,
         baseURL: "https://api.groq.com/openai/v1",
       });
       break;
@@ -56,9 +57,10 @@ function buildClient(provider: Provider): OpenAI {
       break;
 
     case "gemini":
-      if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set");
+      const gemKey = userKey || process.env.GEMINI_API_KEY;
+      if (!gemKey) throw new Error("GEMINI_API_KEY is not set");
       client = new OpenAI({
-        apiKey: process.env.GEMINI_API_KEY,
+        apiKey: gemKey,
         baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
       });
       break;
@@ -71,8 +73,14 @@ function buildClient(provider: Provider): OpenAI {
 let _client: OpenAI | null = null;
 let _provider: Provider | null = null;
 
-function getClient() {
+function getClient(userKey?: string) {
   const provider = getProvider();
+  
+  // If a custom key is provided, always build a new client instead of using the cached one
+  if (userKey) {
+    return { client: buildClient(provider, userKey), provider };
+  }
+  
   if (!_client || _provider !== provider) {
     _client = buildClient(provider);
     _provider = provider;
@@ -81,8 +89,8 @@ function getClient() {
 }
 
 /** Call the LLM and return the raw text response */
-export async function ask(prompt: string, model?: string, retries = 5, delayMs = 2000): Promise<string> {
-  const { client, provider } = getClient();
+export async function ask(prompt: string, userKey?: string, model?: string, retries = 5, delayMs = 2000): Promise<string> {
+  const { client, provider } = getClient(userKey);
   const m = model ?? getDefaultModel(provider);
 
   try {
@@ -100,15 +108,15 @@ export async function ask(prompt: string, model?: string, retries = 5, delayMs =
       await new Promise(resolve => setTimeout(resolve, delayMs));
       // Switch to lighter model on retry to bypass TPM ceilings
       const nextModel = (provider === "groq" && m.includes("70b")) ? "llama-3.1-8b-instant" : m;
-      return ask(prompt, nextModel, retries - 1, delayMs * 1.5);
+      return ask(prompt, userKey, nextModel, retries - 1, delayMs * 1.5);
     }
     throw error;
   }
 }
 
 /** Call the LLM and parse the response as JSON */
-export async function askJSON<T>(prompt: string, model?: string): Promise<T> {
-  const raw = await ask(prompt, model);
+export async function askJSON<T>(prompt: string, userKey?: string, model?: string): Promise<T> {
+  const raw = await ask(prompt, userKey, model);
   let cleaned = raw
     .replace(/```json\s*/gi, "")
     .replace(/```\s*/g, "")
@@ -120,8 +128,8 @@ export async function askJSON<T>(prompt: string, model?: string): Promise<T> {
 
 import { z } from "zod";
 export async function askJSONValidated<T>(
-  prompt: string, schema: z.ZodSchema<T>, model?: string
+  prompt: string, schema: z.ZodSchema<T>, userKey?: string, model?: string
 ): Promise<T> {
-  const raw = await askJSON<any>(prompt, model);
+  const raw = await askJSON<any>(prompt, userKey, model);
   return schema.parse(raw);
 }

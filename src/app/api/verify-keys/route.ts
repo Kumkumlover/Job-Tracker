@@ -71,18 +71,17 @@ export async function POST(req: NextRequest) {
     // 3. Serper.dev
     if (serperKey) {
       checks.push(
-        fetch(`https://api.serper.dev/account`, {
-          method: "GET",
+        fetch(`https://google.serper.dev/search`, {
+          method: "POST",
           headers: {
             "X-API-KEY": serperKey,
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ q: "test" }),
         })
           .then(async (res) => {
             if (res.ok) {
-              const data = await res.json().catch(() => ({}));
-              const creditsLeft = (data?.account?.credits ?? 0) - (data?.account?.usage ?? 0);
-              results.serper = { valid: true, message: `Active (${creditsLeft} credits left)` };
+              results.serper = { valid: true, message: `Active Serper.dev Key verified` };
             } else {
               results.serper = { valid: false, message: "Invalid Serper.dev API Key" };
             }

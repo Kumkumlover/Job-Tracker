@@ -29,9 +29,10 @@ export async function GET(req: NextRequest) {
     const fetchPromises = [];
 
     // 1. Hunter.io Quota
-    if (user.hunterKey) {
+    const hunterKey = user.hunterKey || process.env.HUNTER_API_KEY || process.env.NEXT_PUBLIC_HUNTER_API_KEY;
+    if (hunterKey) {
       fetchPromises.push(
-        fetch(`https://api.hunter.io/v2/account?api_key=${user.hunterKey}`)
+        fetch(`https://api.hunter.io/v2/account?api_key=${hunterKey}`)
           .then(res => res.json())
           .then(data => {
             if (data?.data?.calls) {
@@ -46,13 +47,14 @@ export async function GET(req: NextRequest) {
     }
 
     // 2. Apollo.io Quota
-    if (user.apolloKey) {
+    const apolloKey = user.apolloKey || process.env.APOLLO_API_KEY || process.env.NEXT_PUBLIC_APOLLO_API_KEY;
+    if (apolloKey) {
       fetchPromises.push(
         fetch(`https://api.apollo.io/v1/auth/health`, {
           headers: {
             "Content-Type": "application/json",
             "Cache-Control": "no-cache",
-            "x-api-key": user.apolloKey
+            "x-api-key": apolloKey
           }
         })
           .then(res => res.json())
@@ -74,23 +76,21 @@ export async function GET(req: NextRequest) {
     }
 
     // 3. Serper.dev Quota
-    if (user.serperKey) {
+    const serperKey = user.serperKey || process.env.SERPER_API_KEY;
+    if (serperKey) {
       fetchPromises.push(
-        fetch(`https://api.serper.dev/account`, {
-          method: "GET",
+        fetch(`https://google.serper.dev/search`, {
+          method: "POST",
           headers: {
-            "X-API-KEY": user.serperKey,
+            "X-API-KEY": serperKey,
             "Content-Type": "application/json"
-          }
+          },
+          body: JSON.stringify({ q: "test" })
         })
           .then(res => res.json())
           .then(data => {
-            if (data?.account) {
-              usage.serper = {
-                creditsLeft: data.account.credits - data.account.usage,
-                usage: data.account.usage,
-                total: data.account.credits
-              };
+            if (data?.organic) {
+              usage.serper = { status: "Configured" };
             }
           })
           .catch(e => console.error("Serper API Error:", e))
@@ -100,28 +100,63 @@ export async function GET(req: NextRequest) {
     // 4. Gemini API
     // Gemini does not have a simple quota checking REST endpoint.
     // We mark it as configured if the key exists.
-    if (user.geminiKey) {
+    if (user.geminiKey || process.env.GEMINI_API_KEY) {
       usage.gemini = { status: "Configured" };
     }
 
     // 5. Tavily API
-    // We can hit a dummy endpoint or /search with empty query to get headers, but Tavily might throw 400.
-    // They have a /account endpoint? Let's assume they don't, or we just mark as configured.
-    // Wait, let's just mark it as Configured for now unless we know the exact endpoint.
-    if (user.tavilyKey) {
-       usage.tavily = { status: "Configured" };
+    const tavilyKey = user.tavilyKey || process.env.TAVILY_API_KEY;
+    if (tavilyKey) {
+      fetchPromises.push(
+        fetch(`https://api.tavily.com/usage`, {
+          headers: {
+            "Authorization": `Bearer ${tavilyKey}`
+          }
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data?.account) {
+              usage.tavily = {
+                requestsUsed: data.account.plan_usage,
+                requestsAvailable: data.account.plan_limit
+              };
+            } else {
+              usage.tavily = { status: "Configured" };
+            }
+          })
+          .catch(e => {
+            console.error("Tavily API Error:", e);
+            usage.tavily = { status: "Configured" };
+          })
+      );
     }
 
     // 6. Exa API
     // Exa returns quota in headers on normal requests, no known /account endpoint. 
-    if (user.exaKey) {
+    if (user.exaKey || process.env.EXA_API_KEY) {
        usage.exa = { status: "Configured" };
     }
 
     // Wait for all quota fetches to complete
     await Promise.allSettled(fetchPromises);
 
-    return NextResponse.json(usage);
+    // Fetch local persistent API usage cache
+    const localCache = await prisma.localApiUsage.findUnique({
+      where: { userId: user.id }
+    });
+
+    return NextResponse.json({
+      ...usage,
+      localCache: localCache || {
+        serper: 0,
+        apollo: 0,
+        hunter: 0,
+        gemini: 0,
+        tavily: 0,
+        exa: 0,
+        search: 0
+      }
+    });
   } catch (err) {
     console.error("GET /api/usage error:", err);
     return NextResponse.json({ error: "Failed to fetch usage data" }, { status: 500 });

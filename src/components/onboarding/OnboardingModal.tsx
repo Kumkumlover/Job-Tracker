@@ -25,6 +25,15 @@ export function OnboardingModal() {
     exaKey: "",
   });
 
+  const [envKeysConfigured, setEnvKeysConfigured] = useState<Record<string, boolean>>({
+    gemini: false,
+    serper: false,
+    hunter: false,
+    apollo: false,
+    tavily: false,
+    exa: false,
+  });
+
   const [keyStatus, setKeyStatus] = useState<Record<string, KeyStatus>>({
     geminiKey: { status: "idle" },
     serperKey: { status: "idle" },
@@ -59,8 +68,15 @@ export function OnboardingModal() {
           };
           setKeys(loadedKeys);
 
-          // If core keys are missing, show modal!
-          if (!loadedKeys.geminiKey || !loadedKeys.serperKey) {
+          if (data?.envKeys) {
+            setEnvKeysConfigured(data.envKeys);
+          }
+
+          // If core keys are missing (both in DB and env), show modal!
+          const hasGemini = loadedKeys.geminiKey || data.envKeys?.gemini;
+          const hasSerper = loadedKeys.serperKey || data.envKeys?.serper;
+
+          if (!hasGemini || !hasSerper) {
             setIsOpen(true);
           } else {
             // Already configured, mark complete
@@ -130,11 +146,21 @@ export function OnboardingModal() {
 
   const handleSaveAndContinue = async () => {
     setSaving(true);
+    // Build payload containing ONLY the keys that were NOT configured via env
+    // and that actually have a value
+    const payloadToSave: Record<string, string> = {};
+    Object.keys(keys).forEach(k => {
+      // @ts-ignore
+      if (!envKeysConfigured[k.replace('Key', '')] && keys[k]) {
+        payloadToSave[k] = keys[k as keyof typeof keys];
+      }
+    });
+
     try {
       await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKeys: keys }),
+        body: JSON.stringify(payloadToSave),
       });
       localStorage.setItem("has_completed_onboarding_v1", "true");
       setIsOpen(false);
@@ -270,27 +296,33 @@ export function OnboardingModal() {
                   <div className="relative">
                     <input
                       type="password"
-                      placeholder={`Paste ${p.label}...`}
-                      value={keys[p.id as keyof typeof keys]}
+                      placeholder={envKeysConfigured[p.id.replace('Key', '')] ? "Configured via environment" : `Paste ${p.label}...`}
+                      value={envKeysConfigured[p.id.replace('Key', '')] ? "••••••••••••••••" : keys[p.id as keyof typeof keys]}
+                      disabled={envKeysConfigured[p.id.replace('Key', '')]}
                       onChange={(e) => {
                         setKeys({ ...keys, [p.id]: e.target.value });
                         setKeyStatus({ ...keyStatus, [p.id]: { status: "idle" } });
                       }}
-                      className="w-full px-3.5 py-2 text-sm font-mono border rounded-lg bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]/50 focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] pr-28 transition-all"
+                      className="w-full px-3.5 py-2 text-sm font-mono border rounded-lg bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]/50 focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] pr-28 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     
                     <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
-                      {statusObj?.status === "checking" && (
+                      {envKeysConfigured[p.id.replace('Key', '')] && (
+                        <span className="flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-md font-medium">
+                          <CheckCircle className="w-3 h-3" /> Valid (.env)
+                        </span>
+                      )}
+                      {!envKeysConfigured[p.id.replace('Key', '')] && statusObj?.status === "checking" && (
                         <span className="flex items-center gap-1 text-xs text-[var(--muted-foreground)] bg-[var(--secondary)] px-2 py-1 rounded-md">
                           <Loader2 className="w-3 h-3 animate-spin" /> Verifying
                         </span>
                       )}
-                      {statusObj?.status === "valid" && (
+                      {!envKeysConfigured[p.id.replace('Key', '')] && statusObj?.status === "valid" && (
                         <span className="flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-md font-medium" title={statusObj.message}>
                           <CheckCircle className="w-3 h-3" /> Valid
                         </span>
                       )}
-                      {statusObj?.status === "invalid" && (
+                      {!envKeysConfigured[p.id.replace('Key', '')] && statusObj?.status === "invalid" && (
                         <span className="flex items-center gap-1 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-1 rounded-md font-medium max-w-[140px] truncate" title={statusObj.message}>
                           <AlertCircle className="w-3 h-3 shrink-0" /> {statusObj.message || "Invalid"}
                         </span>

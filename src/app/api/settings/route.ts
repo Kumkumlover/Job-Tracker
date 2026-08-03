@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, getDefaultUserId } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getDefaultUserId();
+    let userAuth = await getAuthenticatedUser(req);
+    let userId = userAuth?.id;
+    if (!userId) {
+      userId = await getDefaultUserId();
+    }
 
     let profile = await prisma.profileContext.findUnique({
       where: { userId },
@@ -75,6 +80,14 @@ Best,
         geminiKey: user?.geminiKey || "",
         tavilyKey: user?.tavilyKey || "",
         exaKey: user?.exaKey || ""
+      },
+      envKeys: {
+        hunter: !!(process.env.HUNTER_API_KEY || process.env.NEXT_PUBLIC_HUNTER_API_KEY),
+        apollo: !!(process.env.APOLLO_API_KEY || process.env.NEXT_PUBLIC_APOLLO_API_KEY),
+        serper: !!process.env.SERPER_API_KEY,
+        gemini: !!process.env.GEMINI_API_KEY,
+        tavily: !!process.env.TAVILY_API_KEY,
+        exa: !!process.env.EXA_API_KEY,
       }
     });
   } catch (err) {
@@ -88,7 +101,11 @@ Best,
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getDefaultUserId();
+    let userAuth = await getAuthenticatedUser(req);
+    let userId = userAuth?.id;
+    if (!userId) {
+      userId = await getDefaultUserId();
+    }
     const body = await req.json();
 
     const updated = await prisma.profileContext.upsert({

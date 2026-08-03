@@ -16,7 +16,8 @@ export async function rankCandidates(
   jd?: string,
   excludeNames: string[] = [],
   llmDeptKeywords?: string,
-  webCompanyContext: string = ""
+  webCompanyContext: string = "",
+  userKeys?: any
 ): Promise<RankedCandidate[]> {
   if (!results.length) return [];
 
@@ -56,7 +57,7 @@ export async function rankCandidates(
   });
 
   try {
-    const { topCandidates } = await askJSONValidated(prompt, TopCandidatesResponseSchema);
+    const { topCandidates } = await askJSONValidated(prompt, TopCandidatesResponseSchema, userKeys?.groqKey);
 
     let verified = (topCandidates || [])
       .map((c) => {

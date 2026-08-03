@@ -61,6 +61,7 @@ model User {
   outreachCampaigns   OutreachCampaign[]
   patternRecords      PatternRecord[]
   profileContext      ProfileContext?
+  localApiUsage       LocalApiUsage?
   sessions            Session[]
   vaultItems          VaultItem[]
 }
@@ -310,3 +311,16 @@ model SearchCache {
   @@index([expiresAt])
 }
 
+model LocalApiUsage {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  serper    Int      @default(0)
+  apollo    Int      @default(0)
+  hunter    Int      @default(0)
+  gemini    Int      @default(0)
+  tavily    Int      @default(0)
+  exa       Int      @default(0)
+  search    Int      @default(0)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -14,8 +14,17 @@ export type GlobalUsage = {
   apollo: { dailyConsumed: number; dailyLimit: number | string } | { status: string } | null;
   serper: { creditsLeft: number; usage: number; total: number } | { status: string } | null;
   gemini: { status: string } | null;
-  tavily: { status: string } | null;
+  tavily: { status: string; requestsUsed?: number; requestsAvailable?: number } | null;
   exa: { status: string } | null;
+  localCache?: {
+    serper: number;
+    apollo: number;
+    hunter: number;
+    gemini: number;
+    tavily: number;
+    exa: number;
+    search: number;
+  };
 };
 
 interface UsageTrackerProps {
@@ -48,7 +57,7 @@ export function UsageTracker({ localUsage }: UsageTrackerProps) {
 
   // Always show the tracker now since it also tracks global usage
 
-  const renderLimit = (name: string, data: any) => {
+  const renderLimit = (name: string, data: any, localCacheValue?: number) => {
     return (
       <div className="flex justify-between items-center text-xs py-1">
         <span className="text-[var(--muted-foreground)] flex items-center gap-1.5">
@@ -57,7 +66,9 @@ export function UsageTracker({ localUsage }: UsageTrackerProps) {
         {!data ? (
           <span className="text-[var(--primary)]/70 text-[10px] uppercase font-bold">Key Required</span>
         ) : data.status ? (
-          <span className="font-medium text-[var(--foreground)]">{data.status}</span>
+          <span className="font-medium text-[var(--foreground)]">
+            {data.status} {localCacheValue !== undefined && localCacheValue > 0 ? <span className="text-[var(--muted-foreground)] text-[10px]">({localCacheValue} used)</span> : ""}
+          </span>
         ) : data.requestsAvailable !== undefined ? (
           <span className="font-medium text-[var(--foreground)]">{data.requestsUsed} / {data.requestsAvailable}</span>
         ) : data.dailyLimit !== undefined ? (
@@ -94,7 +105,7 @@ export function UsageTracker({ localUsage }: UsageTrackerProps) {
           <div className="space-y-4">
             {/* Local Usage (Current Session) */}
             <div className="bg-[var(--card)] rounded-xl p-3 border border-[var(--border)]">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-2">Current Run Limits</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-2">Current Run Usage</div>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="bg-[var(--card-hover)] rounded-lg p-2 border border-[var(--border)]">
                   <div className="text-lg font-bold text-[var(--primary)]">{localUsage.search}</div>
@@ -116,12 +127,12 @@ export function UsageTracker({ localUsage }: UsageTrackerProps) {
               <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-2">Global Account Limits</div>
               
               <div className="space-y-1">
-                {renderLimit("Hunter", globalUsage?.hunter)}
-                {renderLimit("Apollo", globalUsage?.apollo)}
-                {renderLimit("Serper", globalUsage?.serper)}
-                {renderLimit("Gemini", globalUsage?.gemini)}
-                {renderLimit("Tavily", globalUsage?.tavily)}
-                {renderLimit("Exa", globalUsage?.exa)}
+                {renderLimit("Hunter", globalUsage?.hunter, globalUsage?.localCache?.hunter)}
+                {renderLimit("Apollo", globalUsage?.apollo, globalUsage?.localCache?.apollo)}
+                {renderLimit("Serper", globalUsage?.serper, globalUsage?.localCache?.search)}
+                {renderLimit("Gemini", globalUsage?.gemini, globalUsage?.localCache?.gemini)}
+                {renderLimit("Tavily", globalUsage?.tavily, globalUsage?.localCache?.tavily)}
+                {renderLimit("Exa", globalUsage?.exa, globalUsage?.localCache?.exa)}
               </div>
             </div>
           </div>

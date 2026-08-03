@@ -14,6 +14,8 @@ import { executeResearch } from "@/lib/email-generator/research";
 import { generateSimpleEmail } from "@/lib/email-generator/templates";
 import { sendOutboundEmail } from "@/lib/pipeline/send";
 import { prisma, getDefaultUserId } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { incrementLocalApiUsage } from "@/lib/usage-tracker";
 
 export const maxDuration = 60; // Allow up to 60s on Vercel Pro
 
@@ -24,11 +26,11 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "find-contacts":
-        return handleFindContacts(body);
+        return handleFindContacts(body, req);
       case "find-emails":
         return handleFindEmails(body, req);
       case "generate-email":
-        return handleGenerateEmail(body);
+        return handleGenerateEmail(body, req);
       case "send-email":
         return handleSendEmail(body);
       default:
@@ -53,8 +55,16 @@ async function handleFindContacts(body: {
   jobTitle: string;
   jd?: string;
   excludeNames?: string[];
-}) {
+}, req: NextRequest) {
   const { company, jobTitle, jd, excludeNames = [] } = body;
+
+  const user = await getAuthenticatedUser(req);
+  const userKeys = user ? {
+    serperKey: user.serperKey || "",
+    tavilyKey: user.tavilyKey || "",
+    exaKey: user.exaKey || "",
+    groqKey: user.geminiKey || user.geminiKey || process.env.GROQ_API_KEY || "", // Next.js stores Gemini/Groq key generically
+  } : undefined;
 
   if (!company?.trim() || !jobTitle?.trim()) {
     return NextResponse.json(
@@ -63,10 +73,9 @@ async function handleFindContacts(body: {
     );
   }
 
-  // Enforce required backend API keys
-  if (!process.env.SERPER_API_KEY) {
+  if (!process.env.SERPER_API_KEY && !user?.serperKey) {
     return NextResponse.json(
-      { error: "Missing SERPER_API_KEY. You must add this to your Vercel Environment Variables to search LinkedIn." },
+      { error: "Missing SERPER_API_KEY. You must add this to your Vercel Environment Variables or Settings to search LinkedIn." },
       { status: 400 }
     );
   }
@@ -85,7 +94,8 @@ async function handleFindContacts(body: {
     company,
     jobTitle,
     jd,
-    excludeNames
+    excludeNames,
+    userKeys
   );
 
   if (!searchResults.length && !jdContacts.length) {
@@ -97,7 +107,7 @@ async function handleFindContacts(body: {
 
   // Step 2: Rank LLM-discovered contacts
   const ranked = searchResults.length
-    ? await rankCandidates(searchResults, company, jobTitle, jd, excludeNames, deptKeywords, companyContext)
+    ? await rankCandidates(searchResults, company, jobTitle, jd, excludeNames, deptKeywords, companyContext, userKeys)
     : [];
 
   // Filter JD contacts to avoid duplication across cycles
@@ -113,7 +123,7 @@ async function handleFindContacts(body: {
       const q = `site:linkedin.com/in intitle:"${company}" "${c.name}"`;
       const res = await fetch("https://google.serper.dev/search", {
         method: "POST",
-        headers: { "X-API-KEY": process.env.SERPER_API_KEY || "", "Content-Type": "application/json" },
+        headers: { "X-API-KEY": user?.serperKey || process.env.SERPER_API_KEY || "", "Content-Type": "application/json" },
         body: JSON.stringify({ q, num: 3 })
       });
       if (res.ok) {
@@ -158,6 +168,10 @@ async function handleFindContacts(body: {
     allCandidates.push(c);
   }
 
+  if (user && localApiUsage) {
+    await incrementLocalApiUsage(user.id, localApiUsage);
+  }
+
   return NextResponse.json({
     searchResults,
     jdContacts,
@@ -192,7 +206,10 @@ async function handleFindEmails(
 
   // Fallback chain: request header → body field → server-side env vars
   // This ensures automated tests (Playwright) work without localStorage being populated.
+  const user = await getAuthenticatedUser(req);
+  
   const hunterKey = (
+    user?.hunterKey ||
     req.headers.get("x-hunter-key") ||
     body.hunterKey ||
     process.env.HUNTER_API_KEY ||
@@ -200,6 +217,7 @@ async function handleFindEmails(
     ""
   ).trim();
   const apolloKey = (
+    user?.apolloKey ||
     req.headers.get("x-apollo-key") ||
     body.apolloKey ||
     process.env.APOLLO_API_KEY ||
@@ -220,6 +238,10 @@ async function handleFindEmails(
 
   const { results, localApiUsage } = await enrichAll(people, hunterKey, apolloKey);
 
+  if (user && localApiUsage) {
+    await incrementLocalApiUsage(user.id, localApiUsage);
+  }
+
   return NextResponse.json({ emailResults: results, localApiUsage });
 }
 
@@ -236,10 +258,11 @@ async function handleGenerateEmail(body: {
   company: string;
   jobTitle: string;
   jd?: string;
-}) {
+}, req: NextRequest) {
   const { recipientName, company, jobTitle, jd } = body;
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const user = await getAuthenticatedUser(req);
+  const apiKey = user?.geminiKey || process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
 
   const userId = await getDefaultUserId();
@@ -272,6 +295,10 @@ async function handleGenerateEmail(body: {
           }),
         }
       );
+
+      if (user) {
+        await incrementLocalApiUsage(user.id, { gemini: 1 });
+      }
 
       if (res.ok) {
         const data = await res.json();
