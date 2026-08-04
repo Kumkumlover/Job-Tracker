@@ -59,6 +59,7 @@ export const TopCandidatesResponseSchema = z.object({
     linkedin_url: z.string().optional(),
     confidence: z.number(),
     role_type: z.string().optional(),
-    reason: z.string().optional()
+    reason: z.string().optional(),
+    is_ex_employee: z.boolean().optional()
   }))
 });

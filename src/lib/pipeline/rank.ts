@@ -75,13 +75,18 @@ export async function rankCandidates(
         if (isCLevel && !hasDept && (role === "hiring_manager" || role === "team_lead")) {
           role = "founder";
         }
+        
+        let confidence = c.confidence || 0.5;
+        if (c.is_ex_employee) {
+          confidence = 0.1; // push ex-employees to the bottom of the list
+        }
 
         return {
           name: r.title.split(/[-—|]/)[0].trim(),
           profile_url: (r as any).url || (r as any).link || "",
           current_title: r.snippet.substring(0, 60).trim(),
           role_type: role,
-          confidence: c.confidence || 0.5,
+          confidence: confidence,
           reason: `Verified: ${c.reason || "Matches criteria"}`,
         } as RankedCandidate;
       })

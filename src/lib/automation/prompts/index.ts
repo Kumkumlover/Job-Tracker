@@ -50,17 +50,20 @@ Return ONLY the JSON. No markdown, no explanation.`,
 Below are LinkedIn search results. Each result indicates which search engines found it - profiles confirmed by multiple independent engines are far more likely to be current employees.
 
 REJECTION RULES (HARD RULES - only reject if CLEARLY true):
-1. REJECT if the snippet explicitly says "Ex-{{company}}", "Former {{company}}", "ex @{{company}}", "Left {{company}}", or lists a DIFFERENT company as their obvious CURRENT employer (e.g. "Product Manager at Google | Ex-{{company}}").
-2. REJECT if they are in a totally unrelated department (e.g. Sales, Finance) when we need "{{llmDeptKeywords}}". HOWEVER, use common sense: hiring managers are often just senior versions of the role (e.g. if the role is 'APM' or 'Product Intern', do NOT reject 'Product Manager' or 'Senior Product Manager'. If the role is 'Frontend Engineer', do NOT reject 'Engineering Manager' or 'Tech Lead'). HR, Recruiters, and Talent Acquisition are ALWAYS valid contacts.
-3. NEVER reject "Founder", "Co-Founder", "CEO", or other C-level executives. They are always valid contacts regardless of the target department.
-4. DO NOT reject just because the snippet is vague or doesn't explicitly say "current" - most LinkedIn snippets don't.
-5. When in doubt, INCLUDE the candidate with lower confidence (0.5). It is better to include a false positive than miss a real person.
+1. REJECT if they are in a totally unrelated department (e.g. Sales, Finance) when we need "{{llmDeptKeywords}}". HOWEVER, use common sense: hiring managers are often just senior versions of the role (e.g. if the role is 'APM' or 'Product Intern', do NOT reject 'Product Manager' or 'Senior Product Manager'. If the role is 'Frontend Engineer', do NOT reject 'Engineering Manager' or 'Tech Lead'). HR, Recruiters, and Talent Acquisition are ALWAYS valid contacts.
+2. NEVER reject "Founder", "Co-Founder", "CEO", or other C-level executives. They are always valid contacts regardless of the target department.
+3. DO NOT reject just because the snippet is vague or doesn't explicitly say "current" - most LinkedIn snippets don't.
+4. When in doubt, INCLUDE the candidate with lower confidence (0.5). It is better to include a false positive than miss a real person.
 
 CLASSIFICATION RULES for "role_type":
 - "hiring_manager": Assign this to Founders, C-level executives, OR anyone in the target department who holds a senior title (e.g. "Senior Product Manager", "VP of Engineering", "Lead Designer"). 
   - MICRO-DEPARTMENT PRIORITIZATION: If "{{llmDeptKeywords}}" contains a specific micro-department (e.g. "Payments"), prioritize candidates who specifically match that domain. However, if no perfect domain match is found (or if the company is small), generic senior roles (e.g. "VP of Product") are perfectly acceptable as hiring managers. Do NOT reject generic senior people just because they lack the specific micro-department keyword.
 - "team_lead": Assign this to mid-level employees in the target department who might interview the candidate (e.g. "Product Manager", "Software Engineer"), or senior employees in the wrong micro-department.
 - "other": Assign this ONLY to HR, Recruiters, and Talent Acquisition. They are NOT the hiring manager.
+
+EX-EMPLOYEE DETECTION:
+- Set "is_ex_employee" to true ONLY IF the snippet clearly indicates they have LEFT the target company "{{company}}" (e.g. "Ex-{{company}}", "Former {{company}}", or lists a different company as their obvious current employer).
+- Do NOT set "is_ex_employee" to true if they are currently at "{{company}}" but formerly worked somewhere else (e.g. "Ex-Google | {{company}}").
 
 Candidates:
 {{searchResults}}
@@ -74,7 +77,8 @@ Return JSON:
       "current_title": "<their title>", 
       "confidence": <0.4-0.95>, 
       "role_type": "hiring_manager" | "team_lead" | "other", 
-      "reason": "<max 3 words>" 
+      "reason": "<max 3 words>",
+      "is_ex_employee": <boolean>
     } 
   ] 
 }
