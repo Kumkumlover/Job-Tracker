@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { smartSync } from "@/lib/gmail";
 
+export const maxDuration = 60;
+
 // POST /api/gmail/sync          → incremental (auto-detects full if first run)
 // POST /api/gmail/sync?mode=full → force full 3-month scan
 export async function POST(request: NextRequest) {
