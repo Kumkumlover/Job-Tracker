@@ -63,6 +63,9 @@ const GENERIC_EMAIL_DOMAINS = [
   "mail.com",
   "ymail.com",
   "googlemail.com",
+  "tactiq.io",
+  "otter.ai",
+  "read.ai",
 ];
 
 // Subject patterns that indicate this is a JOB ALERT, not an acknowledgment
@@ -115,7 +118,8 @@ const APP_SUBJECT_PATTERNS = [
   /you('ve| have)\s*been\s*selected/i,
   /moving\s*(forward|ahead)\s*with\s*your/i,
   /next\s*steps?\s*(for|in|with)\s*your/i,
-  /interview\s*(invite|invitation|scheduled|confirmation|round)/i,
+  /\binterview(\s*(round|\d+|invite|invitation|scheduled|confirmation|call|discussion))?\b/i,
+  /\b(invitation|invited)\b/i,
   /assignment\s*(received|submitted|details|task)/i,
   /assessment\s*(invite|invitation|link|details)/i,
   /we'?d\s*like\s*to\s*invite\s*you/i,
@@ -183,10 +187,10 @@ function detectStageFromSubject(subject: string): string | null {
 
   // Interview
   if (
-    /interview\s*(invite|invitation|scheduled|confirmation|round|call)/i.test(s) ||
+    /\binterview\b/i.test(s) ||
+    /round\s*[123]/i.test(s) ||
     /we'?d\s*like\s*to\s*invite\s*you\s*(for|to)\s*(an?\s*)?interview/i.test(s) ||
     /schedule\s*(an?\s*)?(interview|call|meeting)/i.test(s) ||
-    /round\s*[123]\s*(interview)?/i.test(s) ||
     /technical\s*(interview|round|discussion)/i.test(s) ||
     /interview\s*(with|at)\s/i.test(s)
   ) {
@@ -1262,7 +1266,7 @@ async function scanAccountForApplications(
     "application", "applied", "applying", "submitted", "received",
     "acknowledged", "shortlisted", "selected", "rejected", "regret",
     "unfortunately", "interview", "assessment", "candidature",
-    "congratulations", "offer", "resume", "hiring",
+    "congratulations", "offer", "resume", "hiring", "invitation", "invited",
   ].map((k) => `subject:${k}`).join(" OR ");
 
   // ── Query 2: Outbound emails the user sent ─────────────────
@@ -1271,7 +1275,7 @@ async function scanAccountForApplications(
     "application", "applying", "resume", "interest",
     "opportunity", "hiring", "position", "role",
     "APM", '"product manager"', '"associate product manager"',
-    "internship",
+    "internship", "assignment", "submission",
   ].map((k) => `subject:${k}`).join(" OR ");
 
   // ── Query 3: ATS platform emails (any subject) ────────────
