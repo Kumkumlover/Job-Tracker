@@ -17,7 +17,7 @@ A full-stack job application tracker that connects to your Gmail and automatical
 - **JobSuite (Outreach)** — An advanced AI email generator that crafts hyper-personalized cold emails, startup pitches, and follow-ups by synthesizing your CV, scraping target company sites, and analyzing job descriptions.
 - **Bring Your Own Keys (BYOK)** — Securely configure and manage your API keys (Gemini, Hunter, Apollo, Serper, Tavily, Exa) in the Settings page.
 - **Real-Time API Tracker** — A floating widget that polls and displays real-time global account limits and session usage across all connected APIs.
-- **Braintrust Evaluation Loop** — Built-in LLM testing and evaluation suite that uses heuristic scorers and LLM-as-a-judge to guarantee email quality and factuality.
+- **Braintrust Evaluation Loop** — Built-in LLM testing and evaluation suite that uses heuristic scorers and LLM-as-a-judge to guarantee email quality and factuality. Read the [Comprehensive 805-Trace Evaluation Whitepaper](evaluation_methodology.md).
 - **Custom Stages & Properties** — Define your own pipeline stages with colors and add custom fields.
 - **Chrome Extension** — Auto-detect company names on career pages and add applications with one click.
 
