@@ -19,6 +19,9 @@ import { resolveMxSafe } from "./dns-utils";
 import { store, type PatternRecord, type CachedEmail } from "./intelligence-store";
 import { ask, askJSON } from "./llm";
 
+// ─── Constants ──────────────────────────────────────────────────
+export const MAX_API_CREDITS_PER_RUN = 2; // Strict safety limit to prevent runaway credit consumption
+
 // ─── Public Types ───────────────────────────────────────────────
 
 export interface PersonInput {
@@ -462,7 +465,7 @@ async function processCandidateOptimized(
     }
 
     // 2b. API Lookups (Paid Fallback)
-    const canCallApi = (localApiUsage.hunter + localApiUsage.apollo) < 2;
+    const canCallApi = (localApiUsage.hunter + localApiUsage.apollo) < MAX_API_CREDITS_PER_RUN;
 
     if (hunterKey && canCallApi) {
       const prefetched = preFetchedResults?.get(`${resolvedPerson.name}-${domain}`);
@@ -489,7 +492,7 @@ async function processCandidateOptimized(
       }
     }
 
-    if (apolloKey && (localApiUsage.hunter + localApiUsage.apollo) < 2) {
+    if (apolloKey && (localApiUsage.hunter + localApiUsage.apollo) < MAX_API_CREDITS_PER_RUN) {
       localApiUsage.apollo++;
       const apolloResult = await apolloLookup(resolvedPerson.name, resolvedPerson.company, domain, apolloKey);
       if (apolloResult) {
@@ -504,19 +507,6 @@ async function processCandidateOptimized(
     }
   }
 
-  // If we had cached predictions but no verified emails, return them
-  if (cached.length > 0) {
-    return formatOutput(
-      resolvedPerson,
-      cached.map((c) => ({
-        email: c.email,
-        type: (c.verified ? "verified" : c.source === "Pattern Engine" ? "predicted" : "discovered") as "verified" | "discovered" | "predicted",
-        confidence: c.confidence,
-        source: c.source,
-      }))
-    );
-  }
-
   // 3. Pattern Engine (Fast, Free Fallback)
   if (results.length === 0) {
     const allPerms = generatePermutations(first, last, domain);
@@ -525,7 +515,10 @@ async function processCandidateOptimized(
     const patternScores = new Map<string, number>();
     for (const p of topPatterns) {
       const baseRate = Math.max(p.successCount / Math.max(p.usageCount, 1), 0.3);
-      const score = Math.min(0.95, Math.round(baseRate * 100) / 100);
+      // Domain-specific verified patterns receive priority boost (0.98)
+      // Generic global patterns are capped at 0.80 so company-specific formats are recommended #1
+      const maxScore = p.domain ? 0.98 : 0.80;
+      const score = Math.min(maxScore, Math.round(baseRate * 100) / 100);
       patternScores.set(p.pattern, score);
     }
 
@@ -661,28 +654,25 @@ export async function enrichAll(
       });
     }
 
-    // Count how many verified emails we already have for this domain
-    const allDomainEmails = await store.getCachedEmailsByDomain(sharedDomain);
-    let totalVerified = new Set(allDomainEmails.filter(c => c.verified).map(c => c.name)).size + jdVerified.length;
-
+    // Process unverified candidates.
+    // Verification mode runs as long as the run still has API credit budget (< MAX_API_CREDITS_PER_RUN)
+    // or DuckDuckGo free search can run. The MAX_API_CREDITS_PER_RUN guard inside processCandidateOptimized
+    // strictly guarantees that no more than 2 paid API credits can EVER be consumed on a single run.
     for (const person of unverified) {
-      // If we have less than 2 verified emails total, this person is in the Verification Group
-      const isVerificationMode = totalVerified < 2;
-      
+      const isVerificationMode =
+        (localApiUsage.hunter + localApiUsage.apollo) < MAX_API_CREDITS_PER_RUN ||
+        Boolean(person.domain || sharedDomain);
+
       const res = await processCandidateOptimized(
-        person, 
-        hunterKey, 
-        apolloKey, 
-        isVerificationMode, 
-        preFetchedResults, 
+        person,
+        hunterKey,
+        apolloKey,
+        isVerificationMode,
+        preFetchedResults,
         localApiUsage
       );
-      
+
       results.push(res);
-      
-      if (res.emails.some(e => e.type === "verified")) {
-        totalVerified++;
-      }
     }
   }
 
