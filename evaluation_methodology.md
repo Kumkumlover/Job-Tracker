@@ -181,6 +181,36 @@ flowchart LR
 
 ---
 
+
+### Complete Braintrust Benchmark Registry (All 22 Active Runs)
+
+Direct web permalinks to inspect every raw trace, input payload, output JSON, and score directly inside the Braintrust web application:
+
+| Pipeline Stage | Experiment Name & Permalink | Short ID | Rows Tested | Benchmark Focus / Milestone |
+| :--- | :--- | :---: | :---: | :--- |
+| **Candidate Ranking** | [main-1784284144](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784284144) | `be0fc360` | 192 rows | Baseline run; diagnosed Python `'None'` and Zod crash |
+| **Candidate Ranking** | [main-1784585218](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784585218) | `6e289061` | 20 rows | Baseline candidate validation score: 26.7% |
+| **Candidate Ranking** | [main-1784585768](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784585768) | `5c943c54` | 50 rows | Score jumped to 62.2% (+133%) via consensus & hard rules |
+| **Candidate Ranking** | [main-1784852193](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784852193) | `19c5ec84` | 4 rows | Score reached 64.4% after founder confidence weighting |
+| **Evidence Selection** | [main-1784284144](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Evidence-Selection/experiments/main-1784284144) | `ae47e193` | 192 rows | Full Evidence Library matching; 0% hallucination rate |
+| **Company Research** | [main-1784585768](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784585768) | `dad010ee` | 30 rows | 100% semantic extraction score; context flattening verification |
+| **Company Research** | [main-1784585218](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784585218) | `d7236bde` | 30 rows | 100% semantic score across enterprise & startup JDs |
+| **Company Research** | [main-1784579494](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784579494) | `1938c0e8` | 30 rows | Stress-testing mission extraction on thin JDs |
+| **Company Research** | [main-1784544244](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784544244) | `a6baf08f` | 21 rows | 100% semantic score; evaluating rate limit pacing |
+| **Company Research** | [main-1784542740](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784542740) | `600ae71b` | 30 rows | Evaluating industry & stage classification precision |
+| **Company Research** | [main-1784542147](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784542147) | `6648c7de` | 30 rows | Validating Groq sequential queue pacing |
+| **Company Research** | [main-1784540924](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784540924) | `c46d15e8` | 30 rows | Core benchmark run: 1.0 (100%) CompanyResearchScore |
+| **Company Research** | [main-1784458937](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784458937) | `5b28780a` | 30 rows | Evaluating ungrounded prompt responses on Lever scrape |
+| **Company Research** | [main-1784457912](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784457912) | `9a96ccba` | 11 rows | Early batch benchmark on live LinkedIn openings |
+| **Email Hook Gen** | [main-1784851969](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Email-Hook-Generation/experiments/main-1784851969) | `59289e47` | 15 rows | Cache restoration & Factuality Judge validation |
+| **Email Hook Gen** | [main-1784587846](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Email-Hook-Generation/experiments/main-1784587846) | `3f08d267` | 15 rows | Core Factuality Judge run: caught Onsurity hallucination |
+| **Email Hook Gen** | [main-1784587737](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Email-Hook-Generation/experiments/main-1784587737) | `a9419a78` | 10 rows | Testing negative constraints on startup mission |
+| **Email Hook Gen** | [main-1784587518](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Email-Hook-Generation/experiments/main-1784587518) | `2e59a8f5` | 15 rows | Evaluating Groq llama-3.1-8b temperature settings |
+| **Email Hook Gen** | [main-1784587321](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Email-Hook-Generation/experiments/main-1784587321) | `f0404968` | 20 rows | Diagnosed unhandled rate limits and OpenAI dependency |
+| **Candidate Validation** | [main-1784579494](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Validation/experiments/main-1784579494) | `f80e86bb` | 20 rows | Baseline candidate validation run: 13.3% accuracy |
+| **Job Tracker Pipeline** | [main-1784637327](https://www.braintrust.dev/app/Shikhar/p/Job%20Tracker%20Pipeline/experiments/main-1784637327) | `8ee56b37` | 5 rows | End-to-end golden run on Presolv360; latency: 2.82s |
+| **Job Tracker Pipeline** | [main-1784635188](https://www.braintrust.dev/app/Shikhar/p/Job%20Tracker%20Pipeline/experiments/main-1784635188) | `5b349674` | 5 rows | Verified HR retention and Zod null error resolution |
+
 ## 5. Sub-Pipeline Deep Dive & Prompt Evolution
 
 Across the **805 evaluated trace rows** in Braintrust, each pipeline module underwent iterative prompt engineering and programmatic tuning.
@@ -188,11 +218,11 @@ Across the **805 evaluated trace rows** in Braintrust, each pipeline module unde
 ---
 
 ### Pipeline Module 1: Company Research & Context Extraction
-*Braintrust Project: `Job-Tracker-Company-Research` (242 rows across 9 active runs)*
+*Braintrust Project: [`Job-Tracker-Company-Research`](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research) (242 rows across 9 active runs)*
 
 ```
 Experiment Progression:
-`5b28780a` (30 rows) ──> `c46d15e8` (30 rows) ──> `dad010ee` (30 rows)
+[`5b28780a`](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784458937) (30 rows) ──> [`c46d15e8`](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784540924) (30 rows) ──> [`dad010ee`](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Company-Research/experiments/main-1784585768) (30 rows)
 All runs: 100.0% Semantic Equivalence on Industry, Stage, Products, Mission
 ```
 
@@ -219,7 +249,7 @@ if (researchRaw && researchRaw.industry) {
 ---
 
 ### Pipeline Module 2: Search Strategy Generation
-*Braintrust Project: `Job-Tracker-Search-Strategy` (13 experiment runs)*
+*Braintrust Project: [`Job-Tracker-Search-Strategy`](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Search-Strategy) (13 experiment runs)*
 
 #### The Problem: The Startup vs. Enterprise Dilemma
 Early search prompts generated generic Boolean queries (e.g. `site:linkedin.com/in "Palantir" "Founder"`). For early startups, emailing the Founder yields high conversion; for a 5,000-person enterprise like Palantir or IDFC First Bank, pitching the CEO/Founder for an internship role is an immediate spam signal.
@@ -244,20 +274,20 @@ Early search prompts generated generic Boolean queries (e.g. `site:linkedin.com/
 ---
 
 ### Pipeline Module 3: Consensus Candidate Ranking & Filtering
-*Braintrust Project: `Job-Tracker-Candidate-Ranking` (266 rows across 4 runs)*
+*Braintrust Project: [`Job-Tracker-Candidate-Ranking`](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking) (266 rows across 4 runs)*
 
 ```
 Candidate Validation Score Progression:
-Run 1 (be0fc360): 0.0% (Crashing) ──> Run 2 (6e289061): 26.7% ──> Run 3 (5c943c54): 62.2% ──> Run 4 (19c5ec84): 64.4%
+[Run 1 (be0fc360)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784284144): 0.0% (Crashing) ──> [Run 2 (6e289061)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784585218): 26.7% ──> [Run 3 (5c943c54)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784585768): 62.2% ──> [Run 4 (19c5ec84)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784852193): 64.4%
 ```
 
 #### Run-by-Run Metric Comparison Table
 | Run ID | Commit | Rows | Score | Latency | Tokens (Prompt / Compl) | Errors | Key Milestones |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| **`be0fc360`** | `948ce4f` | 192 | **0.0%** | 11.16s | 0 / 0 | 2 | Crashing on Python `'None'` and Zod null errors. |
-| **`6e289061`** | `948ce4f` | 20 | **26.7%** | 1.67s | 1,860 / 330 | 0 | Severe ex-employee false positive rate. |
-| **`5c943c54`** | `948ce4f` | 50 | **62.2%** | 9.64s | 2,666 / 364 | 0 | Added consensus search + strict rejection rules. |
-| **`19c5ec84`** | `4fc4186` | 4 | **64.4%** | 3.95s | 2,493 / 1,136 | 0 | Refined founder vs. manager confidence hierarchy. |
+| [**`be0fc360`** (main-1784284144)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784284144) | `948ce4f` | 192 | **0.0%** | 11.16s | 0 / 0 | 2 | Crashing on Python `'None'` and Zod null errors. |
+| [**`6e289061`** (main-1784585218)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784585218) | `948ce4f` | 20 | **26.7%** | 1.67s | 1,860 / 330 | 0 | Severe ex-employee false positive rate. |
+| [**`5c943c54`** (main-1784585768)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784585768) | `948ce4f` | 50 | **62.2%** | 9.64s | 2,666 / 364 | 0 | Added consensus search + strict rejection rules. |
+| [**`19c5ec84`** (main-1784852193)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Candidate-Ranking/experiments/main-1784852193) | `4fc4186` | 4 | **64.4%** | 3.95s | 2,493 / 1,136 | 0 | Refined founder vs. manager confidence hierarchy. |
 | **Live Pipeline**| `44c85e4` | -- | **~95%** | 2.82s | 1,861 / 301 | 0 | Semantic `is_ex_employee` check + APM protection. |
 
 #### Detailed Prompt Evolutions
@@ -303,11 +333,11 @@ Rather than relying solely on string matches, candidate classification was given
 ---
 
 ### Pipeline Module 4: Email Hook Generation & Anti-Hallucination
-*Braintrust Project: `Job-Tracker-Email-Hook-Generation` (75 rows across 5 runs)*
+*Braintrust Project: [`Job-Tracker-Email-Hook-Generation`](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Email-Hook-Generation) (75 rows across 5 runs)*
 
 ```
 Factuality Score Progression:
-Run 1 (f0404968): Errors: 2 ──> Run 4 (3f08d267): 60.0% Factuality ──> Run 5 (59289e47): 60.0% Factuality
+[Run 1 (f0404968)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Email-Hook-Generation/experiments/main-1784587321): Errors: 2 ──> [Run 4 (3f08d267)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Email-Hook-Generation/experiments/main-1784587846): 60.0% Factuality ──> [Run 5 (59289e47)](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Email-Hook-Generation/experiments/main-1784851969): 60.0% Factuality
 ```
 
 #### Row-Level Grounding Analysis from Braintrust Trace (`3f08d267`)
@@ -327,7 +357,7 @@ Run 1 (f0404968): Errors: 2 ──> Run 4 (3f08d267): 60.0% Factuality ──> R
 ---
 
 ### Pipeline Module 5: Final Assembly & Evidence Library Matching
-*Braintrust Project: `Job-Tracker-Evidence-Selection` (192 rows, `ae47e193`)*
+*Braintrust Project: [`Job-Tracker-Evidence-Selection`](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Evidence-Selection) (192 rows, [`main-1784284144 / ae47e193`](https://www.braintrust.dev/app/Shikhar/p/Job-Tracker-Evidence-Selection/experiments/main-1784284144))*
 
 #### The Challenge: Eliminating Resume Hallucinations
 When standard copywriters are asked to *"highlight relevant experience"*, they invent metrics (e.g. *"I led a team of 15 engineers and increased revenue by $2M"*). In cold outreach, submitting an email with fabricated qualifications destroys credibility immediately.
