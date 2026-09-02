@@ -1324,6 +1324,24 @@ async function scanAccountForApplications(
       results.gmailSearchErrors = (results.gmailSearchErrors ?? 0) + 1;
     }
   }
+
+  // If every query failed, the scan encountered an auth or API failure — do not report false "0 emails"
+  if (results.gmailSearchErrors === queries.length) {
+    const firstRejection = searchResults.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
+    const reasonStr = firstRejection?.reason?.message || String(firstRejection?.reason || "");
+    if (
+      reasonStr.includes("unauthorized_client") ||
+      reasonStr.includes("invalid_grant") ||
+      reasonStr.includes("invalid_client") ||
+      reasonStr.includes("Bad Request") ||
+      reasonStr.includes("401") ||
+      reasonStr.includes("403")
+    ) {
+      throw new Error("Google authorization expired or invalid. Please sign out and sign back in with Google to reconnect your Gmail.");
+    }
+    throw new Error(`Gmail search failed: ${reasonStr}`);
+  }
+
   results.gmailIdsFound = (results.gmailIdsFound ?? 0) + allIds.size;
 
   // Split into new vs existing (for re-check)
